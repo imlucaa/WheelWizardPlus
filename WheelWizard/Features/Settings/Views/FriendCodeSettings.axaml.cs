@@ -8,6 +8,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using WheelWizard.CustomDistributions;
+using WheelWizard.DiscImages;
 using WheelWizard.Models.Enums;
 using WheelWizard.RrRooms;
 using WheelWizard.Shared.Desktop.Storage;
@@ -43,6 +44,7 @@ public partial class FriendCodeSettings : UserControl
     private readonly ICustomDistributionPaths _paths;
     private readonly IFilePickerService? _filePicker;
     private readonly IPlayerDatabase? _database;
+    private readonly IDiscImageService? _discs;
     private readonly List<MarioKartWiiEnums.Regions> _regions = [];
     private bool _syncingRegion;
     private readonly List<LicenseIdentity> _identities = [];
@@ -62,10 +64,12 @@ public partial class FriendCodeSettings : UserControl
         ISaveRegionService saveRegions,
         ICustomDistributionPaths paths,
         IFilePickerService? filePicker = null,
-        IPlayerDatabase? database = null
+        IPlayerDatabase? database = null,
+        IDiscImageService? discs = null
     )
     {
         _database = database;
+        _discs = discs;
         _settings = settings;
         _saveRegions = saveRegions;
         _paths = paths;
@@ -127,6 +131,52 @@ public partial class FriendCodeSettings : UserControl
         var current = _settings.Get<MarioKartWiiEnums.Regions>(_settings.RR_REGION);
         RegionPicker.SelectedIndex = _regions.IndexOf(current);
         _syncingRegion = false;
+        ShowRegionHint(current);
+    }
+
+    // The game starts from the disc in the game location, so that is the save it plays on. When the region picked here is
+    // another one, the licenses and friends shown (and used in the sidebar and Rooms) are not the ones the game uses.
+    private MarioKartWiiEnums.Regions _discRegion = MarioKartWiiEnums.Regions.None;
+
+    private void ShowRegionHint(MarioKartWiiEnums.Regions current)
+    {
+        _discRegion = DiscRegion();
+        var mismatch = _discRegion != MarioKartWiiEnums.Regions.None && _discRegion != current && _regionsWithSave.Contains(_discRegion);
+        RegionHintRow.IsVisible = mismatch;
+        if (!mismatch)
+            return;
+
+        var game = RegionName(_discRegion).Split(' ')[0];
+        RegionHintText.Text = $"Your game file is the {game} disc, but this shows the {RegionName(current).Split(' ')[0]} save.";
+        UseDiscRegionButton.Text = $"Use {game}";
+    }
+
+    private MarioKartWiiEnums.Regions DiscRegion()
+    {
+        var path = _settings.Get<string>(_settings.GAME_LOCATION);
+        if (_discs is null || string.IsNullOrWhiteSpace(path))
+            return MarioKartWiiEnums.Regions.None;
+
+        try
+        {
+            var info = _discs.ReadInfo(path);
+            return info.IsSuccess ? GameRegion.FromGameId(info.Value.GameId) : MarioKartWiiEnums.Regions.None;
+        }
+        catch (Exception)
+        {
+            return MarioKartWiiEnums.Regions.None;
+        }
+    }
+
+    private void UseDiscRegion_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (_discRegion == MarioKartWiiEnums.Regions.None)
+            return;
+
+        _settings.Set(_settings.RR_REGION, _discRegion);
+        _licenses.LoadLicense();
+        RefreshRegions();
+        AfterSaveChanged();
     }
 
     private void RegionPicker_OnChanged(object? sender, SelectionChangedEventArgs e)

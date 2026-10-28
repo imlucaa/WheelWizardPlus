@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
@@ -7,8 +7,12 @@ using Avalonia.Interactivity;
 using Avalonia.VisualTree;
 using NSubstitute;
 using WheelWizard.CustomDistributions;
+using WheelWizard.DiscImages;
+using WheelWizard.DiscImages.Domain;
+using WheelWizard.Models.Enums;
 using WheelWizard.RrRooms;
 using WheelWizard.Settings;
+using WheelWizard.Settings.Types;
 using WheelWizard.Settings.Views;
 using WheelWizard.Shared.Services;
 using WheelWizard.Views.Dialogs;
@@ -74,6 +78,52 @@ public class FriendCodeSettingsTests
 
         Assert.Equal("IDs are unique and match.", page.FindControl<TextBlock>("IdStatusText")!.Text);
         Assert.False(page.FindControl<WheelWizard.Views.Components.Button>("FixIdsButton")!.IsVisible);
+        window.Close();
+    }
+
+    private static FriendCodeSettings PageWithDisc(string gameId, MarioKartWiiEnums.Regions shown)
+    {
+        var settings = Substitute.For<ISettingsManager>();
+        settings.Get<string>(Arg.Any<Setting<string>>()).Returns("game.rvz");
+        settings.Get<MarioKartWiiEnums.Regions>(Arg.Any<Setting<MarioKartWiiEnums.Regions>>()).Returns(shown);
+        var saves = Substitute.For<ISaveRegionService>();
+        saves.GetAvailableRegions(Arg.Any<string>()).Returns([MarioKartWiiEnums.Regions.America, MarioKartWiiEnums.Regions.Europe]);
+        var discs = Substitute.For<IDiscImageService>();
+        discs.ReadInfo("game.rvz").Returns(new DiscImageInfo(gameId, "Mario Kart Wii", 0, DiscImageFormat.Rvz));
+        return new FriendCodeSettings(
+            Substitute.For<IApiCaller<IRwfcApi>>(),
+            Substitute.For<IGameLicenseSingletonService>(),
+            Substitute.For<IPopupFactory>(),
+            settings,
+            saves,
+            Substitute.For<ICustomDistributionPaths>(),
+            null,
+            Substitute.For<IPlayerDatabase>(),
+            discs
+        );
+    }
+
+    [AvaloniaFact]
+    public void WhenTheGameFileIsAnotherRegionThanTheSaveShown_TheHintOffersToSwitch()
+    {
+        var page = PageWithDisc("RMCP01", MarioKartWiiEnums.Regions.America);
+        var window = new Window { Content = page };
+        window.Show();
+
+        Assert.True(page.FindControl<Grid>("RegionHintRow")!.IsVisible);
+        Assert.Contains("Europe", page.FindControl<TextBlock>("RegionHintText")!.Text);
+        Assert.Equal("Use Europe", page.FindControl<WheelWizard.Views.Components.Button>("UseDiscRegionButton")!.Text);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void WhenTheGameFileMatchesTheSaveShown_ThereIsNoHint()
+    {
+        var page = PageWithDisc("RMCP01", MarioKartWiiEnums.Regions.Europe);
+        var window = new Window { Content = page };
+        window.Show();
+
+        Assert.False(page.FindControl<Grid>("RegionHintRow")!.IsVisible);
         window.Close();
     }
 
