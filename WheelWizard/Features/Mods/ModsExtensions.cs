@@ -9,6 +9,7 @@ public static class ModsExtensions
         services.AddSingleton<IModManager, ModManager>();
         services.AddSingleton<IModPresetStore, ModPresetStore>();
         services.AddSingleton<IModsLaunchService, ModsLaunchService>();
+        services.AddTransient<ViewModels.ModBrowserViewModel>();
         return services;
     }
 }

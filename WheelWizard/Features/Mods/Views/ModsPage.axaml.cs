@@ -18,6 +18,7 @@ using WheelWizard.Shared.MessageTranslations;
 using WheelWizard.Views.Components;
 using WheelWizard.Views.Dialogs;
 using WheelWizard.Views.Shell;
+using WheelWizard.Views.Shell.Navigation;
 
 namespace WheelWizard.Mods.Views;
 
@@ -27,6 +28,7 @@ public partial class ModsPage : UserControl, INotifyPropertyChanged
 {
     // #todo: move list state and mod workflows into a view model, and split drag-and-drop visuals into their own behavior.
     private IPopupFactory Popups { get; }
+    private INavigationService Navigation { get; }
 
     private Func<int, ModPreviewViewModel> CreatePreview { get; }
     private readonly Dictionary<int, ModPreviewViewModel> _previews = [];
@@ -96,6 +98,7 @@ public partial class ModsPage : UserControl, INotifyPropertyChanged
 
     public ModsPage(
         IPopupFactory popups,
+        INavigationService navigation,
         Func<int, ModPreviewViewModel> createPreview,
         IModOperationPresentation modPresentation,
         IFilePickerService filePicker,
@@ -106,6 +109,7 @@ public partial class ModsPage : UserControl, INotifyPropertyChanged
     )
     {
         Popups = popups;
+        Navigation = navigation;
         CreatePreview = createPreview;
         ModPresentation = modPresentation;
         FilePicker = filePicker;
@@ -171,8 +175,7 @@ public partial class ModsPage : UserControl, INotifyPropertyChanged
 
     private void BrowseMod_Click(object sender, RoutedEventArgs e)
     {
-        var modPopup = Popups.Create<ModBrowserWindow>();
-        modPopup.Show();
+        Navigation.NavigateTo<ModBrowserPage>();
     }
 
     private async Task ReloadModsAndShowErrorsAsync()

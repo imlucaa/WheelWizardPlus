@@ -62,6 +62,7 @@ public class ApplicationCompositionTests
         registrations.AddTransient(typeof(IApiCaller<>), typeof(OfflineApiCaller<>));
         var modsLoaded = new TaskCompletionSource<OperationResult>();
         var mods = Substitute.For<IModManager>();
+        mods.Mods.Returns([]);
         mods.ReloadAsync().Returns(modsLoaded.Task);
         mods.Mods.Returns([]);
         registrations.AddSingleton(mods);
@@ -145,6 +146,7 @@ public class ApplicationCompositionTests
                 typeof(FriendsPage),
                 typeof(RoomsPage),
                 typeof(ModsPage),
+                typeof(ModBrowserPage),
                 typeof(MiiListPage),
                 typeof(LeaderboardPage),
                 typeof(UserProfilePage),
