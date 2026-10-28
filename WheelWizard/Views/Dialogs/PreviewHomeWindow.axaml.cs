@@ -26,6 +26,7 @@ public partial class PreviewHomeWindow : PopupContent
         : base(true, false, true, "Launcher preview")
     {
         InitializeComponent();
+        IsDismissible = true;
         foreach (var tab in PreviewTabs.Children.OfType<SidebarRadioButton>())
             tab.NavigationRequested += (_, _) => ShowPage((string?)tab.Tag ?? "Home");
         UpdatePreview(theme, background, surfaceOpacity, minimalHomeArtwork, hideHomeTitle);

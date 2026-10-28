@@ -28,9 +28,10 @@ public partial class PlayerProfileWindow : PopupContent, INotifyPropertyChanged
         // bind to that window (and log a failed cast for every field) before this line ran.
         DataContext = this;
         InitializeComponent();
+        IsDismissible = true;
         HistoryHost.Content = historyGraph;
         historyGraph.Bind(VrHistoryGraph.FriendCodeProperty, new Binding(nameof(ProfileFriendCode)) { Source = this });
-        Window.WindowTitle = friendCode;
+        PopupTitle = friendCode;
         LoadProfile(friendCode);
     }
 
@@ -158,7 +159,7 @@ public partial class PlayerProfileWindow : PopupContent, INotifyPropertyChanged
             if (result.IsSuccess && result.Value != null)
             {
                 Profile = result.Value;
-                Window.WindowTitle = Profile.Name;
+                PopupTitle = Profile.Name;
                 IsLoading = false;
             }
             else

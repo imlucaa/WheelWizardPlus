@@ -20,6 +20,8 @@ public class FriendCodeHistoryWindowTests
             new(time, "change", 0, "luca", "0310-0111-0111", "4939-2147-5073", "b1"),
         ];
         LicenseIdentity[] now = [new(0, "luca", 1, "0310-0111-0111", 1, 1), new(3, "two", 2, "0000-0041-0070", 2, 2)];
+        var owner = new ModalOwnerWindow();
+        owner.Show();
         var window = new FriendCodeHistoryWindow(history, now);
 
         var answer = window.AwaitAnswer();
@@ -43,5 +45,6 @@ public class FriendCodeHistoryWindowTests
 
         restores[0]!.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Avalonia.Controls.Button.ClickEvent));
         Assert.Same(history[0], await answer);
+        owner.Close();
     }
 }

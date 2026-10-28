@@ -14,9 +14,12 @@ public class ThemeColorPickerWindowTests
     [AvaloniaFact]
     public void Picker_ShowsCurrentAndNewColorAndQuickSwatches()
     {
+        var owner = new ModalOwnerWindow();
+        owner.Show();
         var content = new ThemeColorPickerWindow("Main color", Color.Parse("#112233"));
         content.Show();
         var window = Assert.IsAssignableFrom<Window>(TopLevel.GetTopLevel(content));
+        Assert.Same(owner, window);
         try
         {
             window.UpdateLayout();
@@ -40,7 +43,7 @@ public class ThemeColorPickerWindowTests
         }
         finally
         {
-            window.Close();
+            owner.Close();
         }
     }
 }

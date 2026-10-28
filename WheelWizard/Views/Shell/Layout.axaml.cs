@@ -11,6 +11,7 @@ using WheelWizard.Branding;
 using WheelWizard.Localization;
 using WheelWizard.MiiImages.Views;
 using WheelWizard.Mods;
+using WheelWizard.Mods.Views;
 using WheelWizard.RrRooms;
 using WheelWizard.RrRooms.Views;
 using WheelWizard.Settings;
@@ -39,6 +40,7 @@ public partial class Layout : BaseWindow, IPollingListener
 
     protected override Control InteractionOverlay => DisabledDarkenEffect;
     protected override Control InteractionContent => WindowFrame;
+    protected override Control ModalInteractionContent => CompleteGrid;
 
     public const double WindowHeight = 876;
     public const double WindowWidth = 656;
@@ -229,7 +231,10 @@ public partial class Layout : BaseWindow, IPollingListener
     {
         var reloadResult = await ModManagerService.ReloadAsync();
         if (reloadResult.IsFailure)
+        {
+            await _loaded.Task;
             MessageTranslationHelper.ShowMessage(reloadResult.Error);
+        }
     }
 
     private void OnSettingSignal(SettingChangedSignal signal) => OnSettingChanged(signal.Setting);
@@ -391,6 +396,7 @@ public partial class Layout : BaseWindow, IPollingListener
     }
 
     private bool _closeConfirmed;
+    private bool _closePromptOpen;
 
     protected override async void OnClosing(WindowClosingEventArgs e)
     {
@@ -398,10 +404,20 @@ public partial class Layout : BaseWindow, IPollingListener
         {
             e.Cancel = true;
             base.OnClosing(e);
-            if (!await guard.ConfirmLeaveAsync())
+            if (_closePromptOpen)
                 return;
-            _closeConfirmed = true;
-            Close();
+            _closePromptOpen = true;
+            try
+            {
+                if (!await guard.ConfirmLeaveAsync())
+                    return;
+                _closeConfirmed = true;
+                Close();
+            }
+            finally
+            {
+                _closePromptOpen = false;
+            }
             return;
         }
 
@@ -443,6 +459,8 @@ public partial class Layout : BaseWindow, IPollingListener
 
             // TODO: make a better way to have these type of exceptions
             if (button.PageType == typeof(RoomsPage) && typeof(RoomDetailsPage) == page.GetType())
+                button.IsChecked = true;
+            if (button.PageType == typeof(ModsPage) && page is ModBrowserPage)
                 button.IsChecked = true;
             if (button.PageType == typeof(MiiListPage) && page is MiiEditorPage)
                 button.IsChecked = true;
@@ -553,7 +571,7 @@ public partial class Layout : BaseWindow, IPollingListener
     /// <summary>Ten presses on the version text in Settings ask for the tester phrase.</summary>
     public async void TesterUnlockClick(PointerPressedEventArgs e)
     {
-        if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+        if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed || Modals.HasModals)
             return;
 
         e.Handled = true;
@@ -673,7 +691,7 @@ public partial class Layout : BaseWindow, IPollingListener
 
     private void SupportUs_OnClick(object? sender, RoutedEventArgs e) => ViewUtils.OpenLink(BrandingService.Branding.SupportUrl.ToString());
 
-    public bool CompleteContentEnabled => InteractionContent.IsEnabled;
+    public bool CompleteContentEnabled => ModalInteractionContent.IsEnabled;
 
     public void ShowAppInfo() => Navigation.NavigateTo<SettingsPage>(typeof(AppInfo));
 

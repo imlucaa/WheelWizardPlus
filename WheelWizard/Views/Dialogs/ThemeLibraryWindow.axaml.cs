@@ -18,6 +18,7 @@ public partial class ThemeLibraryWindow : PopupContent
         : base(true, false, true, "Theme library")
     {
         InitializeComponent();
+        IsDismissible = true;
 
         var labelColor = Application.Current!.FindResource("FormFieldLabelColor") is Color color ? color : Colors.White;
         for (var index = 0; index < themeNames.Count; index++)

@@ -15,6 +15,7 @@ public partial class ThemeColorPickerWindow : PopupContent
         : base(true, false, true, "Theme color")
     {
         InitializeComponent();
+        IsDismissible = true;
         PickerTitle.Text = title;
         _selectedColor = initialColor;
         Picker.Color = initialColor;

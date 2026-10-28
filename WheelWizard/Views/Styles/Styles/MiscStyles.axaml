@@ -1,10 +1,15 @@
 ﻿<Styles xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:behaviors="clr-namespace:WheelWizard.Views.Behaviors">
     <Design.PreviewWith>
         <Border Padding="20">
             <!-- Add Controls for Previewer Here -->
         </Border>
     </Design.PreviewWith>
+
+    <Style Selector="ScrollViewer">
+        <Setter Property="behaviors:HorizontalPanBehavior.IsEnabled" Value="True" />
+    </Style>
 
     <Style Selector="Border.SettingsBlockStyle">
         <Setter Property="Background" Value="{DynamicResource Neutral900}" />

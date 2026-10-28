@@ -3,6 +3,7 @@ using WheelWizard.AutoUpdating;
 using WheelWizard.Shared.Downloads;
 using WheelWizard.Shared.Platform;
 using WheelWizard.Views.Dialogs;
+using WheelWizard.Views.Shell;
 
 namespace WheelWizard.AutoUpdating.Presentation;
 
@@ -78,6 +79,7 @@ public sealed class UpdatePresentation(IRuntimeEnvironment environment) : IUpdat
     ) =>
         await Dispatcher.UIThread.InvokeAsync(async () =>
         {
+            var owner = BaseWindow.GetModalOwner();
             using var cancellation = new CancellationTokenSource();
             ProgressWindow? window = null;
             var finished = false;
@@ -90,6 +92,7 @@ public sealed class UpdatePresentation(IRuntimeEnvironment environment) : IUpdat
                     window = new ProgressWindow(t("progress.update_wh_wz"))
                         .SetExtraText(t("progress.latest_wh_wz_github"))
                         .SetCancellationTokenSource(cancellation);
+                    window.SetModalOwner(owner);
                     window.Show();
                 }
                 if (update.Retrying)

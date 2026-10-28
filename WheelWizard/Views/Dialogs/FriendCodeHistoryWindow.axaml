@@ -3,10 +3,16 @@
                    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
                    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                    xmlns:base="clr-namespace:WheelWizard.Views.Popups.Base"
+                   xmlns:components="clr-namespace:WheelWizard.Views.Components"
                    mc:Ignorable="d" d:DesignWidth="360" d:DesignHeight="300"
                    x:Class="WheelWizard.Views.Dialogs.FriendCodeHistoryWindow">
-    <ScrollViewer Width="360" MaxHeight="440" VerticalScrollBarVisibility="Auto"
-                  HorizontalScrollBarVisibility="Disabled">
-        <StackPanel x:Name="HistoryList" Spacing="16" Margin="0,4,0,4" />
-    </ScrollViewer>
+    <Grid Width="360" RowDefinitions="Auto,*">
+        <components:ModalHeading Margin="0,0,0,12">
+            <TextBlock Classes="TitleText" FontSize="18" Text="Friend code history" />
+        </components:ModalHeading>
+        <ScrollViewer Grid.Row="1" MaxHeight="440" VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+            <StackPanel x:Name="HistoryList" Spacing="16" Margin="0,4,0,4" />
+        </ScrollViewer>
+    </Grid>
 </base:PopupContent>
