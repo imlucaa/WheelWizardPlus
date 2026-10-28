@@ -16,6 +16,7 @@ public static class RrRoomsExtensions
 
         services.AddSingleton<LiveRoomsService>();
         services.AddSingleton<IRoomPresence, RoomPresence>();
+        services.AddSingleton<IFriendVrRefresher, FriendVrRefresher>();
 
         return services;
     }

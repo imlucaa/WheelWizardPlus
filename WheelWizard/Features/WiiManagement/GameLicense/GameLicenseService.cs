@@ -345,7 +345,8 @@ public class GameLicenseSingletonService : ObservablePollingService, IGameLicens
             foreach (var friend in user.Friends)
             {
                 friend.IsOnline = _presence.IsOnline(friend.FriendCode);
-                // The save keeps a friend's ratings as they were when you last saw them; in a room they are current.
+                // The save keeps a friend's ratings as they were when you last saw them; in a room they are current, and
+                // for a friend who is not in one the profile on rwfc.net is the next best.
                 if (friend.IsOnline && _presence.TryGetRating(friend.FriendCode, out var vr, out var br))
                 {
                     if (vr is { } liveVr and >= 0)
@@ -353,6 +354,8 @@ public class GameLicenseSingletonService : ObservablePollingService, IGameLicens
                     if (br is { } liveBr and >= 0)
                         friend.Br = (uint)liveBr;
                 }
+                else if (!friend.IsOnline && _presence.TryGetProfileVr(friend.FriendCode, out var profileVr))
+                    friend.Vr = (uint)profileVr;
             }
         }
     }

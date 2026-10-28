@@ -1,4 +1,5 @@
-﻿using System.IO.Abstractions;
+﻿using System.Globalization;
+using System.IO.Abstractions;
 using System.Text.RegularExpressions;
 using WheelWizard.CustomDistributions;
 
@@ -138,6 +139,8 @@ public sealed record GhostMatch(GhostTrack Track, int Speed, TimeSpan CurrentTim
 {
     public string Label => $"{Track.Name} ({Speed}cc, now {GhostFile.Format(CurrentTime)})";
 }
+
+public sealed record EarlierGhost(string Path, TimeSpan Time, DateTime? ReplacedAt);
 
 public sealed record GhostImportResult(bool Success, string Message, TimeSpan? Replaced = null, TimeSpan? Imported = null);
 
@@ -308,53 +311,81 @@ public sealed partial class GhostImporter(ICustomDistributionPaths paths, IFileS
     }
 
     /// <summary>The ghost this slot had before it was last replaced (kept in the <c>Replaced</c> folder), or null when there is none.</summary>
-    public (string Path, TimeSpan Time)? Previous(GhostTrack track, int speed)
+    public (string Path, TimeSpan Time)? Previous(GhostTrack track, int speed) =>
+        Earlier(track, speed) is [var newest, ..] ? (newest.Path, newest.Time) : null;
+
+    /// <summary>Every ghost kept for this slot in the <c>Replaced</c> folder, newest first, with when it was replaced.</summary>
+    public IReadOnlyList<EarlierGhost> Earlier(GhostTrack track, int speed)
     {
         var folder = fileSystem.Path.Combine(GhostsFolder, "Replaced", track.FolderName);
+        var found = new List<EarlierGhost>();
         try
         {
             if (!fileSystem.Directory.Exists(folder))
-                return null;
+                return found;
             foreach (var file in fileSystem.Directory.EnumerateFiles(folder, $"{track.Index}_{speed}-*.rkg").OrderDescending())
             {
                 if (GhostFile.TryRead(fileSystem.File.ReadAllBytes(file), out var time))
-                    return (file, time);
+                    found.Add(new EarlierGhost(file, time, ReplacedAt(file)));
             }
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            return null;
+            return found;
         }
 
-        return null;
+        return found;
+    }
+
+    // The kept file is named "<index>_<speed>-yyyyMMdd-HHmmss.rkg" after the moment it was replaced.
+    private DateTime? ReplacedAt(string file)
+    {
+        var name = fileSystem.Path.GetFileNameWithoutExtension(file);
+        var dash = name.IndexOf('-');
+        return dash > 0 && DateTime.TryParseExact(name[(dash + 1)..], "yyyyMMdd-HHmmss", null, DateTimeStyles.None, out var at) ? at : null;
     }
 
     /// <summary>
     /// Puts the previous ghost of the slot back. The ghost that is there now goes to the <c>Replaced</c> folder in its
     /// place, so doing it again swaps them back.
     /// </summary>
-    public GhostImportResult RestorePrevious(GhostTrack track, int speed)
-    {
-        if (Previous(track, speed) is not { } previous)
-            return new(false, "There is no earlier ghost for that track.");
+    public GhostImportResult RestorePrevious(GhostTrack track, int speed) =>
+        Previous(track, speed) is { } previous
+            ? Restore(track, speed, previous.Path)
+            : new(false, "There is no earlier ghost for that track.");
 
+    /// <summary>Puts one of the kept ghosts (from <see cref="Earlier"/>) back; the ghost that is there now is kept in its place.</summary>
+    public GhostImportResult Restore(GhostTrack track, int speed, string keptPath)
+    {
         byte[] data;
         try
         {
-            data = fileSystem.File.ReadAllBytes(previous.Path);
+            data = fileSystem.File.ReadAllBytes(keptPath);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             return new(false, "Could not read the earlier ghost.");
         }
 
+        if (!GhostFile.TryRead(data, out var time))
+            return new(false, "That earlier ghost is damaged.");
+
         var result = ImportData(data, track, speed);
-        return result.Success
-            ? result with
-            {
-                Message = $"{track.Name} ({speed}cc) is back to {GhostFile.Format(previous.Time)}.",
-            }
-            : result;
+        if (!result.Success)
+            return result;
+
+        // It is the current ghost again, so it leaves the list (the one it replaced took its place there).
+        try
+        {
+            if (fileSystem.File.Exists(keptPath) && fileSystem.File.ReadAllBytes(keptPath).AsSpan().SequenceEqual(data))
+                fileSystem.File.Delete(keptPath);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+
+        return result with
+        {
+            Message = $"{track.Name} ({speed}cc) is back to {GhostFile.Format(time)}.",
+        };
     }
 
     /// <summary>The file name an exported ghost gets: just the finish time, like "1m34s086.rkg".</summary>

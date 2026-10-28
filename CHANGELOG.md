@@ -33,8 +33,10 @@ version sequence.
 - Friend codes: pick several .rkp files at once and they are added to empty slots together (nothing that is there is replaced).
 - Backup: Manage > Back up now saves a copy of the save as it is.
 - Ghosts: click Gap to list the tracks furthest from the world record first, and Undo puts back the ghost a track had before an import.
-- Friends: a friend who is in a room shows their current VR and BR instead of the ones stored in the save.
+- Friends: a friend who is in a room shows their current VR and BR instead of the ones stored in the save; a friend who is offline shows their current VR too (looked up a few at a time, at most every 10 minutes each).
 - Line colour is a tab in Settings (and can be pinned to the sidebar): it changes the colour of the line under your name online, inside a disc. Pick a disc and a colour, and Wheel Wizard uses Wiimm's ISO Tool to take it apart, change the region ID in main.dol and rebuild it, as a copy or over the original. The tool is asked for once, or the Download button on that tab fetches it from wit.wiimm.de (Windows) into Wheel Wizard+'s folder. A disc that was replaced remembers the colour it had, and the colour list offers Back to the original.
+- Friend codes: Rename changes the name of the picked license.
+- Ghosts: Undo keeps going back. With more than one earlier ghost, Undo lists the last few (with the time and when each was replaced) and you pick which one to put back.
 - Testing Mode is a normal item in Arrange sidebar, so it can be moved or hidden like the others.
 
 ### Removed

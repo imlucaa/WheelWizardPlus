@@ -602,19 +602,24 @@ public sealed class GhostsPage : UserControl
 
         foreach (var speed in new[] { 150, 200 })
         {
-            if (_importer.Previous(track, speed) is not { } previous)
+            var earlier = _importer.Earlier(track, speed);
+            if (earlier.Count == 0)
                 continue;
             var undo = Button(
                 $"Undo {speed}cc",
                 null,
-                $"Put back the ghost this track had before ({GhostFile.Format(previous.Time)}); the current one is kept"
+                earlier.Count == 1
+                    ? $"Put back the ghost this track had before ({GhostFile.Format(earlier[0].Time)}); the current one is kept"
+                    : $"Go back to one of the last {earlier.Count} ghosts this track had; the current one is kept"
             );
             undo.Margin = new Thickness(0, 0, 6, 6);
             var chosen = speed;
             undo.Click += (_, _) =>
             {
-                Say(_importer.RestorePrevious(track, chosen).Message);
-                ShowTable();
+                if (earlier.Count == 1)
+                    Restore(track, chosen, earlier[0]);
+                else
+                    ShowEarlier(undo, track, chosen, earlier);
             };
             panel.Children.Add(undo);
         }
@@ -626,6 +631,27 @@ public sealed class GhostsPage : UserControl
         return panel;
     }
 
+    private void Restore(GhostTrack track, int speed, EarlierGhost ghost)
+    {
+        Say(_importer.Restore(track, speed, ghost.Path).Message);
+        ShowTable();
+    }
+
+    // Each kept ghost with its time and when it was replaced, newest first.
+    private void ShowEarlier(Control anchor, GhostTrack track, int speed, IReadOnlyList<EarlierGhost> earlier)
+    {
+        var flyout = new MenuFlyout();
+        foreach (var ghost in earlier)
+        {
+            var when = ghost.ReplacedAt is { } at ? $"   replaced {at:d MMM, HH:mm}" : "";
+            var item = new MenuItem { Header = GhostFile.Format(ghost.Time) + when };
+            var each = ghost;
+            item.Click += (_, _) => Restore(track, speed, each);
+            flyout.Items.Add(item);
+        }
+
+        flyout.ShowAt(anchor);
+    }
     #endregion
 
     #region Import

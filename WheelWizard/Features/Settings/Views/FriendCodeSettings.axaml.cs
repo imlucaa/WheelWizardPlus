@@ -173,6 +173,7 @@ public partial class FriendCodeSettings : UserControl
         LicenseNote.Text = _identities.Count == 0 ? "No licenses found. Start the game once first." : string.Empty;
         LicenseNote.IsVisible = _identities.Count == 0;
         ExportLicenseButton.IsEnabled = _identities.Count > 0;
+        RenameLicenseButton.IsEnabled = _identities.Count > 0;
         ImportLicenseButton.IsEnabled = _identities.Count > 0;
         UpdateApplyButton();
     }
@@ -288,6 +289,56 @@ public partial class FriendCodeSettings : UserControl
         IdStatusText.Foreground = problems.Any ? Bad : Good;
         IdStatusText.Text = problems.Any ? ProblemText(license, problems) : "IDs are unique and match.";
         FixIdsButton.IsVisible = problems.Any && !problems.SameFriendCode(license);
+    }
+
+    private async void RenameLicense_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (_selected < 0 || _selected >= _identities.Count || BlockWhileGameRuns())
+            return;
+
+        var license = _identities[_selected];
+        if (!HasName(license))
+        {
+            ViewUtils.ShowSnackbar(
+                "This license has no name to change yet. Make a Mii for it in the game first.",
+                ViewUtils.SnackbarType.Warning
+            );
+            return;
+        }
+
+        var input = await _popups
+            .Create<TextInputWindow>()
+            .SetMainText($"Rename {license.Name}")
+            .SetExtraText("1 to 10 characters. Your save is backed up first. Close the game before you continue.")
+            .SetPlaceholderText("New name")
+            .SetInitialText(license.Name)
+            .SetButtonText("Cancel", "Rename")
+            .ShowDialog();
+        var name = input?.Trim();
+        if (string.IsNullOrEmpty(name) || name == license.Name)
+            return;
+        if (name.Length > 10)
+        {
+            ViewUtils.ShowSnackbar("A name can be 10 characters at most.", ViewUtils.SnackbarType.Warning);
+            return;
+        }
+
+        var backup = _licenses.BackupSaveNow();
+        if (backup.IsFailure)
+        {
+            ViewUtils.ShowSnackbar(backup.Error.Message, ViewUtils.SnackbarType.Danger);
+            return;
+        }
+
+        var result = _licenses.ChangeMiiName(license.Slot, name);
+        if (result.IsFailure)
+        {
+            ViewUtils.ShowSnackbar(result.Error.Message, ViewUtils.SnackbarType.Danger);
+            return;
+        }
+
+        AfterSaveChanged();
+        ViewUtils.ShowSnackbar($"Renamed to {name}.");
     }
 
     private async void FixIds_OnClick(object? sender, RoutedEventArgs e)

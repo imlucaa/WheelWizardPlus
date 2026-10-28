@@ -20,15 +20,18 @@
                         <components:Dropdown x:Name="RegionPicker" Grid.Column="1" Width="150" ZIndex="2" />
                     </Grid>
                     <Border Height="1" Background="{DynamicResource Neutral700}" Opacity="0.6" />
-                    <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="6">
+                    <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto" ColumnSpacing="6">
                         <components:FormFieldLabel Text="License" VerticalAlignment="Center" />
-                        <components:Button Grid.Column="1" x:Name="ExportLicenseButton" Text="Export" ButtonSize="Compact"
+                        <components:Button Grid.Column="1" x:Name="RenameLicenseButton" Text="Rename" ButtonSize="Compact"
+                                           ToolTip.Tip="Change the name of the selected license"
+                                           Click="RenameLicense_OnClick" />
+                        <components:Button Grid.Column="2" x:Name="ExportLicenseButton" Text="Export" ButtonSize="Compact"
                                            ToolTip.Tip="Save the selected license as a .rkp file"
                                            Click="ExportLicense_OnClick" />
-                        <components:Button Grid.Column="2" x:Name="ExportAllButton" Text="Export all" ButtonSize="Compact"
+                        <components:Button Grid.Column="3" x:Name="ExportAllButton" Text="Export all" ButtonSize="Compact"
                                            ToolTip.Tip="Save every license of this save as .rkp files in a folder you pick"
                                            Click="ExportAll_OnClick" />
-                        <components:Button Grid.Column="3" x:Name="ImportLicenseButton" Text="Import" ButtonSize="Compact"
+                        <components:Button Grid.Column="4" x:Name="ImportLicenseButton" Text="Import" ButtonSize="Compact"
                                            ToolTip.Tip="Put a license from a .rkp file, an earlier save or a save file into this save"
                                            Click="ImportLicense_OnClick" />
                     </Grid>

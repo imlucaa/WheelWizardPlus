@@ -72,7 +72,8 @@ public sealed class FriendRoomNotifier : IPollingListener
 
     public void OnUpdate(ObservablePollingService sender)
     {
-        if (sender is not LiveRoomsService rooms)
+        // A failed refresh publishes an empty list; reading that as "everyone left" would announce all online friends next time.
+        if (sender is not LiveRoomsService { LastRefreshSucceeded: true } rooms)
             return;
 
         IReadOnlySet<string> friendCodes;

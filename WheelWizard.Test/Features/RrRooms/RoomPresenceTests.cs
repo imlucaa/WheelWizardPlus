@@ -235,4 +235,72 @@ public class RoomPresenceTests
     {
         public Task Refresh() => ExecuteTaskAsync(CancellationToken.None);
     }
+
+    [Fact]
+    public void AFriendNotInARoom_ShowsTheVrOnTheirProfile_ButARoomRatingStillWins()
+    {
+        var presence = new RoomPresence();
+        var service = new GameLicenseSingletonService(
+            Substitute.For<IMiiDbService>(),
+            Substitute.For<IFileSystem>(),
+            Substitute.For<IWhWzDataSingletonService>(),
+            Substitute.For<IRrRatingReader>(),
+            Substitute.For<ISettingsManager>(),
+            Substitute.For<ISaveRegionService>(),
+            Substitute.For<IDolphinPaths>(),
+            Substitute.For<ICustomDistributionPaths>(),
+            presence,
+            Substitute.For<IPollingScheduler>(),
+            TimeProvider.System,
+            NullLogger<GameLicenseSingletonService>.Instance
+        );
+        var user = new LicenseProfile
+        {
+            FriendCode = "user",
+            Vr = 5000,
+            Br = 5000,
+            RegionId = 0,
+            Mii = null,
+            TotalRaceCount = 0,
+            TotalWinCount = 0,
+        };
+        FriendProfile Friend(string code) =>
+            new()
+            {
+                FriendCode = code,
+                Vr = 4000,
+                Br = 4100,
+                RegionId = 0,
+                Mii = null,
+                Wins = 0,
+                Losses = 0,
+                CountryCode = 0,
+            };
+        var offline = Friend("offline");
+        var unknown = Friend("unknown");
+        var inRoom = Friend("in-room");
+        user.Friends.AddRange([offline, unknown, inRoom]);
+        service.LicenseCollection.Users.Add(user);
+        presence.SetProfileVr("offline", 7777);
+        presence.SetProfileVr("in-room", 1111);
+        presence.Replace(["in-room"]);
+        presence.SetRatings(
+            [
+                new()
+                {
+                    Pid = "1",
+                    Name = "a",
+                    FriendCode = "in-room",
+                    Vr = 9123,
+                    Br = 8456,
+                },
+            ]
+        );
+
+        service.RefreshOnlineStatus();
+
+        Assert.Equal(7777u, offline.Vr);
+        Assert.Equal(4000u, unknown.Vr);
+        Assert.Equal(9123u, inRoom.Vr);
+    }
 }

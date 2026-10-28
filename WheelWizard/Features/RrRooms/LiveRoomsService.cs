@@ -22,7 +22,11 @@ public class LiveRoomsService : ObservablePollingService
     public int PlayerCount => CurrentRooms.Sum(room => room.PlayerCount);
     public int RoomCount => CurrentRooms.Count;
 
+    /// <summary>False when the last refresh could not get the room list, so <see cref="CurrentRooms"/> is empty for that reason.</summary>
+    public bool LastRefreshSucceeded { get; private set; } = true;
+
     private readonly IRoomPresence _presence;
+    private readonly IFriendVrRefresher? _friendVr;
 
     public LiveRoomsService(
         IWhWzDataSingletonService whWzService,
@@ -32,7 +36,8 @@ public class LiveRoomsService : ObservablePollingService
         IRoomPresence presence,
         IPollingScheduler scheduler,
         TimeProvider timeProvider,
-        ILogger<LiveRoomsService> logger
+        ILogger<LiveRoomsService> logger,
+        IFriendVrRefresher? friendVr = null
     )
         : base(40, scheduler, timeProvider, logger)
     {
@@ -41,6 +46,7 @@ public class LiveRoomsService : ObservablePollingService
         _leaderboardService = leaderboardService;
         _gameLicenseService = gameLicenseService;
         _presence = presence;
+        _friendVr = friendVr;
     }
 
     /// <summary>Fetches the room list right now, for callers that need a room created since the last refresh.</summary>
@@ -57,6 +63,7 @@ public class LiveRoomsService : ObservablePollingService
 
         var roomsResult = roomsTask.Result;
         var leaderboardResult = leaderboardTask.Result;
+        LastRefreshSucceeded = roomsResult.IsSuccess;
         if (roomsResult.IsFailure)
         {
             PublishRooms([]);
@@ -100,7 +107,31 @@ public class LiveRoomsService : ObservablePollingService
             .Select(room => MapRoom(room, _whWzService, leaderboardByPid, leaderboardByFriendCode, friendProfileIds))
             .ToList();
 
+        await RefreshFriendVrAsync(cancellationToken);
         PublishRooms(rrRooms);
+    }
+
+    // Friends who are not in a room have only the VR the save kept; their profiles have the current one.
+    private async Task RefreshFriendVrAsync(CancellationToken cancellationToken)
+    {
+        if (_friendVr is null)
+            return;
+
+        try
+        {
+            var codes = _gameLicenseService.ActiveCurrentFriends.Select(friend => friend.FriendCode).ToList();
+            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            timeout.CancelAfter(TimeSpan.FromSeconds(8));
+            await _friendVr.RefreshAsync(codes, timeout.Token);
+        }
+        catch (Exception ex) when (ex is ArgumentOutOfRangeException or InvalidOperationException or NullReferenceException)
+        {
+            // The save has not been read yet; there are no friends to look up.
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            // Too slow this time: the rooms are published without it.
+        }
     }
 
     private void PublishRooms(List<RrRoom> rooms)

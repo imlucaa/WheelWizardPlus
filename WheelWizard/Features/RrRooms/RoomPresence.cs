@@ -11,12 +11,18 @@ public interface IRoomPresence
     bool TryGetRating(string friendCode, out int? vr, out int? br);
 
     void SetRatings(IEnumerable<RrPlayer> players);
+
+    /// <summary>The VR on a player's rwfc.net profile (for a friend who is not in a room), or false when none was looked up.</summary>
+    bool TryGetProfileVr(string friendCode, out int vr);
+
+    void SetProfileVr(string friendCode, int vr);
 }
 
 public sealed class RoomPresence : IRoomPresence
 {
     private HashSet<string> _onlineFriendCodes = new(StringComparer.Ordinal);
     private Dictionary<string, (int? Vr, int? Br)> _ratings = new(StringComparer.Ordinal);
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, int> _profileVr = new(StringComparer.Ordinal);
 
     public bool IsOnline(string friendCode) => Volatile.Read(ref _onlineFriendCodes).Contains(friendCode);
 
@@ -37,6 +43,10 @@ public sealed class RoomPresence : IRoomPresence
         vr = br = null;
         return false;
     }
+
+    public bool TryGetProfileVr(string friendCode, out int vr) => _profileVr.TryGetValue(friendCode, out vr);
+
+    public void SetProfileVr(string friendCode, int vr) => _profileVr[friendCode] = vr;
 
     public void SetRatings(IEnumerable<RrPlayer> players) =>
         Volatile.Write(

@@ -192,6 +192,47 @@ public class GhostImporterTests
     }
 
     [Fact]
+    public void Earlier_ListsEveryKeptGhostNewestFirst_AndRestoreGoesBackToAnyOfThem()
+    {
+        var fixture = new Fixture();
+        var track = fixture.Importer.LoadTracks(GhostKind.Custom)[0];
+        fixture.Write("ExpertsCT/0_150.rkg", Ghost(0x00, 0x78, 0x01)); // 0:30.001
+        fixture.Files.Directory.CreateDirectory(fixture.Path("Replaced/ExpertsCT"));
+        fixture.Files.File.WriteAllBytes(fixture.Path("Replaced/ExpertsCT/0_150-20200101-101500.rkg"), Ghost(0x02, 0x88, 0x56)); // 1:34.086
+        fixture.Files.File.WriteAllBytes(fixture.Path("Replaced/ExpertsCT/0_150-20200102-081000.rkg"), Ghost(0x02, 0x00, 0x7B)); // 1:00.123
+
+        var earlier = fixture.Importer.Earlier(track, 150);
+
+        Assert.Equal([new TimeSpan(0, 0, 1, 0, 123), new TimeSpan(0, 0, 1, 34, 86)], earlier.Select(each => each.Time));
+        Assert.Equal(new DateTime(2020, 1, 2, 8, 10, 0), earlier[0].ReplacedAt);
+
+        var result = fixture.Importer.Restore(track, 150, earlier[1].Path);
+
+        Assert.True(result.Success);
+        Assert.Equal(new TimeSpan(0, 0, 1, 34, 86), fixture.Importer.CurrentTime(track, 150));
+        // The restored one left the list; the ghost it replaced joined it.
+        var after = fixture.Importer.Earlier(track, 150).Select(each => each.Time).ToList();
+        Assert.Equal(2, after.Count);
+        Assert.Contains(new TimeSpan(0, 0, 0, 30, 1), after);
+        Assert.DoesNotContain(new TimeSpan(0, 0, 1, 34, 86), after);
+    }
+
+    [Fact]
+    public void Restore_WithADamagedKeptFile_ChangesNothing()
+    {
+        var fixture = new Fixture();
+        var track = fixture.Importer.LoadTracks(GhostKind.Custom)[0];
+        fixture.Write("ExpertsCT/0_150.rkg", Ghost(0x00, 0x78, 0x01));
+        fixture.Files.Directory.CreateDirectory(fixture.Path("Replaced/ExpertsCT"));
+        fixture.Files.File.WriteAllBytes(fixture.Path("Replaced/ExpertsCT/0_150-20200101-101500.rkg"), [1, 2, 3]);
+
+        var result = fixture.Importer.Restore(track, 150, fixture.Path("Replaced/ExpertsCT/0_150-20200101-101500.rkg"));
+
+        Assert.False(result.Success);
+        Assert.Equal(new TimeSpan(0, 0, 0, 30, 1), fixture.Importer.CurrentTime(track, 150));
+    }
+
+    [Fact]
     public void RestorePrevious_WithNothingReplacedBefore_SaysSoAndChangesNothing()
     {
         var fixture = new Fixture();
