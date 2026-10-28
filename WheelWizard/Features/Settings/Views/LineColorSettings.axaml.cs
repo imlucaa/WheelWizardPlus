@@ -223,10 +223,16 @@ public partial class LineColorSettings : UserControl
             progress.Close();
         }
 
-        var saved = result.IsSuccess ? await _line.SetWitAsync(result.Value) : null;
-        if (result.IsFailure || saved!.IsFailure)
+        var problem = result.IsFailure ? result.Error.Message : null;
+        if (problem is null)
         {
-            ViewUtils.ShowSnackbar(result.IsFailure ? result.Error.Message : saved!.Error.Message, ViewUtils.SnackbarType.Warning);
+            var saved = await _line.SetWitAsync(result.Value);
+            problem = saved.IsFailure ? saved.Error.Message : null;
+        }
+
+        if (problem is not null)
+        {
+            ViewUtils.ShowSnackbar(problem, ViewUtils.SnackbarType.Warning);
             return false;
         }
 

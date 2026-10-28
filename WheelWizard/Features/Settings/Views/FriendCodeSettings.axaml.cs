@@ -334,10 +334,10 @@ public partial class FriendCodeSettings : UserControl
     }
 
     // A license without a name (the game calls it "no name") goes by its friend code instead.
-    private static bool HasName(LicenseIdentity license) => license.Name != "no name" && license.Name.Any(IsVisible);
+    private static bool HasName(LicenseIdentity license) => license.Name != "no name" && license.Name.Any(IsVisibleGlyph);
 
     // Mii names can be made of blank-looking characters (format characters and the Hangul fillers and the Wii's blank character).
-    private static bool IsVisible(char c) =>
+    private static bool IsVisibleGlyph(char c) =>
         !char.IsControl(c)
         && !char.IsWhiteSpace(c)
         && c is not ('\u3164' or '\u115F' or '\u1160' or '\uFFA0' or '\uF060')

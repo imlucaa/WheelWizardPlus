@@ -461,10 +461,11 @@ public class SharedControlTests
             Dispatcher.UIThread.RunJobs();
             window.UpdateLayout();
             var popup = dropdown.GetVisualDescendants().OfType<Avalonia.Controls.Primitives.Popup>().Single();
-            var search = popup.Child!.GetVisualDescendants().OfType<InputField>().Single();
-            var empty = popup.Child!.GetVisualDescendants().OfType<TextBlock>().Single(x => x.Name == "PART_Empty");
-            var width = popup.Child.Bounds.Width;
-            var height = popup.Child.Bounds.Height;
+            var content = popup.Child!;
+            var search = content.GetVisualDescendants().OfType<InputField>().Single();
+            var empty = content.GetVisualDescendants().OfType<TextBlock>().Single(x => x.Name == "PART_Empty");
+            var width = content.Bounds.Width;
+            var height = content.Bounds.Height;
             Assert.True(width > dropdown.Bounds.Width);
             Dispatcher.UIThread.RunJobs();
             Assert.True(search.IsFocused);
