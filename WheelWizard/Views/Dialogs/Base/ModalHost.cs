@@ -51,7 +51,7 @@ public sealed class ModalHost : Grid
             Margin = new Thickness(24),
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
-            Background = _owner.FindResource("BackgroundColor") as IBrush,
+            Background = OpaqueBackground(),
             BorderThickness = new Thickness(0),
             CornerRadius = new CornerRadius(8),
             ClipToBounds = true,
@@ -89,6 +89,15 @@ public sealed class ModalHost : Grid
             DispatcherPriority.Loaded
         );
     }
+
+    // The theme's panel opacity makes the background colour see-through; a modal sits over the page and must stay readable.
+    private IBrush? OpaqueBackground() =>
+        _owner.FindResource("BackgroundColor") switch
+        {
+            SolidColorBrush { Color: var color } => new SolidColorBrush(Color.FromRgb(color.R, color.G, color.B)),
+            IBrush brush => brush,
+            _ => null,
+        };
 
     private TimeSpan GetAnimationDuration() =>
         _owner.FindResource(WindowAppearance.ControlAnimationDurationResourceKey) is TimeSpan duration
