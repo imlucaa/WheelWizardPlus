@@ -8,6 +8,7 @@ version sequence.
 
 ### Changed
 
+- Pop-ups (messages, questions, progress, text input, friend and player profiles, option lists) now open inside the app window instead of as separate windows. Esc or a click outside closes the ones that can be dismissed.
 - Settings: tabs hidden from the sidebar are listed at the end of the settings tabs, not under a separate heading.
 - Themes: an option to show or hide the outline around your profile in the sidebar (it shows on any picture and at any panel opacity, and has an opacity slider); the Install Beta button on the Testing Mode page uses the theme colour.
 - Testing Mode page follows the theme colours.

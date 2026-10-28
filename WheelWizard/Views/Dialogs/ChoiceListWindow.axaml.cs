@@ -30,6 +30,7 @@ public partial class ChoiceListWindow : PopupContent
         : base(true, false, true, title)
     {
         InitializeComponent();
+        IsDismissible = true;
         HeadingText.Text = heading;
         DescriptionText.Text = description;
 

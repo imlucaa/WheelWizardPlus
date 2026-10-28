@@ -26,6 +26,8 @@ public class BindingWarningTests
             .Returns(new TaskCompletionSource<OperationResult<RwfcPlayerVrHistoryResponse>>().Task);
         using var model = new VrHistoryViewModel(caller);
         using var warnings = new BindingWarningSink();
+        var owner = new ModalOwnerWindow();
+        owner.Show();
         var content = new PlayerProfileWindow(new VrHistoryGraph(model), caller, "1234-5678-9012");
         try
         {
@@ -35,6 +37,7 @@ public class BindingWarningTests
         finally
         {
             content.Close();
+            owner.Close();
         }
 
         Assert.True(warnings.Broken.Count == 0, string.Join("\n", warnings.Broken));

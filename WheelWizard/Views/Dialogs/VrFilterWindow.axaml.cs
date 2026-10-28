@@ -26,6 +26,7 @@ public partial class VrFilterWindow : PopupContent
         : base(true, false, true, "Filter rooms")
     {
         InitializeComponent();
+        IsDismissible = true;
         foreach (var (label, presetMin, presetMax) in Presets)
         {
             var chip = new Avalonia.Controls.Button { Content = label, Tag = new VrRange(presetMin, presetMax) };

@@ -28,6 +28,7 @@ public partial class DiscordPreviewWindow : PopupContent
         _presence = presence;
         _settings = settings;
         InitializeComponent();
+        IsDismissible = true;
         DetailsText.Text = live ? "Racing in a WiFi VS (VR: 12000 BR: 9500)" : "Retro Rewind";
         StateText.Text = live ? "Mushroom Gorge" : settings.Get<string>(settings.DISCORD_STATE);
         StateText.IsVisible = !string.IsNullOrEmpty(StateText.Text);

@@ -22,6 +22,7 @@ public partial class FriendCodeHistoryWindow : PopupContent
         : base(true, false, true, "Friend code history")
     {
         InitializeComponent();
+        IsDismissible = true;
         var labelColor = Application.Current!.FindResource("FormFieldLabelColor") is Color color ? color : Colors.White;
 
         // One section per license slot, all four, each with its own changes newest first.

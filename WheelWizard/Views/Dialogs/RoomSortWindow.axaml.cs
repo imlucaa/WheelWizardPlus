@@ -12,6 +12,7 @@ public partial class RoomSortWindow : PopupContent
         : base(true, false, true, "Sort rooms")
     {
         InitializeComponent();
+        IsDismissible = true;
         AddChips(OrderChips, current, (0, "Default"), (1, "Lowest VR first"), (2, "Highest VR first"));
         AddChips(SingleChips, current, (3, "Lowest only"), (4, "Highest only"));
     }

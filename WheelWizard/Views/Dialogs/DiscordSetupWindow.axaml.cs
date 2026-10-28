@@ -24,6 +24,7 @@ public partial class DiscordSetupWindow : PopupContent
         _settings = settings;
         _presence = presence;
         InitializeComponent();
+        IsDismissible = true;
         _steps = [Step1, Step2, Step3, Step4, Step5];
 
         AppIdBox.Text = settings.Get<string>(settings.DISCORD_APP_ID);
