@@ -5,6 +5,7 @@ using WheelWizard.AutoUpdating;
 using WheelWizard.Branding;
 using WheelWizard.CustomCharacters;
 using WheelWizard.CustomDistributions;
+using WheelWizard.DiscImages;
 using WheelWizard.DolphinInstaller;
 using WheelWizard.Features.Archives;
 using WheelWizard.Features.Backups;
@@ -47,6 +48,7 @@ public static class SetupExtensions
         services.AddGitHub();
         services.AddRrRooms();
         services.AddRrLounge();
+        services.AddDiscImages();
         services.AddWhWzData();
         services.AddWiiManagement();
         services.AddGameBanana();

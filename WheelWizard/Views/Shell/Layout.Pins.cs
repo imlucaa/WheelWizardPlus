@@ -35,6 +35,7 @@ public partial class Layout
         new("DiscordSettings", typeof(DiscordSettings), () => "Discord RPC", "DiscordIcon"),
         new("OverlaySettings", typeof(OverlaySettings), () => "VR overlay", "Play"),
         new("FriendCodeSettings", typeof(FriendCodeSettings), () => "Friend codes", "UserCouple"),
+        new("LineColorSettings", typeof(LineColorSettings), () => "Line colour", "ThemePalette"),
         new("BackupSettings", typeof(BackupSettings), () => t("category.backup"), "FileExport"),
     ];
 

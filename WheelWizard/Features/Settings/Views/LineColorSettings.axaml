@@ -1,0 +1,44 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:components="clr-namespace:WheelWizard.Views.Components"
+             mc:Ignorable="d" d:DesignWidth="444" d:DesignHeight="716"
+             x:Class="WheelWizard.Settings.Views.LineColorSettings">
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="0,15,0,0" Spacing="14" MaxWidth="440">
+            <StackPanel Spacing="3">
+                <components:FormFieldLabel Text="Line colour" />
+                <TextBlock Classes="TinyText" TextWrapping="Wrap"
+                           Text="The line under your name online." />
+            </StackPanel>
+
+            <StackPanel Spacing="4">
+                <Border Classes="SettingsBlockStyle SettingsRowStyle SettingsRowTop">
+                    <Grid ColumnDefinitions="*,Auto" MinHeight="56" ColumnSpacing="16">
+                        <components:FormFieldLabel Text="Disc" VerticalAlignment="Center" />
+                        <components:ActionButton Grid.Column="1" Tone="Secondary" Size="Compact" Text="Pick"
+                                                 VerticalAlignment="Center" Click="LineColour_OnClick" />
+                    </Grid>
+                </Border>
+                <Border Classes="SettingsBlockStyle SettingsRowStyle SettingsRowBottom">
+                    <Grid ColumnDefinitions="*,Auto" MinHeight="56" ColumnSpacing="16">
+                        <StackPanel Spacing="3" VerticalAlignment="Center">
+                            <components:FormFieldLabel Text="Wiimm's ISO Tool" />
+                            <TextBlock x:Name="ToolText" Classes="TinyText" TextTrimming="CharacterEllipsis" Text="" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                            <components:ActionButton x:Name="DownloadToolButton" Tone="Secondary" Size="Compact" Text="Download"
+                                                     ToolTip.Tip="Download Wiimm's ISO Tool for Wheel Wizard+ to use"
+                                                     Click="DownloadTool_OnClick" />
+                            <components:ActionButton x:Name="ToolButton" Tone="Secondary" Size="Compact" Text="Set"
+                                                     ToolTip.Tip="Pick a wit you already have"
+                                                     Click="Tool_OnClick" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </StackPanel>
+            <Border Classes="SettingsBottomSpacer" />
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

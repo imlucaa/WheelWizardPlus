@@ -212,7 +212,7 @@ fi:
       Liittyäksesi tiettyyn huoneeseen, se tulee tehdä joko kaverin kautta tai toivoa että pääset siihen liittymällä verkkopeliin.
     friends_page_disclaimer: "Kavereiden lisääminen täytyy tehdä pelin sisällä."
     region_user_selection: "Näyttää vain alueet, joilla itse olet pelannut"
-    primary_profile: "Pääprofiilia käytetään viitteenä Wheel Wizardissa"
+    primary_profile: "Pääprofiilia käytetään viitteenä Wheel Wizard+issa"
   empty_content:
     no_profiles: "Sinun on pelattava peliä vähintään kerran nähdäksesi profiilisi listalla"
     no_friends_title: "Ei kavereita vielä."
@@ -255,8 +255,8 @@ fi:
     installing_mods_count: "Asennetaan %{amount} modia"
     processing_xof_y: "Käsitellään %{processed}/%{total} tiedostoa..."
     update_rr: "Päivitetään Retro Rewindia"
-    latest_wh_wz_github: "Hankitaan uusinta Wheel Wizard -versiota GitHubista"
-    update_wh_wz: "Päivitetään Wheel Wizardia"
+    latest_wh_wz_github: "Hankitaan uusinta Wheel Wizard+ -versiota GitHubista"
+    update_wh_wz: "Päivitetään Wheel Wizard+ia"
     installing_rr: "Asennetaan Retro Rewindia"
     installing_rr_first_time: "Asennetaan Retro Rewindia ensimmäistä kertaa"
     installing_dolphin: "Asennetaan Dolphin-emulaattoria"
@@ -312,9 +312,9 @@ fi:
       title: "Haluatko ottaa uuden skaalan käyttöön?"
       extra: "Muutos perutaan %{remainingTime} kuluttua, ellet aio pitää muutosta."
     move_data:
-      title: "Siirretäänkö Wheel Wizardin tiedot?"
+      title: "Siirretäänkö Wheel Wizard+in tiedot?"
       extra: |-
-        Wheel Wizardin tiedostot siirretään sijaintiin:
+        Wheel Wizard+in tiedostot siirretään sijaintiin:
         %{path}
         Tässä saattaa mennä hetki riippuen tietojen määrästä.
     dolphin_found:
@@ -334,8 +334,8 @@ fi:
         Jos et tiedä, mitä kaikki tarkoittaa, paina vain 'Kyllä'.
         Dolphin-emulaattori löytyi. Haluatko käyttää sitä?
     new_version_wh_wz:
-      title: "Wheel Wizard -päivitys saatavilla"
-      extra: "Wheel Wizardin versio %{latestVersion} on saatavilla (nykyinen versio: %{currentVersion}). Haluatko päivittää heti?"
+      title: "Wheel Wizard+ -päivitys saatavilla"
+      extra: "Wheel Wizard+in versio %{latestVersion} on saatavilla (nykyinen versio: %{currentVersion}). Haluatko päivittää heti?"
     update_admin:
       title: "Päivitä järjestelmänvalvojana"
       extra: "Joskus päivitys vaatii järjestelmänvalvojan oikeuet. Haluatko aktivoida ne tätä päivitystä varten?"
@@ -392,7 +392,7 @@ fi:
     dolphin_version_unverified:
       title: "Dolphin-emulaattorin versiota ei voitu vahvistaa"
       extra: |-
-        Wheel Wizard ei voinut lukea määrittämääsi Dolphin-emulaattorin versiota, joten se ei voi tietää, onko siinä tietoturvakorjauksia.
+        Wheel Wizard+ ei voinut lukea määrittämääsi Dolphin-emulaattorin versiota, joten se ei voi tietää, onko siinä tietoturvakorjauksia.
 
         Tarkista, että käytät %{minimumVersion}-versiota tai uudempaa. Vanhemmissa versioissa on tunnettu tietoturvaongelma, jossa haitalliset pelitiedostot, modit tai huijaavat verkkopelaajat voivat tartuttaa tietokoneesi haittaohjelmilla.
     dolphin_tool_selected:
@@ -404,12 +404,12 @@ fi:
     unable_update_wh_wz:
       extra:
         reason_network: |-
-          Ei voitu tarkistaa, onko Wheel Wizard ajan tasalla.
+          Ei voitu tarkistaa, onko Wheel Wizard+ ajan tasalla.
           Syynä saattaa olla verkkoyhteysongelmat.
         reason_location: |-
-          Wheel Wizardia ei voi päivittää. Varmista, että sovellus sijaitsee kansiossa, johon voi kirjoittaa tietoja.
+          Wheel Wizard+ia ei voi päivittää. Varmista, että sovellus sijaitsee kansiossa, johon voi kirjoittaa tietoja.
           Nykyistä kansiota ei löytynyt.
-      title: "Wheel Wizardia ei voi päivittää."
+      title: "Wheel Wizard+ia ei voi päivittää."
     no_connect_server:
       extra: "Yhdistäminen palvelimelle epäonnistui. Yritä myöhemmin uudelleen."
       title: "Yhdistäminen palvelimelle epäonnistui."
@@ -477,7 +477,7 @@ fi:
     data_folder_moved:
       title: "Tietokansio päivitetty"
       extra: |-
-        Wheel Wizardin tiedot sijaitsevat nyt kohteessa:
+        Wheel Wizard+in tiedot sijaitsevat nyt kohteessa:
         %{path}
     rr_up_to_date:
       title: "Retro Rewind on ajan tasalla."
@@ -514,7 +514,7 @@ fi:
     mii_failure_create: "Miin '%{error}' luominen epäonnistui"
     mii_failure_duplicate: "Miin '%{error}' kopioiminen epäonnistui"
   helper_note:
-    name_must_between: "Nimien täytyy olla 3–10 merkkiä pitkä."
+    name_must_between: "Nimien täytyy olla 1–10 merkkiä pitkä."
     creator_name_less11: "Tekijän nimen täytyy olla alle 11 merkkiä pitkä."
     creator_name_less10: "Tekijän nimen täytyy olla alle 10 merkkiä pitkä."
   file_picker:
@@ -527,7 +527,7 @@ fi:
     brsar_external_count: "%{amount} BRSAR-tiedostomerkintää ovat ulkoisia viittauksia, eikä niitä voida viedä."
     brsar_file_id_external: "BRSAR-tiedostotunnus %{fileId} on ulkoinen tiedostoviittaus, eikä sitä voida viedä."
   option:
-    wh_wz_language: "Wheel Wizardin kieli"
+    wh_wz_language: "Wheel Wizard+in kieli"
     force_disable_wiimote: "Pakota Wiimote pois käytöstä"
     launch_with_dolphin: "Käynnistä peli Dolphin-ikkunassa"
     launch_rr_on_startup: "Käynnistä Retro Rewind heti"
@@ -541,7 +541,7 @@ fi:
     renderer: "Renderöijä"
     window_scale: "Ikkunan koko"
     open_config: "Avaa asetuskansio"
-    wheel_wizard_data_folder: "Wheel Wizardinin tietokansio"
+    wheel_wizard_data_folder: "Wheel Wizard+inin tietokansio"
     retro_rewind_folder: "Retro Rewind -kansio"
     reset_data_folder: "Käytä oletussijaintia"
     dolphin_user_path: "Dolphin-käyttäjäkansio"
@@ -569,7 +569,7 @@ fi:
     performance: "Suorituskyvyn asetukset"
     renderer: "Renderöintiasetukset"
     location_paths: "Sijaintiasetukset"
-    wh_wz_appearance: "Wheel Wizardin ulkoasu"
+    wh_wz_appearance: "Wheel Wizard+in ulkoasu"
     installation: "Asennus"
     setup: "Kokoonpano"
     recomp: "WiiCompiled (beta)"
@@ -587,7 +587,7 @@ fi:
     recomp_dolphin_data_not_found: "Määritä ensin olemassa oleva Dolphin-käyttäjäkansio sijaintiasetuksissa. Sen on sisällettävä Wii-kansio."
     recomp_prevent_stutters: "Varjostinta käännettäessä sitä tarvitsevat objektit ohitetaan muutaman kuvan ajan sen sijaan, että koko peli jumiutuisi, kunnes se on valmis. Vähentää pätkimistä grafiikan äkillisen ilmestymisen kustannuksella."
     launch_with_dolphin: "Käynnistää Dolphinin pääikkunan pelin mukana"
-    launch_rr_on_startup: "Retro Rewind käynnistetään heti kun Wheel Wizard käynnistyy"
+    launch_rr_on_startup: "Retro Rewind käynnistetään heti kun Wheel Wizard+ käynnistyy"
     retro_rewind_version: "Asennettu versio: %{version}"
     installed_version: "Asennettu versio: %{version}"
     force_disable_wiimote: "Poistaa Wiimoten käytöstä pelissä, mutta ottaa sen käyttöön Wii-valikossa"
@@ -596,14 +596,14 @@ fi:
     v_sync: "Synkronoi pelin kuvataajuuden näyttösi kanssa estääkseen kuvan pilkottumista."
     recommended: "Muuttaa joitakin Dolphinin asetuksia pätkimisen ja lagipiikkien vähentämiseksi"
     30_fps: "Pakottaa pelin toimimaan 30 FPS -tilassa (oletus on 60)"
-    wheel_wizard_data_folder: "Valitse Wheel Wizardin tiedostosijainti. Siirtäminen voi kestää hetken."
+    wheel_wizard_data_folder: "Valitse Wheel Wizard+in tiedostosijainti. Siirtäminen voi kestää hetken."
     retro_rewind_folder: "Avaa kansion, joka sisältää asennetut Retro Rewind -tiedostot."
     end_with_exe: "Polun täytyy loppua päätteeseen .exe"
     select_dolphin_linux: "Valitse Dolphin-ohjelmatiedosto tai anna käynnistyskomento"
     select_dolphin_macos: "Valitse Dolphin.app"
-    enable_animations: "Ottaa käyttöön animaatiot Wheel Wizard -sovelluksessa"
+    enable_animations: "Ottaa käyttöön animaatiot Wheel Wizard+ -sovelluksessa"
     end_with_x: "Polku voi loppua:"
-    wh_wz_language: "Muuttaa Wheel Wizardin käyttämää kieltä, mutta ei pelin sisäistä kieltä."
+    wh_wz_language: "Muuttaa Wheel Wizard+in käyttämää kieltä, mutta ei pelin sisäistä kieltä."
     optional: "Valinnainen"
     must_set_paths: "Nämä 3 polkua on määritettävä ennen kuin voit pelata Retro Rewindia"
     must_set_game_path: "Sinun on valittava Mario Kart Wii -pelitiedostosi ennen kuin voit pelata WiiCompiledia"

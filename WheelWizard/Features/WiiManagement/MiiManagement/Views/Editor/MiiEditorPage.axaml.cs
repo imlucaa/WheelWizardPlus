@@ -898,7 +898,7 @@ public partial class MiiEditorPage : UserControl, INavigationGuard, ILockedSideb
     }
 
     private static OperationResult ValidateName(string name) =>
-        name.Length is > 10 or < 3 ? Fail(t("helper_note.name_must_between")) : Ok();
+        name.Length is > 10 or < 1 ? Fail(t("helper_note.name_must_between")) : Ok();
 
     private void FavoriteButton_OnClick(object? sender, RoutedEventArgs e)
     {

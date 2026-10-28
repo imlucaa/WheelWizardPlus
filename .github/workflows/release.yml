@@ -1,4 +1,4 @@
-name: Release BetterWheelWizard
+name: Release Wheel Wizard+
 
 on:
   push:
@@ -83,5 +83,5 @@ jobs:
           artifacts/BetterWheelWizard_Linux
           artifacts/BetterWheelWizard_ARM64_Linux
           --repo "${{ github.repository }}"
-          --title "BetterWheelWizard ${{ github.ref_name }}"
+          --title "Wheel Wizard+ ${{ github.ref_name }}"
           --generate-notes

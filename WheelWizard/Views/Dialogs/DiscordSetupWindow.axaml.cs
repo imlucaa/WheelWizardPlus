@@ -11,7 +11,7 @@ namespace WheelWizard.Views.Dialogs;
 public partial class DiscordSetupWindow : PopupContent
 {
     private const string Portal = "https://discord.com/developers/applications";
-    private const int LastStep = 4;
+    private const int LastStep = 5;
     private readonly ISettingsManager _settings;
     private readonly DiscordPresenceService _presence;
     private readonly Control[] _steps;
@@ -24,7 +24,7 @@ public partial class DiscordSetupWindow : PopupContent
         _settings = settings;
         _presence = presence;
         InitializeComponent();
-        _steps = [Step1, Step2, Step3, Step4];
+        _steps = [Step1, Step2, Step3, Step4, Step5];
 
         AppIdBox.Text = settings.Get<string>(settings.DISCORD_APP_ID);
         ImageKeyBox.Text = settings.Get<string>(settings.DISCORD_LARGE_IMAGE);
@@ -55,6 +55,20 @@ public partial class DiscordSetupWindow : PopupContent
 
     private void Cancel_OnClick(object? sender, RoutedEventArgs e) => Close();
 
+    private async void CheckIcon_OnClick(object? sender, RoutedEventArgs e) => await CheckIconAsync();
+
+    /// <summary>Says whether the app has an App Icon yet; it can still be skipped, but Discord then shows a ?.</summary>
+    private async Task CheckIconAsync()
+    {
+        IconCheckText.Text = "Checking…";
+        IconCheckText.Text = await DiscordPresenceService.HasApplicationIconAsync(AppId) switch
+        {
+            true => "App icon found.",
+            false => "No App icon yet. Add one and press Check again, or press Next to skip it.",
+            null => "Could not check. Press Next to go on.",
+        };
+    }
+
     private async void RefreshImages_OnClick(object? sender, RoutedEventArgs e) => await LoadImagesAsync();
 
     private void ImagePicker_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
@@ -71,9 +85,14 @@ public partial class DiscordSetupWindow : PopupContent
 
         ImageListText.Text = "Looking for your images…";
         var names = await DiscordPresenceService.GetImageNamesAsync(AppId);
-        ImagePicker.SelectedItem = null;
         ImagePicker.ItemsSource = names;
         ImagePicker.IsVisible = names.Count > 0;
+        // The image already chosen stays selected; with none chosen yet the app's own first upload is suggested.
+        var suggested =
+            names.Contains(ImageKey) ? ImageKey
+            : ImageKey.Length == 0 ? names.FirstOrDefault()
+            : null;
+        ImagePicker.SelectedItem = suggested;
         ImageListText.Text =
             names.Count > 0 ? "Pick one, or type another name below." : "No images found yet. Upload one, then press Refresh list.";
     }
@@ -141,7 +160,7 @@ public partial class DiscordSetupWindow : PopupContent
             return false;
         }
 
-        if (_step == 3 && !ImageKey.All(c => char.IsAsciiLetterLower(c) || char.IsAsciiDigit(c) || c is '_' or '-'))
+        if (_step == 4 && !ImageKey.All(c => char.IsAsciiLetterLower(c) || char.IsAsciiDigit(c) || c is '_' or '-'))
         {
             ImageKeyBox.ErrorText = "Use only lowercase letters, numbers, _ and -.";
             return false;
@@ -157,6 +176,8 @@ public partial class DiscordSetupWindow : PopupContent
 
         StepCounter.Text = $"Step {_step} of {LastStep}";
         if (_step == 3)
+            _ = CheckIconAsync();
+        if (_step == 4)
             _ = LoadImagesAsync();
         BackButton.IsVisible = _step > 1;
         NextButton.Text = _step == LastStep ? "Finish" : "Next";

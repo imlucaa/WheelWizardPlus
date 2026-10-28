@@ -143,8 +143,10 @@ public sealed class MiiRenderingResourceInstaller(
             }
         }
 
-        // #todo: (#482) include the archive url in download errors so blocked hosts are easier to spot.
-        return Fail("Failed to download a valid Mii rendering archive after multiple attempts.");
+        // Name the host: a firewall or network filter blocking it is the usual reason this keeps failing.
+        return Fail(
+            $"Failed to download a valid Mii rendering archive after multiple attempts. It comes from {MiiRenderingEndpoints.ArchiveBaseUrl}; if your network or firewall blocks that site, allow it and try again."
+        );
     }
 
     private async Task ExtractResourceAsync(byte[] archiveBytes, string extractedPath, CancellationToken cancellationToken)

@@ -138,7 +138,6 @@ public partial class Layout : BaseWindow, IPollingListener
         GameLicenseService.Subscribe(this);
         ModManagerService.PropertyChanged += ModManager_PropertyChanged;
         _modsLoaded = ReloadModsAndShowErrorsAsync();
-        UpdateOtherSectionVisibility();
         if (SettingsService.SIDEBAR_COLLAPSED.Get())
             _ = SetSidebarCollapsedAsync(true, animate: false);
     }
@@ -266,6 +265,8 @@ public partial class Layout : BaseWindow, IPollingListener
         if (
             setting == SettingsService.LAUNCHER_SURFACE_OPACITY
             || setting == SettingsService.LAUNCHER_CLEAN_SIDEBAR
+            || setting == SettingsService.LAUNCHER_PROFILE_OUTLINE
+            || setting == SettingsService.LAUNCHER_PROFILE_OUTLINE_OPACITY
             || setting == SettingsService.LAUNCHER_BACKGROUND_FILE
         )
             ApplyLauncherAppearance();
@@ -308,8 +309,8 @@ public partial class Layout : BaseWindow, IPollingListener
         UpdateSeamlessSurface();
         var cleanSidebar = SettingsService.LAUNCHER_CLEAN_SIDEBAR.Get();
         CompleteGrid.Classes.Set("CleanSidebar", cleanSidebar);
-        SidebarProfileBlock.Background = cleanSidebar ? Brushes.Transparent : (IBrush)Application.Current!.FindResource("SidebarBoxBrush")!;
-        SidebarProfileBlock.BorderBrush = cleanSidebar ? Brushes.Transparent : GetResourceBrush("Neutral600");
+        SidebarProfileBlock.Background = ProfileBackground("SidebarBoxBrush");
+        SidebarProfileBlock.BorderBrush = ProfileOutlineBrush();
         // Footer utility glyphs remain unboxed in both sidebar modes. Their own
         // foreground colors provide contrast without theme-colored circles.
         LiveStatusBorder.Background = Brushes.Transparent;
@@ -522,7 +523,7 @@ public partial class Layout : BaseWindow, IPollingListener
             if (LiveStatusBorder.Child is PathIcon pathIcon)
             {
                 // Parse the SVG path data
-                var geometry = Geometry.Parse(sender.Status.Icon!);
+                var geometry = Geometry.Parse(sender.Status!.Icon!);
                 pathIcon.Data = geometry;
 
                 // Apply custom color if provided, otherwise use a default
@@ -539,7 +540,7 @@ public partial class Layout : BaseWindow, IPollingListener
         else
         {
             // Use variant-based styling
-            LiveStatusBorder.Classes.Add(sender.Status.Variant.ToString()!);
+            LiveStatusBorder.Classes.Add(sender.Status!.Variant.ToString()!);
         }
     }
 
@@ -549,7 +550,8 @@ public partial class Layout : BaseWindow, IPollingListener
             BeginMoveDrag(e);
     }
 
-    private async void TitleLabel_OnPointerPressed(object? sender, PointerPressedEventArgs e)
+    /// <summary>Ten presses on the version text in Settings ask for the tester phrase.</summary>
+    public async void TesterUnlockClick(PointerPressedEventArgs e)
     {
         if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
             return;
@@ -596,20 +598,11 @@ public partial class Layout : BaseWindow, IPollingListener
         }
     }
 
-    private void UpdateTestingButtonVisibility()
-    {
-        TestingButton.IsVisible = SettingsService.Get<bool>(SettingsService.TESTING_MODE_ENABLED);
-        UpdateOtherSectionVisibility();
-    }
-
-    private void UpdateOtherSectionVisibility()
-    {
-        OtherSectionText.IsVisible = TestingButton.IsVisible;
-    }
+    // Testing Mode sits in the sidebar like any other item, so turning it on or off rearranges the sidebar.
+    private void UpdateTestingButtonVisibility() => ArrangeSidebar();
 
     public void HideDevelopmentFeatures()
     {
-        UpdateOtherSectionVisibility();
         if (ContentArea.Content is SettingsPage settingsPage)
             settingsPage.HideDevelopmentFeatures();
     }
@@ -628,19 +621,15 @@ public partial class Layout : BaseWindow, IPollingListener
 
     private void SidebarProfileBlock_OnPointerEntered(object? sender, PointerEventArgs e)
     {
-        var cleanSidebar = SettingsService.LAUNCHER_CLEAN_SIDEBAR.Get();
-        SidebarProfileBlock.Background = cleanSidebar
-            ? Brushes.Transparent
-            : (IBrush)Application.Current!.FindResource("SidebarBoxHoverBrush")!;
-        SidebarProfileBlock.BorderBrush = cleanSidebar ? Brushes.Transparent : GetResourceBrush("Neutral600");
+        SidebarProfileBlock.Background = ProfileBackground("SidebarBoxHoverBrush");
+        SidebarProfileBlock.BorderBrush = ProfileOutlineBrush();
         SidebarProfileHoverEffect.IsVisible = false;
     }
 
     private void SidebarProfileBlock_OnPointerExited(object? sender, PointerEventArgs e)
     {
-        var cleanSidebar = SettingsService.LAUNCHER_CLEAN_SIDEBAR.Get();
-        SidebarProfileBlock.Background = cleanSidebar ? Brushes.Transparent : (IBrush)Application.Current!.FindResource("SidebarBoxBrush")!;
-        SidebarProfileBlock.BorderBrush = cleanSidebar ? Brushes.Transparent : GetResourceBrush("Neutral600");
+        SidebarProfileBlock.Background = ProfileBackground("SidebarBoxBrush");
+        SidebarProfileBlock.BorderBrush = ProfileOutlineBrush();
         SidebarProfileHoverEffect.IsVisible = false;
     }
 
@@ -654,6 +643,24 @@ public partial class Layout : BaseWindow, IPollingListener
             0
         );
     }
+
+    // The outline is its own choice, so a clean sidebar can keep one around the profile.
+    // It is drawn in the text colour with some see-through, so it shows on a dark or a light picture and at any panel
+    // opacity (a surface-coloured line vanished against the picture when the panels were see-through).
+    private IBrush ProfileOutlineBrush() =>
+        SettingsService.LAUNCHER_PROFILE_OUTLINE.Get()
+            ? new SolidColorBrush(
+                (Color)Application.Current!.FindResource("Neutral300")!,
+                SettingsService.LAUNCHER_PROFILE_OUTLINE_OPACITY.Get()
+            )
+            : Brushes.Transparent;
+
+    // The box behind the profile: the sidebar's own box, or with a clean sidebar nothing, except a faint shade when
+    // the outline is on so the outlined card reads against any picture.
+    private IBrush ProfileBackground(string boxResource) =>
+        !SettingsService.LAUNCHER_CLEAN_SIDEBAR.Get() ? (IBrush)Application.Current!.FindResource(boxResource)!
+        : SettingsService.LAUNCHER_PROFILE_OUTLINE.Get() ? new SolidColorBrush(Color.FromArgb(0x40, 0, 0, 0))
+        : Brushes.Transparent;
 
     private static IBrush GetResourceBrush(string resourceName) =>
         new SolidColorBrush((Color)Application.Current!.FindResource(resourceName)!);

@@ -40,15 +40,15 @@
                                                  ImageVariant="{x:Static miiVars:MiiImageVariants.OnlinePlayerSmall}" />
                     </Border>
                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
-                        <TextBlock Text="{Binding Profile.Name}" FontSize="26" FontWeight="Bold"
+                        <TextBlock Text="{Binding ProfileName}" FontSize="26" FontWeight="Bold"
                                    TextTrimming="CharacterEllipsis" />
-                        <TextBlock Text="{Binding Profile.FriendCode}" Classes="BodyText" FontSize="13"
+                        <TextBlock Text="{Binding ProfileFriendCode}" Classes="BodyText" FontSize="13"
                                    Foreground="{DynamicResource Neutral400}" />
                         <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,2,0,0">
                             <TextBlock Text="{Binding LastSeenText, StringFormat='Last seen {0}'}" Classes="TinyText"
                                        VerticalAlignment="Center" />
                             <components:StatusBadge Text="Suspicious" Variant="Error" HorizontalAlignment="Left"
-                                                    IsVisible="{Binding Profile.IsSuspicious}" />
+                                                    IsVisible="{Binding IsSuspicious}" />
                         </StackPanel>
                     </StackPanel>
                 </Grid>

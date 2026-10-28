@@ -17,7 +17,7 @@ public partial class MiiRenderingSetupPopup : PopupContent
     private bool _skipRequested;
 
     public MiiRenderingSetupPopup(ILogger<MiiRenderingSetupPopup> logger, IMiiRenderingResourceInstaller resourceInstaller)
-        : base(true, false, true, "BetterWheelWizard")
+        : base(true, false, true, "Wheel Wizard+")
     {
         Logger = logger;
         ResourceInstaller = resourceInstaller;

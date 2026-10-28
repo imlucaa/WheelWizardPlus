@@ -386,11 +386,11 @@ ko:
     mii_failure_create: "Mii ‘%{error}’ 생성에 실패했습니다"
     mii_failure_duplicate: "Mii ‘%{error}’ 복제에 실패했습니다"
   helper_note:
-    name_must_between: "이름은 반드시 3~10자 내여야 합니다."
+    name_must_between: "이름은 반드시 1~10자 내여야 합니다."
     creator_name_less11: "작성자 이름은 반드시 10자 이내여야 합니다."
     creator_name_less10: "작성자 이름은 반드시 10자 이내여야 합니다."
   option:
-    wh_wz_language: "휠 위저드(Wheel Wizard) 언어"
+    wh_wz_language: "휠 위저드(Wheel Wizard+) 언어"
     force_disable_wiimote: "위모트 강제 비활성"
     launch_with_dolphin: "Dolphin 창에서 게임 실행"
     v_sync: "수직동기화(VSync)"
@@ -427,7 +427,7 @@ ko:
     recommended: "이 설정은 랙을 줄이기 위해 Dolphin의 일부 설정을 바꿉니다."
     30_fps: "이 설정은 게임을 강제로 30프레임으로 구동시킵니다.(기본: 60)"
     end_with_exe: "파일 경로는 \".exe\"로 끝나야 합니다."
-    enable_animations: "Wheel Wizard 앱의 애니메이션을 활성화 합니다."
+    enable_animations: "Wheel Wizard+ 앱의 애니메이션을 활성화 합니다."
     end_with_x: "파일 경로는 다음과 같이 끝날 수 있습니다:"
     optional: "옵션"
     must_set_paths: "Retro Rewind 실행 전 3개의 경로를 설정해야 합니다."

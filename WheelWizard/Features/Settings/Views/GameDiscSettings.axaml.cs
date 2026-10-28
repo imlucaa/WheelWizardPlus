@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
+using WheelWizard.DiscImages;
 using WheelWizard.GameDiscs;
 using WheelWizard.Models.Enums;
 using WheelWizard.Shared.Desktop.Storage;
@@ -25,17 +26,24 @@ public partial class GameDiscSettings : UserControl
     private readonly ISettingsManager _settings;
     private readonly IFilePickerService _filePicker;
     private readonly IGameLicenseSingletonService _licenses;
+    private readonly IDiscImageService _discs;
 
-    public GameDiscSettings(ISettingsManager settings, IFilePickerService filePicker, IGameLicenseSingletonService licenses)
+    public GameDiscSettings(
+        ISettingsManager settings,
+        IFilePickerService filePicker,
+        IGameLicenseSingletonService licenses,
+        IDiscImageService discs
+    )
     {
         _settings = settings;
         _filePicker = filePicker;
         _licenses = licenses;
+        _discs = discs;
         InitializeComponent();
         Rebuild();
     }
 
-    private static string Name(MarioKartWiiEnums.Regions region) =>
+    private static string DiscRegionName(MarioKartWiiEnums.Regions region) =>
         region switch
         {
             MarioKartWiiEnums.Regions.America => "America",
@@ -44,10 +52,10 @@ public partial class GameDiscSettings : UserControl
             _ => "South Korea",
         };
 
-    private static FilePickerFileType DiscFile =>
+    private FilePickerFileType DiscFile =>
         new("Mario Kart Wii disc")
         {
-            Patterns = ["*.iso", "*.wbfs", "*.rvz", "*.wia", "*.ciso", "*.gcz"],
+            Patterns = _discs.SupportedExtensions.Select(extension => "*" + extension).ToList(),
             MimeTypes = ["application/octet-stream"],
         };
 
@@ -61,7 +69,11 @@ public partial class GameDiscSettings : UserControl
             var path = RegionDiscs.PathFor(stored, region);
             var active = region == current;
 
-            var title = new TextBlock { Text = Name(region) + (active ? "   In use" : string.Empty), FontWeight = FontWeight.SemiBold };
+            var title = new TextBlock
+            {
+                Text = DiscRegionName(region) + (active ? "   In use" : string.Empty),
+                FontWeight = FontWeight.SemiBold,
+            };
             var file = new TextBlock
             {
                 Text = path is null ? "No disc added" : System.IO.Path.GetFileName(path),
@@ -127,12 +139,20 @@ public partial class GameDiscSettings : UserControl
 
     private async Task AddAsync(MarioKartWiiEnums.Regions region)
     {
-        var path = await _filePicker.OpenSingleFileAsync($"Pick the {Name(region)} disc", [DiscFile]);
+        var path = await _filePicker.OpenSingleFileAsync($"Pick the {DiscRegionName(region)} disc", [DiscFile]);
         if (path is null)
             return;
 
-        var detected = RegionDiscs.DetectRegionFromFile(path);
-        if (detected is null)
+        // The disc header says which game and region it is, whatever the file format (ISO, WBFS, CISO, GCZ, WIA, RVZ).
+        var info = _discs.ReadInfo(path);
+        if (info.IsFailure)
+        {
+            ViewUtils.ShowSnackbar(info.Error.Message, ViewUtils.SnackbarType.Warning);
+            return;
+        }
+
+        var detected = GameRegion.FromGameId(info.Value.GameId);
+        if (detected == MarioKartWiiEnums.Regions.None)
         {
             ViewUtils.ShowSnackbar("That does not look like a Mario Kart Wii disc.", ViewUtils.SnackbarType.Warning);
             return;
@@ -141,7 +161,7 @@ public partial class GameDiscSettings : UserControl
         if (detected != region)
         {
             ViewUtils.ShowSnackbar(
-                $"That is the {Name(detected.Value)} disc. Add it on the {Name(detected.Value)} row.",
+                $"That is the {DiscRegionName(detected)} disc. Add it on the {DiscRegionName(detected)} row.",
                 ViewUtils.SnackbarType.Warning
             );
             return;
@@ -153,6 +173,7 @@ public partial class GameDiscSettings : UserControl
         if (region == current || string.IsNullOrWhiteSpace(_settings.Get<string>(_settings.GAME_LOCATION)))
             _settings.Set(_settings.GAME_LOCATION, path);
         Rebuild();
+        ViewUtils.ShowSnackbar($"{DiscRegionName(region)} disc added ({info.Value.Format.ToString().ToUpperInvariant()}).");
     }
 
     private void Use(MarioKartWiiEnums.Regions region)

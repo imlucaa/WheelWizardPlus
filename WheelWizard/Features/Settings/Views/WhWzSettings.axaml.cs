@@ -95,6 +95,7 @@ public partial class WhWzSettings : UserControl
     private void ShowUpdateSource(IBrandingSingletonService branding)
     {
         VersionLabel.Text = $"{branding.Branding.DisplayName} v{branding.Branding.Version}";
+        VersionLabel.PointerPressed += (_, e) => ViewUtils.GetLayout().TesterUnlockClick(e);
         var repository = branding.Branding.RepositoryUrl;
         UpdateSourceText.Text = $"{repository.Host}{repository.AbsolutePath.TrimEnd('/')}";
         if (_updater.IsUpdateAvailable)

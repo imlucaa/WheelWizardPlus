@@ -52,6 +52,10 @@ public class MiiControlTests
         header.Text = "X";
         await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
         Assert.Equal("X", info.Text);
+        Assert.False(info.HasError);
+        header.Text = "ElevenChars!";
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+        Assert.Equal("ElevenChars!", info.Text);
         Assert.True(info.HasError);
         Assert.Equal(string.Empty, header.ErrorText);
         Assert.True(header.HasError);

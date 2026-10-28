@@ -154,6 +154,26 @@ public sealed class DiscordPresenceService(
     }
 
     /// <summary>
+    /// Whether a Discord application has an App Icon (null when it could not be looked up). Without one, Discord shows a
+    /// question mark next to the player's name in the member list.
+    /// </summary>
+    public static async Task<bool?> HasApplicationIconAsync(string applicationId)
+    {
+        try
+        {
+            var json = await Http.GetStringAsync(
+                $"https://discord.com/api/v9/oauth2/applications/{applicationId}/rpc?cb={DateTime.UtcNow.Ticks}"
+            );
+            using var document = System.Text.Json.JsonDocument.Parse(json);
+            return document.RootElement.TryGetProperty("icon", out var icon) && !string.IsNullOrEmpty(icon.GetString());
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
     /// Asks Discord whether the saved image key exists in the saved application, so a missing or unsaved upload
     /// is reported instead of showing a blank image on Discord.
     /// </summary>
@@ -173,11 +193,13 @@ public sealed class DiscordPresenceService(
             );
             using var document = System.Text.Json.JsonDocument.Parse(json);
             var names = document.RootElement.EnumerateArray().Select(asset => asset.GetProperty("name").GetString() ?? "").ToList();
-            if (names.Contains(key, StringComparer.Ordinal))
-                return $"Image '{key}' found.";
-            return names.Count == 0
-                ? $"Discord can't see '{key}' yet. If you just added it, wait up to 15 minutes."
+            var result =
+                names.Contains(key, StringComparer.Ordinal) ? $"Image '{key}' found."
+                : names.Count == 0 ? $"Discord can't see '{key}' yet. If you just added it, wait up to 15 minutes."
                 : $"'{key}' not found. Your app has: {string.Join(", ", names.Take(8))}.";
+            if (await HasApplicationIconAsync(clientId) == false)
+                result += "\nThe app has no App Icon, so Discord shows a ? next to your name. Add one under General Information.";
+            return result;
         }
         catch (Exception)
         {
@@ -406,7 +428,17 @@ public sealed class DiscordPresenceService(
             _startedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             // The pack posts its own status again whenever the screen changes, so it is cleared again each time.
             if (!liveDefault)
+            {
+                _lastDolphinClear = DateTime.UtcNow;
                 _ = ClearDolphinOwnStatusAsync();
+            }
+        }
+        // Dolphin can post its own status again while the game sits idle in a menu, which would replace this one, so it is
+        // cleared again now and then and not only when the screen changes.
+        else if (!liveDefault && DateTime.UtcNow - _lastDolphinClear > DolphinClearEvery)
+        {
+            _lastDolphinClear = DateTime.UtcNow;
+            _ = ClearDolphinOwnStatusAsync();
         }
         _lastSection = section;
 
@@ -500,6 +532,10 @@ public sealed class DiscordPresenceService(
     /// The screen comes from the game itself (same wording as the pack's presence); the online room list adds the
     /// track, player count and ratings. Without the game screen, the room list alone still shows an online room.
     /// </summary>
+    private int? _loggedMissingTrack;
+    private DateTime _lastDolphinClear = DateTime.MinValue;
+    private static readonly TimeSpan DolphinClearEvery = TimeSpan.FromSeconds(20);
+
     private LiveInfo? BuildLiveInfo(int? sectionId, int? licenseIndex, string? gameTrack = null)
     {
         // The license picked in the game, not the one selected in the launcher, is the one playing.
@@ -517,6 +553,15 @@ public sealed class DiscordPresenceService(
             // loaded in the game is used, the same one the pack's own status shows.
             if (raceTrack.Length == 0 && gameTrack is not null && RetroRewindSections.ShowsGameTrack(id))
                 raceTrack = gameTrack;
+            if (raceTrack.Length == 0 && gameTrack is null && RetroRewindSections.ShowsGameTrack(id) && _loggedMissingTrack != id)
+            {
+                // Once per screen, so a missing track name in Time Trials shows up in the log without filling it.
+                _loggedMissingTrack = id;
+                logger.LogInformation(
+                    "Discord status: screen {Section} should show a track, but no track name could be read from the game",
+                    id
+                );
+            }
             return new(details, raceTrack, room?.PlayerCount ?? 0, BuildPlayerUrl(profile?.FriendCode), room != null, room?.Id);
         }
 

@@ -25,12 +25,62 @@ public sealed record RegionLicense(MarioKartWiiEnums.Regions Region, int Slot, s
 
 /// <summary>The three ids that identify a license on the server. They must be unique per license.</summary>
 /// <summary>A copy of the save kept in the backup folder. Kind says why it was made: manual, change, undo, before-restore or before-import.</summary>
-public sealed record SaveBackup(string Name, string Kind, DateTime Time, string FilePath);
+public sealed record SaveBackup(string Name, string Kind, DateTime Time, string FilePath, string? Label = null);
 
 /// <summary>A license found inside a backup, so it can be shown before the backup is restored.</summary>
-public sealed record BackupLicense(int Slot, string Name, string FriendCode);
+public sealed record BackupLicense(int Slot, string Name, string FriendCode, uint PseudoId = 0, uint AuthenticId = 0);
 
 public sealed record LicenseIdentity(int Slot, string Name, uint ProfileId, string FriendCode, uint PseudoId, uint AuthenticId);
+
+/// <summary>
+/// One license whose friend code changed. <paramref name="Kind"/> is the kind of backup taken just before it (for example
+/// "change" or "before-license-import"), and <paramref name="BackupName"/> that backup, which still holds the old code. A
+/// code is empty when the slot had no license.
+/// </summary>
+public sealed record FriendCodeChange(DateTime Time, string Kind, int Slot, string Name, string OldCode, string NewCode, string BackupName);
+
+/// <summary>
+/// What is wrong with the ids of one license, the things a duplicate checker looks for: another license that shares its
+/// friend code, pseudo id or authentic id (the server then cannot tell them apart, and one may not save), and pseudo and
+/// authentic ids that differ (they have to match).
+/// </summary>
+public sealed record LicenseIdProblems(IReadOnlyList<LicenseIdentity> SharesWith, bool IdsDiffer)
+{
+    public bool Any => SharesWith.Count > 0 || IdsDiffer;
+
+    /// <summary>Another license has the very same friend code, which new ids cannot fix.</summary>
+    public bool SameFriendCode(LicenseIdentity license) => SharesWith.Any(other => other.ProfileId == license.ProfileId);
+}
+
+public static class LicenseIds
+{
+    public static LicenseIdProblems Check(LicenseIdentity license, IEnumerable<LicenseIdentity> all) =>
+        new(
+            all.Where(other =>
+                    other.Slot != license.Slot
+                    && (
+                        other.ProfileId == license.ProfileId
+                        || other.PseudoId == license.PseudoId
+                        || other.AuthenticId == license.AuthenticId
+                    )
+                )
+                .ToList(),
+            license.PseudoId != license.AuthenticId
+        );
+
+    /// <summary>The next value above both ids that none of the other licenses use, to give a license new shared ids.</summary>
+    public static uint NextFree(uint pseudo, uint authentic, IEnumerable<LicenseIdentity> others)
+    {
+        var used = others.SelectMany(license => new[] { license.PseudoId, license.AuthenticId }).ToHashSet();
+        var next = Math.Max(pseudo, authentic) + 1;
+        while (next == 0 || used.Contains(next))
+            next++;
+        return next;
+    }
+}
+
+/// <summary>What a .rkp license file holds: the license name and friend code.</summary>
+public sealed record LicenseFile(string Name, string FriendCode, uint ProfileId, uint PseudoId = 0, uint AuthenticId = 0);
 
 public interface IGameLicenseSingletonService
 {
@@ -110,11 +160,29 @@ public interface IGameLicenseSingletonService
     /// </summary>
     OperationResult ChangeProfileId(int userIndex, uint newProfileId);
 
+    /// <summary>
+    /// Gives a license new pseudo and authentic ids (one shared value no other license uses) and keeps its friend code. It fixes
+    /// a license that shares ids with another or whose two ids differ. A backup of rksys.dat is made first.
+    /// </summary>
+    OperationResult MakeIdsUnique(int userIndex);
+
     /// <summary>Copies the current rksys.dat into its own dated folder inside "backup". Returns the folder name.</summary>
     OperationResult<string> BackupSaveNow();
 
     /// <summary>The backups in the backup folder, newest first.</summary>
     IReadOnlyList<SaveBackup> ListBackups();
+
+    /// <summary>Gives a backup a name you will recognise, or clears the name when it is empty. A named backup is never removed on its own.</summary>
+    OperationResult NameBackup(string name, string label);
+
+    /// <summary>Deletes one backup.</summary>
+    OperationResult DeleteBackup(string name);
+
+    /// <summary>
+    /// Deletes the oldest backups, keeping the newest <paramref name="keep"/>. Named backups and the ones that record a
+    /// friend code change (the history) are kept and not counted. Returns how many were deleted.
+    /// </summary>
+    int PruneBackups(int keep);
 
     /// <summary>The licenses (name and friend code) stored in a backup.</summary>
     IReadOnlyList<BackupLicense> GetBackupLicenses(string name);
@@ -128,8 +196,50 @@ public interface IGameLicenseSingletonService
     /// <summary>Replaces the save with a rksys.dat from the given path. The current save is backed up first.</summary>
     OperationResult ImportSave(string sourcePath);
 
+    /// <summary>Saves one license as a .rkp file: its RKPD block from rksys.dat, the way other save tools share licenses.</summary>
+    OperationResult ExportLicense(int userIndex, string destinationPath);
+
+    /// <summary>Reads a .rkp file without changing anything, to show what is in it.</summary>
+    OperationResult<LicenseFile> ReadLicenseFile(string sourcePath);
+
+    /// <summary>Puts a .rkp license into a slot of the save, replacing what is there. The save is backed up first.</summary>
+    OperationResult ImportLicense(int userIndex, string sourcePath);
+
+    /// <summary>The licenses (slot, name and friend code) in any rksys.dat file, such as a backup. Empty when it is not a save.</summary>
+    IReadOnlyList<BackupLicense> ReadSaveLicenses(string savePath);
+
+    /// <summary>
+    /// Puts one license of another rksys.dat (a backup, or a save from somewhere else) into a slot of this save, replacing
+    /// what is there. The rest of that save is not used. This save is backed up first.
+    /// </summary>
+    OperationResult ImportLicenseFromSave(int userIndex, string savePath, int sourceSlot);
+
+    /// <summary>
+    /// Puts several licenses of another rksys.dat back into this save, each into its own slot (license 2 of the other save
+    /// replaces license 2 here). All of them are written together after one backup; if one cannot be taken, none is.
+    /// </summary>
+    OperationResult ImportLicensesFromSave(string savePath, IReadOnlyList<int> slots);
+
+    /// <summary>
+    /// Puts several .rkp files into the given slots (slot, file) after one backup. Every file is checked first; if one is
+    /// not a license file, nothing is written.
+    /// </summary>
+    OperationResult ImportLicenseFiles(IReadOnlyList<(int Slot, string Path)> files);
+
     /// <summary>When the newest backup made by <see cref="ChangeProfileId"/> was taken, or null when there is none.</summary>
     DateTime? GetLastBackupTime();
+
+    /// <summary>
+    /// Every friend code change on this region's save, newest first. Worked out from the backups kept before each change, so
+    /// it also covers changes made before this list existed.
+    /// </summary>
+    IReadOnlyList<FriendCodeChange> GetFriendCodeHistory();
+
+    /// <summary>
+    /// Puts back the friend code a license had in a backup (the old code of a <see cref="FriendCodeChange"/>), on every
+    /// region's save. The saves are backed up first, and "undo last change" takes it back.
+    /// </summary>
+    OperationResult RestoreFriendCode(string backupName, int slot);
 
     /// <summary>
     /// Puts the profile, pseudo and authentic ids back to what the newest backup has. Everything else in the save (races, VR,
@@ -233,7 +343,17 @@ public class GameLicenseSingletonService : ObservablePollingService, IGameLicens
         {
             user.IsOnline = _presence.IsOnline(user.FriendCode);
             foreach (var friend in user.Friends)
+            {
                 friend.IsOnline = _presence.IsOnline(friend.FriendCode);
+                // The save keeps a friend's ratings as they were when you last saw them; in a room they are current.
+                if (friend.IsOnline && _presence.TryGetRating(friend.FriendCode, out var vr, out var br))
+                {
+                    if (vr is { } liveVr and >= 0)
+                        friend.Vr = (uint)liveVr;
+                    if (br is { } liveBr and >= 0)
+                        friend.Br = (uint)liveBr;
+                }
+            }
         }
     }
 
@@ -817,8 +937,8 @@ public class GameLicenseSingletonService : ObservablePollingService, IGameLicens
         newName = Regex.Replace(newName, @"\s+", " ");
 
         // Basic checks
-        if (newName.Length is > 10 or < 3)
-            return Fail("Names must be between 3 and 10 characters long.");
+        if (newName.Length is > 10 or < 1)
+            return Fail("Names must be between 1 and 10 characters long.");
 
         if (newName.Length > 10)
             newName = newName.Substring(0, 10);
@@ -919,15 +1039,13 @@ public class GameLicenseSingletonService : ObservablePollingService, IGameLicens
         var authentic = BigEndianBinary.BufferToUint32(_rksysData, offset + 0x58);
 
         // Raise the shared pseudo/authentic id to a value that no other license has.
-        var used = others.SelectMany(l => new[] { l.PseudoId, l.AuthenticId }).ToHashSet();
-        var next = Math.Max(pseudo, authentic) + 1;
-        while (next == 0 || used.Contains(next))
-            next++;
+        var next = LicenseIds.NextFree(pseudo, authentic, others);
 
         var backup = BackupRksys("change");
         if (backup.IsFailure)
             return backup;
 
+        var oldProfileId = BigEndianBinary.BufferToUint32(_rksysData, offset + 0x5C);
         BigEndianBinary.WriteUInt32BigEndian(_rksysData, offset + 0x5C, newProfileId);
         BigEndianBinary.WriteUInt32BigEndian(_rksysData, offset + 0x4C, next);
         BigEndianBinary.WriteUInt32BigEndian(_rksysData, offset + 0x58, next);
@@ -936,7 +1054,40 @@ public class GameLicenseSingletonService : ObservablePollingService, IGameLicens
         if (saved.IsFailure)
             return saved;
 
-        MirrorToOtherRegions(userIndex, newProfileId, next);
+        MirrorToOtherRegions(oldProfileId, newProfileId, next, next, "change");
+        return LoadLicense();
+    }
+
+    public OperationResult MakeIdsUnique(int userIndex)
+    {
+        if (userIndex is < 0 or >= MaxPlayerNum)
+            return Fail("Invalid license index. Please select a valid license.");
+        if (_rksysData is null || _rksysData.Length != RksysSize)
+            return Fail("Invalid or unloaded rksys.dat data.");
+
+        var identities = GetLicenseIdentities();
+        if (identities.FirstOrDefault(l => l.Slot == userIndex) is not { } license)
+            return Fail("That slot has no license.");
+
+        var problems = LicenseIds.Check(license, identities);
+        if (!problems.Any)
+            return Fail("This license's ids are already fine.");
+        if (problems.SameFriendCode(license))
+            return Fail("Another license has the same friend code. Give one of them a new friend code instead.");
+
+        var next = LicenseIds.NextFree(license.PseudoId, license.AuthenticId, identities.Where(l => l.Slot != userIndex));
+        var backup = BackupRksys("change");
+        if (backup.IsFailure)
+            return backup;
+
+        var offset = RksysMagic.Length + userIndex * RkpdSize;
+        BigEndianBinary.WriteUInt32BigEndian(_rksysData, offset + 0x4C, next);
+        BigEndianBinary.WriteUInt32BigEndian(_rksysData, offset + 0x58, next);
+        var saved = SaveRksysToFile();
+        if (saved.IsFailure)
+            return saved;
+
+        MirrorToOtherRegions(license.ProfileId, license.ProfileId, next, next, "change");
         return LoadLicense();
     }
 
@@ -961,11 +1112,12 @@ public class GameLicenseSingletonService : ObservablePollingService, IGameLicens
     }
 
     /// <summary>
-    /// Puts the same ids on the same license slot of the other regions' saves (when that slot has a license there), so the
-    /// friend code is the same whichever disc is played. Each of those saves is backed up first. Best effort: the save being
-    /// edited is already done by then.
+    /// Gives the same license on the other regions' saves the same ids, so its friend code is the same whichever disc is
+    /// played. "The same license" is the one that has <paramref name="matchProfileId"/> there now (in whatever slot): a
+    /// different license in that slot is left alone, and so is a save where the new code is already taken. Each of those
+    /// saves is backed up first. Best effort: the save being edited is already done by then.
     /// </summary>
-    private void MirrorToOtherRegions(int slot, uint profileId, uint authenticId)
+    private void MirrorToOtherRegions(uint matchProfileId, uint profileId, uint pseudoId, uint authenticId, string kind)
     {
         foreach (var folder in OtherRegionFolders())
         {
@@ -976,13 +1128,18 @@ public class GameLicenseSingletonService : ObservablePollingService, IGameLicens
                 if (ValidateSave(data).IsFailure)
                     continue;
 
-                var offset = RksysMagic.Length + slot * RkpdSize;
-                if (BigEndianBinary.BufferToUint32(data, offset + 0x5C) == 0)
+                var slots = Enumerable
+                    .Range(0, MaxPlayerNum)
+                    .Select(slot => (Slot: slot, Id: BigEndianBinary.BufferToUint32(data, RksysMagic.Length + slot * RkpdSize + 0x5C)))
+                    .ToList();
+                var match = slots.FirstOrDefault(item => item.Id == matchProfileId && item.Id != 0);
+                if (match.Id == 0 || slots.Any(item => item.Slot != match.Slot && item.Id == profileId))
                     continue;
 
-                CopyFolderBackup(folder, "change");
+                var offset = RksysMagic.Length + match.Slot * RkpdSize;
+                CopyFolderBackup(folder, kind);
                 BigEndianBinary.WriteUInt32BigEndian(data, offset + 0x5C, profileId);
-                BigEndianBinary.WriteUInt32BigEndian(data, offset + 0x4C, authenticId);
+                BigEndianBinary.WriteUInt32BigEndian(data, offset + 0x4C, pseudoId);
                 BigEndianBinary.WriteUInt32BigEndian(data, offset + 0x58, authenticId);
                 FixRksysCrc(data);
                 _fileSystem.WriteAllBytesAtomic(path, data, "Failed to update another region's rksys.dat.");
@@ -991,16 +1148,40 @@ public class GameLicenseSingletonService : ObservablePollingService, IGameLicens
         }
     }
 
-    private void CopyFolderBackup(string folder, string kind)
+    /// <summary>
+    /// A backup folder name stamped with the time. Backups are ordered by name, so the stamp always comes after the newest
+    /// one already there (of any kind): a backup made in the same second as another still sorts after it.
+    /// </summary>
+    private string NewBackupName(string folder, string kind)
     {
+        var root = _fileSystem.Path.Combine(folder, "backup");
         var stamp = DateTime.Now;
-        var name = $"{stamp:yyyyMMdd-HHmmss}-{kind}";
-        while (_fileSystem.Directory.Exists(_fileSystem.Path.Combine(folder, "backup", name)))
+        if (_fileSystem.Directory.Exists(root))
         {
-            stamp = stamp.AddSeconds(1);
-            name = $"{stamp:yyyyMMdd-HHmmss}-{kind}";
+            foreach (var directory in _fileSystem.Directory.GetDirectories(root))
+            {
+                var name = _fileSystem.Path.GetFileName(directory);
+                if (
+                    name.Length >= 15
+                    && DateTime.TryParseExact(
+                        name[..15],
+                        "yyyyMMdd-HHmmss",
+                        System.Globalization.CultureInfo.InvariantCulture,
+                        System.Globalization.DateTimeStyles.None,
+                        out var taken
+                    )
+                    && taken >= stamp.AddTicks(-(stamp.Ticks % TimeSpan.TicksPerSecond))
+                )
+                    stamp = taken.AddSeconds(1);
+            }
         }
 
+        return $"{stamp:yyyyMMdd-HHmmss}-{kind}";
+    }
+
+    private void CopyFolderBackup(string folder, string kind)
+    {
+        var name = NewBackupName(folder, kind);
         var directory = _fileSystem.Path.Combine(folder, "backup", name);
         _fileSystem.Directory.CreateDirectory(directory);
         _fileSystem.File.Copy(
@@ -1008,6 +1189,7 @@ public class GameLicenseSingletonService : ObservablePollingService, IGameLicens
             _fileSystem.Path.Combine(directory, "rksys.dat"),
             overwrite: true
         );
+        PruneFolder(folder, KeepBackups);
     }
 
     /// <summary>Undo for the other regions: puts back the ids from each one's newest "change" backup.</summary>
@@ -1039,6 +1221,13 @@ public class GameLicenseSingletonService : ObservablePollingService, IGameLicens
                 for (var slot = 0; slot < MaxPlayerNum; slot++)
                 {
                     var offset = RksysMagic.Length + slot * RkpdSize;
+                    // Same as on the main save: leave licenses added or removed since alone.
+                    if (
+                        BigEndianBinary.BufferToUint32(backup, offset + 0x5C) == 0
+                        || BigEndianBinary.BufferToUint32(data, offset + 0x5C) == 0
+                    )
+                        continue;
+
                     foreach (var field in new[] { 0x4C, 0x58, 0x5C })
                     {
                         var old = BigEndianBinary.BufferToUint32(backup, offset + field);
@@ -1095,7 +1284,7 @@ public class GameLicenseSingletonService : ObservablePollingService, IGameLicens
                     )
                         ? parsed
                         : _fileSystem.File.GetLastWriteTime(file);
-                result.Add(new SaveBackup(name, kind, time, file));
+                result.Add(new SaveBackup(name, kind, time, file, ReadLabel(directory)));
             }
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
@@ -1104,34 +1293,167 @@ public class GameLicenseSingletonService : ObservablePollingService, IGameLicens
         return result.OrderByDescending(b => b.Name, StringComparer.Ordinal).ToList();
     }
 
-    public IReadOnlyList<BackupLicense> GetBackupLicenses(string name)
+    // How many ordinary backups each save folder keeps; older ones are removed whenever a new one is made.
+    private const int KeepBackups = 30;
+    private const string LabelFile = "name.txt";
+
+    private string? ReadLabel(string directory)
     {
-        var result = new List<BackupLicense>();
+        try
+        {
+            var file = _fileSystem.Path.Combine(directory, LabelFile);
+            return _fileSystem.File.Exists(file) && _fileSystem.File.ReadAllText(file).Trim() is { Length: > 0 } label ? label : null;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return null;
+        }
+    }
+
+    public OperationResult NameBackup(string name, string label)
+    {
         if (ListBackups().FirstOrDefault(b => b.Name == name) is not { } backup)
-            return result;
+            return Fail("That backup was not found.");
 
         try
         {
-            var data = _fileSystem.File.ReadAllBytes(backup.FilePath);
-            if (ValidateSave(data).IsFailure)
-                return result;
-
-            for (var slot = 0; slot < MaxPlayerNum; slot++)
+            var file = _fileSystem.Path.Combine(_fileSystem.Path.GetDirectoryName(backup.FilePath)!, LabelFile);
+            label = label.Trim();
+            if (label.Length == 0)
             {
-                var offset = RksysMagic.Length + slot * RkpdSize;
-                if (BigEndianBinary.BufferToUint32(data, offset + 0x5C) == 0)
-                    continue;
+                if (_fileSystem.File.Exists(file))
+                    _fileSystem.File.Delete(file);
+            }
+            else
+                _fileSystem.File.WriteAllText(file, label);
+            return Ok();
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return Fail("Could not name that backup.");
+        }
+    }
 
-                var licenseName = Encoding.BigEndianUnicode.GetString(data, offset + 0x14, 20).TrimEnd('\0').Trim();
-                result.Add(new BackupLicense(slot, licenseName, FriendCode.GetFriendCode(data, offset + 0x5C)));
+    public OperationResult DeleteBackup(string name)
+    {
+        if (ListBackups().FirstOrDefault(b => b.Name == name) is not { } backup)
+            return Fail("That backup was not found.");
+
+        try
+        {
+            _fileSystem.Directory.Delete(_fileSystem.Path.GetDirectoryName(backup.FilePath)!, recursive: true);
+            return Ok();
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return Fail("Could not delete that backup.");
+        }
+    }
+
+    public int PruneBackups(int keep) => PruneFolder(SaveFolderForRegion(), keep);
+
+    private int PruneFolder(string folder, int keep)
+    {
+        var removed = 0;
+        try
+        {
+            var root = _fileSystem.Path.Combine(folder, "backup");
+            if (!_fileSystem.Directory.Exists(root))
+                return 0;
+
+            var old = _fileSystem
+                .Directory.GetDirectories(root)
+                .Where(directory =>
+                {
+                    var name = _fileSystem.Path.GetFileName(directory);
+                    return _fileSystem.File.Exists(_fileSystem.Path.Combine(directory, "rksys.dat"))
+                        && !_fileSystem.File.Exists(_fileSystem.Path.Combine(directory, LabelFile))
+                        && !name.EndsWith("-change", StringComparison.Ordinal)
+                        && !name.EndsWith($"-{RestoreKind}", StringComparison.Ordinal);
+                })
+                .OrderByDescending(directory => _fileSystem.Path.GetFileName(directory), StringComparer.Ordinal)
+                .Skip(keep)
+                .ToList();
+            foreach (var directory in old)
+            {
+                try
+                {
+                    _fileSystem.Directory.Delete(directory, recursive: true);
+                    removed++;
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
             }
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
 
-        return result;
+        return removed;
     }
 
-    private SaveBackup? NewestChangeBackup() => ListBackups().FirstOrDefault(b => b.Kind == "change");
+    public IReadOnlyList<BackupLicense> GetBackupLicenses(string name)
+    {
+        return ListBackups().FirstOrDefault(b => b.Name == name) is { } backup ? ReadSaveLicenses(backup.FilePath) : [];
+    }
+
+    // A restore from the history is undone the same way as a code change.
+    private SaveBackup? NewestChangeBackup() => ListBackups().FirstOrDefault(b => b.Kind is "change" or RestoreKind);
+
+    private const string RestoreKind = "restore-change";
+
+    public OperationResult RestoreFriendCode(string backupName, int slot)
+    {
+        if (slot is < 0 or >= MaxPlayerNum)
+            return Fail("Invalid license index. Please select a valid license.");
+        if (_rksysData is null || _rksysData.Length != RksysSize)
+            return Fail("Invalid or unloaded rksys.dat data.");
+        if (ListBackups().FirstOrDefault(b => b.Name == backupName) is not { } backup)
+            return Fail("That backup was not found.");
+
+        byte[] data;
+        try
+        {
+            data = _fileSystem.File.ReadAllBytes(backup.FilePath);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return Fail("Could not read the backup.");
+        }
+
+        var valid = ValidateSave(data);
+        if (valid.IsFailure)
+            return valid;
+
+        var offset = RksysMagic.Length + slot * RkpdSize;
+        var profileId = BigEndianBinary.BufferToUint32(data, offset + 0x5C);
+        var pseudoId = BigEndianBinary.BufferToUint32(data, offset + 0x4C);
+        var authenticId = BigEndianBinary.BufferToUint32(data, offset + 0x58);
+        if (profileId == 0)
+            return Fail("That license did not exist then.");
+        if (BigEndianBinary.BufferToUint32(_rksysData, offset + 0x5C) == 0)
+            return Fail("That slot has no license now.");
+        if (
+            BigEndianBinary.BufferToUint32(_rksysData, offset + 0x5C) == profileId
+            && BigEndianBinary.BufferToUint32(_rksysData, offset + 0x4C) == pseudoId
+            && BigEndianBinary.BufferToUint32(_rksysData, offset + 0x58) == authenticId
+        )
+            return Fail("This license already has that friend code.");
+        if (GetLicenseIdentities().Any(l => l.Slot != slot && l.ProfileId == profileId))
+            return Fail("Another license on this save already uses that friend code.");
+
+        var safety = BackupRksys(RestoreKind);
+        if (safety.IsFailure)
+            return safety;
+
+        var currentProfileId = BigEndianBinary.BufferToUint32(_rksysData, offset + 0x5C);
+        BigEndianBinary.WriteUInt32BigEndian(_rksysData, offset + 0x5C, profileId);
+        BigEndianBinary.WriteUInt32BigEndian(_rksysData, offset + 0x4C, pseudoId);
+        BigEndianBinary.WriteUInt32BigEndian(_rksysData, offset + 0x58, authenticId);
+        var saved = SaveRksysToFile();
+        if (saved.IsFailure)
+            return saved;
+
+        MirrorToOtherRegions(currentProfileId, profileId, pseudoId, authenticId, RestoreKind);
+        return LoadLicense();
+    }
 
     public OperationResult<string> BackupSaveNow()
     {
@@ -1143,6 +1465,90 @@ public class GameLicenseSingletonService : ObservablePollingService, IGameLicens
     }
 
     public DateTime? GetLastBackupTime() => NewestChangeBackup()?.Time;
+
+    public IReadOnlyList<FriendCodeChange> GetFriendCodeHistory()
+    {
+        var history = new List<FriendCodeChange>();
+        if (_rksysData is null || _rksysData.Length != RksysSize)
+            return history;
+
+        // Each backup is the save just before something changed it, so comparing it with the next backup (or with the save
+        // as it is now) shows what that change did. Manual backups change nothing and drop out on their own.
+        var backups = ListBackups().Reverse().ToList();
+        var states = backups.Select(b => ReadLicenseSlots(b.FilePath)).ToList();
+        states.Add(LicenseSlots(_rksysData));
+        for (var i = 0; i < backups.Count; i++)
+        {
+            var before = states[i];
+            if (before is null)
+                continue;
+
+            // An unreadable backup is skipped over, so the change is compared with the next state that can be read.
+            var after = states.Skip(i + 1).FirstOrDefault(state => state is not null);
+            if (after is null)
+                continue;
+
+            for (var slot = 0; slot < MaxPlayerNum; slot++)
+            {
+                if (before[slot].Code == after[slot].Code)
+                    continue;
+
+                var name = after[slot].Code.Length > 0 ? after[slot].Name : before[slot].Name;
+                history.Add(new(backups[i].Time, backups[i].Kind, slot, name, before[slot].Code, after[slot].Code, backups[i].Name));
+            }
+        }
+
+        history.Reverse();
+        return history;
+    }
+
+    private const int LicenseAreaSize = 0x8 + MaxPlayerNum * RkpdSize;
+
+    /// <summary>The name and friend code of each slot of a saved rksys.dat, or null when it is not a save.</summary>
+    private (string Name, string Code, uint PseudoId, uint AuthenticId)[]? ReadLicenseSlots(string path)
+    {
+        try
+        {
+            using var stream = _fileSystem.File.OpenRead(path);
+            if (stream.Length != RksysSize)
+                return null;
+
+            // Only the licenses at the start are needed, not the whole 2.8 MB.
+            var data = new byte[LicenseAreaSize];
+            stream.ReadExactly(data);
+            return Encoding.ASCII.GetString(data, 0, RksysMagic.Length) == RksysMagic ? LicenseSlots(data) : null;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return null;
+        }
+    }
+
+    private static (string Name, string Code, uint PseudoId, uint AuthenticId)[] LicenseSlots(byte[] data)
+    {
+        var slots = new (string Name, string Code, uint PseudoId, uint AuthenticId)[MaxPlayerNum];
+        for (var slot = 0; slot < MaxPlayerNum; slot++)
+        {
+            var offset = RksysMagic.Length + slot * RkpdSize;
+            if (BigEndianBinary.BufferToUint32(data, offset + 0x5C) == 0)
+            {
+                slots[slot] = (string.Empty, string.Empty, 0, 0);
+                continue;
+            }
+
+            // Mii names can hold the game's own symbols (private-use characters) that no font here can draw.
+            var raw = Encoding.BigEndianUnicode.GetString(data, offset + 0x14, 20).TrimEnd('\0');
+            var name = new string(raw.Where(c => c is < '' or > '').ToArray()).Trim();
+            slots[slot] = (
+                name,
+                FriendCode.GetFriendCode(data, offset + 0x5C),
+                BigEndianBinary.BufferToUint32(data, offset + 0x4C),
+                BigEndianBinary.BufferToUint32(data, offset + 0x58)
+            );
+        }
+
+        return slots;
+    }
 
     private static OperationResult ValidateSave(byte[] data)
     {
@@ -1229,6 +1635,201 @@ public class GameLicenseSingletonService : ObservablePollingService, IGameLicens
         return LoadLicense();
     }
 
+    public OperationResult ExportLicense(int userIndex, string destinationPath)
+    {
+        if (userIndex is < 0 or >= MaxPlayerNum)
+            return Fail("Invalid license index. Please select a valid license.");
+        if (_rksysData is null || _rksysData.Length != RksysSize)
+            return Fail("Invalid or unloaded rksys.dat data.");
+
+        var offset = RksysMagic.Length + userIndex * RkpdSize;
+        if (BigEndianBinary.BufferToUint32(_rksysData, offset + 0x5C) == 0)
+            return Fail("That slot has no license.");
+
+        try
+        {
+            _fileSystem.File.WriteAllBytes(destinationPath, _rksysData.AsSpan(offset, RkpdSize).ToArray());
+            return Ok();
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return Fail("Could not save the file there.");
+        }
+    }
+
+    public OperationResult<LicenseFile> ReadLicenseFile(string sourcePath)
+    {
+        var read = ReadRkp(sourcePath);
+        if (read.IsFailure)
+            return read.Error;
+
+        var data = read.Value;
+        var name = Encoding.BigEndianUnicode.GetString(data, 0x14, 20).TrimEnd('\0').Trim();
+        return new LicenseFile(
+            name,
+            FriendCode.GetFriendCode(data, 0x5C),
+            BigEndianBinary.BufferToUint32(data, 0x5C),
+            BigEndianBinary.BufferToUint32(data, 0x4C),
+            BigEndianBinary.BufferToUint32(data, 0x58)
+        );
+    }
+
+    public OperationResult ImportLicense(int userIndex, string sourcePath)
+    {
+        if (userIndex is < 0 or >= MaxPlayerNum)
+            return Fail("Invalid license index. Please select a valid license.");
+        if (_rksysData is null || _rksysData.Length != RksysSize)
+            return Fail("Invalid or unloaded rksys.dat data.");
+
+        var read = ReadRkp(sourcePath);
+        if (read.IsFailure)
+            return read.Error;
+
+        return PutLicense(userIndex, read.Value);
+    }
+
+    public IReadOnlyList<BackupLicense> ReadSaveLicenses(string savePath)
+    {
+        var slots = ReadLicenseSlots(savePath);
+        var result = new List<BackupLicense>();
+        if (slots is null)
+            return result;
+
+        for (var slot = 0; slot < MaxPlayerNum; slot++)
+            if (slots[slot].Code.Length > 0)
+                result.Add(new BackupLicense(slot, slots[slot].Name, slots[slot].Code, slots[slot].PseudoId, slots[slot].AuthenticId));
+        return result;
+    }
+
+    public OperationResult ImportLicenseFromSave(int userIndex, string savePath, int sourceSlot)
+    {
+        if (userIndex is < 0 or >= MaxPlayerNum || sourceSlot is < 0 or >= MaxPlayerNum)
+            return Fail("Invalid license index. Please select a valid license.");
+        if (_rksysData is null || _rksysData.Length != RksysSize)
+            return Fail("Invalid or unloaded rksys.dat data.");
+
+        byte[] data;
+        try
+        {
+            data = _fileSystem.File.ReadAllBytes(savePath);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return Fail("Could not read that file.");
+        }
+
+        var valid = ValidateSave(data);
+        if (valid.IsFailure)
+            return valid;
+
+        var offset = RksysMagic.Length + sourceSlot * RkpdSize;
+        if (
+            Encoding.ASCII.GetString(data, offset, RkpdMagic.Length) != RkpdMagic
+            || BigEndianBinary.BufferToUint32(data, offset + 0x5C) == 0
+        )
+            return Fail("That license does not exist in that save.");
+
+        return PutLicense(userIndex, data.AsSpan(offset, RkpdSize).ToArray());
+    }
+
+    public OperationResult ImportLicensesFromSave(string savePath, IReadOnlyList<int> slots)
+    {
+        if (slots.Count == 0 || slots.Any(slot => slot is < 0 or >= MaxPlayerNum))
+            return Fail("Invalid license index. Please select a valid license.");
+        if (_rksysData is null || _rksysData.Length != RksysSize)
+            return Fail("Invalid or unloaded rksys.dat data.");
+
+        byte[] data;
+        try
+        {
+            data = _fileSystem.File.ReadAllBytes(savePath);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return Fail("Could not read that file.");
+        }
+
+        var valid = ValidateSave(data);
+        if (valid.IsFailure)
+            return valid;
+
+        var blocks = new List<(int Slot, byte[] Block)>();
+        foreach (var slot in slots.Distinct())
+        {
+            var offset = RksysMagic.Length + slot * RkpdSize;
+            if (
+                Encoding.ASCII.GetString(data, offset, RkpdMagic.Length) != RkpdMagic
+                || BigEndianBinary.BufferToUint32(data, offset + 0x5C) == 0
+            )
+                return Fail($"License {slot + 1} does not exist in that save.");
+            blocks.Add((slot, data.AsSpan(offset, RkpdSize).ToArray()));
+        }
+
+        return PutLicenses(blocks);
+    }
+
+    public OperationResult ImportLicenseFiles(IReadOnlyList<(int Slot, string Path)> files)
+    {
+        if (
+            files.Count == 0
+            || files.Any(file => file.Slot is < 0 or >= MaxPlayerNum)
+            || files.Select(file => file.Slot).Distinct().Count() != files.Count
+        )
+            return Fail("Invalid license index. Please select a valid license.");
+        if (_rksysData is null || _rksysData.Length != RksysSize)
+            return Fail("Invalid or unloaded rksys.dat data.");
+
+        var blocks = new List<(int Slot, byte[] Block)>();
+        foreach (var (slot, path) in files)
+        {
+            var read = ReadRkp(path);
+            if (read.IsFailure)
+                return read.Error;
+            blocks.Add((slot, read.Value));
+        }
+
+        return PutLicenses(blocks);
+    }
+
+    /// <summary>Writes one license block into a slot, after a backup of the save, and reloads.</summary>
+    private OperationResult PutLicense(int userIndex, byte[] block) => PutLicenses([(userIndex, block)]);
+
+    private OperationResult PutLicenses(IReadOnlyList<(int Slot, byte[] Block)> blocks)
+    {
+        var backup = BackupRksys("before-license-import");
+        if (backup.IsFailure)
+            return backup;
+
+        foreach (var (slot, block) in blocks)
+            Array.Copy(block, 0, _rksysData!, RksysMagic.Length + slot * RkpdSize, RkpdSize);
+        var saved = SaveRksysToFile();
+        if (saved.IsFailure)
+            return saved;
+
+        return LoadLicense();
+    }
+
+    /// <summary>A .rkp is exactly one RKPD block; anything else would spill into the next license.</summary>
+    private OperationResult<byte[]> ReadRkp(string sourcePath)
+    {
+        byte[] data;
+        try
+        {
+            data = _fileSystem.File.ReadAllBytes(sourcePath);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return Fail("Could not read that file.");
+        }
+
+        if (data.Length != RkpdSize || Encoding.ASCII.GetString(data, 0, RkpdMagic.Length) != RkpdMagic)
+            return Fail("That is not a Mario Kart Wii license file (.rkp).");
+        if (BigEndianBinary.BufferToUint32(data, 0x5C) == 0)
+            return Fail("That license file is empty.");
+
+        return data;
+    }
+
     public OperationResult UndoLastProfileIdChange()
     {
         if (_rksysData is null || _rksysData.Length != RksysSize)
@@ -1253,6 +1854,14 @@ public class GameLicenseSingletonService : ObservablePollingService, IGameLicens
         for (var slot = 0; slot < MaxPlayerNum; slot++)
         {
             var offset = RksysMagic.Length + slot * RkpdSize;
+            // A slot that was empty then (or is empty now) holds a license added or removed since, not a changed code:
+            // putting the backup's zero ids on it would break that license.
+            if (
+                BigEndianBinary.BufferToUint32(backup, offset + 0x5C) == 0
+                || BigEndianBinary.BufferToUint32(_rksysData, offset + 0x5C) == 0
+            )
+                continue;
+
             foreach (var field in new[] { 0x4C, 0x58, 0x5C })
             {
                 if (BigEndianBinary.BufferToUint32(backup, offset + field) != BigEndianBinary.BufferToUint32(_rksysData, offset + field))
@@ -1300,17 +1909,11 @@ public class GameLicenseSingletonService : ObservablePollingService, IGameLicens
                 return Fail("rksys.dat not found.");
 
             // Two backups in the same second must not share a folder, or the later one would overwrite the earlier state.
-            var stamp = DateTime.Now;
-            name = $"{stamp:yyyyMMdd-HHmmss}-{kind}";
-            while (_fileSystem.Directory.Exists(_fileSystem.Path.Combine(folder, "backup", name)))
-            {
-                stamp = stamp.AddSeconds(1);
-                name = $"{stamp:yyyyMMdd-HHmmss}-{kind}";
-            }
-
+            name = NewBackupName(folder, kind);
             var directory = _fileSystem.Path.Combine(folder, "backup", name);
             _fileSystem.Directory.CreateDirectory(directory);
             _fileSystem.File.Copy(path, _fileSystem.Path.Combine(directory, "rksys.dat"), overwrite: true);
+            PruneFolder(folder, KeepBackups);
             return Ok();
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)

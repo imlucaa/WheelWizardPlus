@@ -67,16 +67,15 @@
                 </Border>
             </StackPanel>
 
-            <Grid ColumnDefinitions="*,Auto" Margin="0,12,0,0" RowDefinitions="Auto,Auto" RowSpacing="8">
-                <TextBlock x:Name="CheckText" Classes="TinyText" TextWrapping="Wrap" VerticalAlignment="Center"
-                           Margin="4,0,12,0" IsVisible="False" />
-                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+            <!-- The buttons first, and what they find below them across the whole width. -->
+            <StackPanel Margin="0,12,0,0" Spacing="8">
+                <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
                     <components:Button x:Name="PreviewButton" Text="Preview" Click="Preview_OnClick" />
                     <components:Button x:Name="CheckButton" Text="Check setup" Click="Check_OnClick" />
                 </StackPanel>
-                <TextBlock Grid.Row="1" x:Name="ResultText" Classes="TinyText" TextWrapping="Wrap"
-                           VerticalAlignment="Center" Margin="4,0,12,0" IsVisible="False" />
-            </Grid>
+                <TextBlock x:Name="CheckText" Classes="TinyText" TextWrapping="Wrap" Margin="4,0" IsVisible="False" />
+                <TextBlock x:Name="ResultText" Classes="TinyText" TextWrapping="Wrap" Margin="4,0" IsVisible="False" />
+            </StackPanel>
             <Border Classes="SettingsBottomSpacer" />
         </StackPanel>
     </ScrollViewer>

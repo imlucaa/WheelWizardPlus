@@ -190,7 +190,7 @@ tr:
       Belirli bir odaya katılmak için bir arkadaşınız aracılığıyla katılmanız veya çevrimiçi sunuculara katılarak bu odaya girmeyi ummanız gerekecek.
     friends_page_disclaimer: "Arkadaş eklemek için onları oyunun içinde eklemeniz gerekiyor."
     region_user_selection: "Bu sadece SİZİN oynadığıınız bölgeleri gösterir."
-    primary_profile: "Ana profil, Wheel Wizard için referans olarak kullanılır."
+    primary_profile: "Ana profil, Wheel Wizard+ için referans olarak kullanılır."
   empty_content:
     no_profiles: "Profillerinizi burada görmek için oyunu en az bir kez oynamanız gerekiyor."
     no_friends_title: "Henüz arkadaş yok!"
@@ -223,8 +223,8 @@ tr:
     installing_mods_count: "%{amount} modları yükleniyor"
     processing_xof_y: "%{processed} dosyasından %{total} işleniyor..."
     update_rr: "Retro Rewind Güncelleniyor"
-    latest_wh_wz_github: "Github sürümlerinden en son Wheel Wizard alınıyor"
-    update_wh_wz: "Wheel Wizard güncelleniyor"
+    latest_wh_wz_github: "Github sürümlerinden en son Wheel Wizard+ alınıyor"
+    update_wh_wz: "Wheel Wizard+ güncelleniyor"
     installing_rr: "Retro Rewind Yükleniyor"
     installing_rr_first_time: "Retro Rewind ilk kez yükleniyor"
     installing_dolphin: "Dolphin Emulator yükleniyor"
@@ -246,8 +246,8 @@ tr:
         Eğer bunların ne anlama geldiğini bilmiyorsanız, evet diyebilirsiniz :)
         Dolphin Emulator klasörü bulundu. Bu klasörü kullanmak ister misiniz?
     new_version_wh_wz:
-      title: "Wheel Wizard Güncellemesi Mevcut"
-      extra: "Wheel Wizard'ın %{latestVersion} sürümü mevcut (şu anda %{currentVersion}'de). Şimdi güncellemek ister misiniz?"
+      title: "Wheel Wizard+ Güncellemesi Mevcut"
+      extra: "Wheel Wizard+'ın %{latestVersion} sürümü mevcut (şu anda %{currentVersion}'de). Şimdi güncellemek ister misiniz?"
     update_admin:
       title: "Yönetici kullanarak güncelle"
       extra: "Bazen bir güncelleme yönetici hakları gerektirir, bu güncelleme için onları aktif etmek ister misiniz?"
@@ -295,12 +295,12 @@ tr:
     unable_update_wh_wz:
       extra:
         reason_network: |-
-          Wheel Wizard'ın güncel olup olmadığını kontrol edilemedi.
+          Wheel Wizard+'ın güncel olup olmadığını kontrol edilemedi.
           Ağ sorunları yaşıyor olabilirsiniz.
         reason_location: |-
-          Wheel Wizard güncellenemedi. Uygulamanın erişilebilir bir klasörde bulunduğundan emin olun.
+          Wheel Wizard+ güncellenemedi. Uygulamanın erişilebilir bir klasörde bulunduğundan emin olun.
           İstenilen klasör bulunamadı.
-      title: "Wheel Wizard güncellenemedi."
+      title: "Wheel Wizard+ güncellenemedi."
     no_connect_server:
       extra: "Sunucuya bağlanılamadı. Lütfen daha sonra tekrar deneyin."
       title: "Sunucuya bağlanılamıyor."
@@ -386,11 +386,11 @@ tr:
     mii_failure_create: "Mii '%{error}' oluşturulamadı."
     mii_failure_duplicate: "Mii '%{error}' çoğaltılamadı."
   helper_note:
-    name_must_between: "Adın 3 ile 10 karakter arasında olması gerekiyor."
+    name_must_between: "Adın 1 ile 10 karakter arasında olması gerekiyor."
     creator_name_less11: "Yapımcı adı 11 karakterden kısa olması gerekiyor."
     creator_name_less10: "Yapımcı adı 10 karakterden kısa olması gerekiyor."
   option:
-    wh_wz_language: "Wheel Wizard Dili"
+    wh_wz_language: "Wheel Wizard+ Dili"
     force_disable_wiimote: "Wiimote'u Zorla Devre Dışı Bırak"
     launch_with_dolphin: "Dolphin Penceresi ile Oyunu Başlat"
     v_sync: "VSync"
@@ -416,7 +416,7 @@ tr:
     performance: "Performans Ayarları"
     renderer: "Render Ayarları"
     location_paths: "Konum Ayarları"
-    wh_wz_appearance: "Wheel Wizard görünümü"
+    wh_wz_appearance: "Wheel Wizard+ görünümü"
     installation: "Kurulum"
   helper_text:
     topbar:
@@ -427,7 +427,7 @@ tr:
     recommended: "Bu ayar, takılmaları ve gecikme dalgalanmalarını azaltmak için belirli Dolphin ayarlarını değiştirir."
     30_fps: "Bu ayar, oyunu 30 FPS'de çalışmaya zorlar (varsayılan 60)."
     end_with_exe: "Yol, .exe ile bitmelidir."
-    enable_animations: "Bu, Wheel Wizard uygulamasındaki animasyonları etkinleştirir."
+    enable_animations: "Bu, Wheel Wizard+ uygulamasındaki animasyonları etkinleştirir."
     end_with_x: "Yol, bunlar ile bitebilir:"
     optional: "Opsiyonel"
     must_set_paths: "Retro Rewind'ı oynayabilmek için önce bu üç yolu ayarlamanız gerekiyor"

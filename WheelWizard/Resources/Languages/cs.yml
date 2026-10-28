@@ -191,7 +191,7 @@ cs:
       Chceš-li se připojit ke konkrétní místnosti, budeš se muset buď připojit prostřednictvím kamaráda, nebo doufat, že se k ní připojíš připojením k online serverům.
     friends_page_disclaimer: "Chceš-li přidat kamarády, musíš je přidat ve hře."
     region_user_selection: "To ukazuje pouze regiony, ve kterých TY jsi hrál"
-    primary_profile: "Primární profil se používá jako reference v klientovi Wheel Wizard"
+    primary_profile: "Primární profil se používá jako reference v klientovi Wheel Wizard+"
   empty_content:
     no_profiles: "Hru musíš hrát aspoň jednou, abys viděl tvé profily zde uvedené"
     no_friends_title: "Zatím žádní kamarádi!"
@@ -223,7 +223,7 @@ cs:
     installing_mods: "Instalování mody"
     installing_mods_count: "Instalování %{amount} mody"
     update_rr: "Aktualizování Retro Rewind"
-    update_wh_wz: "Aktualizování Wheel Wizard"
+    update_wh_wz: "Aktualizování Wheel Wizard+"
     installing_rr: "Instalování Retro Rewind"
     installing_rr_first_time: "Instalování Retro Rewind poprvé"
     installing_dolphin: "Instalování Dolphin Emulator"
@@ -280,7 +280,7 @@ cs:
       title: "Kontrola aktualizací se nezdařila"
       extra: "Aktualizace není možné právě teď zkontrolovat. Možná nejsi připojeni k internetu nebo server může být mimo provoz."
     unable_update_wh_wz:
-      title: "Není možné aktualizovat Wheel Wizard"
+      title: "Není možné aktualizovat Wheel Wizard+"
     no_connect_server:
       extra: "Nepodařilo se připojit k serveru. Zkus to prosím znovu později."
       title: "Nepodařilo se připojit k serveru."
@@ -353,11 +353,11 @@ cs:
     deleted_miis: "Smazáno %{amount} Miiy"
     profile_set_primary: "Nastavit profil jako primární"
   helper_note:
-    name_must_between: "Jména musí mít délku 3 až 10 znaků."
+    name_must_between: "Jména musí mít délku 1 až 10 znaků."
     creator_name_less11: "Jméno tvůrce musí být kratší než 11 znaků."
     creator_name_less10: "Jméno tvůrce musí být kratší než 10 znaků."
   option:
-    wh_wz_language: "Jazyk Wheel Wizard"
+    wh_wz_language: "Jazyk Wheel Wizard+"
     v_sync: "VSync"
     recommended: "Doporučené Nastavení"
     show_fps: "Zobrazit FPS"
@@ -380,7 +380,7 @@ cs:
     performance: "Nastavení Výkonu"
     renderer: "Nastavení Vykreslování"
     location_paths: "Nastavení Umístění"
-    wh_wz_appearance: "Vzhled Wheel Wizard"
+    wh_wz_appearance: "Vzhled Wheel Wizard+"
     installation: "Instalace"
   helper_text:
     topbar:
@@ -388,7 +388,7 @@ cs:
     launch_with_dolphin: "Spustí hlavní okno Dolphin spolu s hrou"
     30_fps: "Toto nastavení donutí hru běžet za 30 FPS (výchozí je 60)"
     end_with_exe: "Cesta musí končit .exe"
-    enable_animations: "To aktivuje animace v aplikaci Wheel Wizard"
+    enable_animations: "To aktivuje animace v aplikaci Wheel Wizard+"
     end_with_x: "Cesta může končit:"
     optional: "Volitelný"
     must_set_paths: "Musíš nastavit tyto 3 cesty než začneš hrát Retro Rewind."

@@ -147,6 +147,89 @@ public class GhostsPageTests
     }
 
     [AvaloniaFact]
+    public void ClickingGap_ListsTheFurthestTracksFirst_AndUndoPutsBackTheReplacedGhost()
+    {
+        var files = new MockFileSystem();
+        var root = files.Path.GetFullPath("/rr6");
+        files.Directory.CreateDirectory(files.Path.Combine(root, "Ghosts", "ExpertsRT"));
+        files.File.WriteAllText(
+            files.Path.Combine(root, "Ghosts", GhostTrackTable.RetroFile),
+            "SNES Mario Circuit 1 = 12345678\nGCN Peach Beach = 23456789\n"
+        );
+        files.File.WriteAllText(files.Path.Combine(root, "Ghosts", GhostTrackTable.CustomFile), "");
+        var paths = Substitute.For<ICustomDistributionPaths>();
+        paths.RetroRewindFolderPath.Returns(root);
+        var importer = new GhostImporter(paths, files);
+        var mario = importer.LoadTracks(GhostKind.Retro)[0];
+        var peach = importer.LoadTracks(GhostKind.Retro)[1];
+        Assert.True(importer.ImportData(Ghost(1, 25, 0), mario, 150).Success); // +1.140 behind
+        Assert.True(importer.ImportData(Ghost(2, 0, 0), peach, 150).Success); // +20.000 behind
+
+        var marioRecord = Record("SNES Mario Circuit 1", 83860, "1:23.860");
+        var peachRecord = Record("GCN Peach Beach", 100000, "1:40.000");
+        peachRecord.TrackId = 2;
+        var api = Substitute.For<IRwfcApi>();
+        api.GetTimeTrialTracksAsync()
+            .Returns(
+                [
+                    new RwfcTimeTrialTrack
+                    {
+                        Id = 1,
+                        Name = "SNES Mario Circuit 1",
+                        Category = "retro",
+                        Laps = 3,
+                    },
+                    new RwfcTimeTrialTrack
+                    {
+                        Id = 2,
+                        Name = "GCN Peach Beach",
+                        Category = "retro",
+                        Laps = 3,
+                    },
+                ]
+            );
+        api.GetTimeTrialRecordsAsync(150, null, null, null).Returns([marioRecord, peachRecord]);
+
+        var page = new GhostsPage(importer, Substitute.For<IFilePickerService>(), new DirectCaller(api));
+        var window = new Window
+        {
+            Content = page,
+            Width = 440,
+            Height = 860,
+        };
+        window.Show();
+        Settle();
+
+        double Top(string track) =>
+            window
+                .GetVisualDescendants()
+                .OfType<TextBlock>()
+                .First(block => block.Text == track && block.IsEffectivelyVisible)
+                .TranslatePoint(default, window)!
+                .Value.Y;
+
+        Assert.True(Top("SNES Mario Circuit 1") < Top("GCN Peach Beach"));
+        Assert.Contains("+20.000", Texts(window));
+
+        Click(window, "Gap");
+        Assert.Contains("Gap ▼", Texts(window));
+        Assert.True(Top("GCN Peach Beach") < Top("SNES Mario Circuit 1"));
+
+        // Replace Peach Beach's ghost; its row now offers Undo for the old one.
+        Assert.True(importer.ImportData(Ghost(1, 50, 0), peach, 150).Success);
+        Click(window, "GCN Peach Beach");
+        Press(window, "Undo 150cc");
+        Settle();
+        Assert.Equal(new TimeSpan(0, 0, 2, 0, 0), importer.CurrentTime(peach, 150));
+        Assert.Contains("2:00.000", Texts(window));
+
+        // Gap again goes back to the game's order.
+        Click(window, "Gap ▼");
+        Assert.True(Top("SNES Mario Circuit 1") < Top("GCN Peach Beach"));
+        window.Close();
+    }
+
+    [AvaloniaFact]
     public void ADownloadedGhost_ShowsItsTimeOnThePage_StraightAway()
     {
         var files = new MockFileSystem();

@@ -29,6 +29,9 @@ public sealed class GhostsPage : UserControl
     private static TimeTrialFilter _filter = new();
     private static bool _noGlitch;
 
+    // Whether the tracks are listed by how far your ghost is from the record, the furthest first, instead of in the game's order.
+    private static bool _sortByGap;
+
     private readonly GhostImporter _importer;
     private readonly IFilePickerService _filePicker;
     private readonly IApiCaller<IRwfcApi> _api;
@@ -40,6 +43,7 @@ public sealed class GhostsPage : UserControl
     private readonly ContentControl _importCard = new() { IsVisible = false };
     private readonly TextBlock _status;
     private readonly TextBlock _yoursHeading;
+    private readonly TextBlock _gapHeading;
 
     private GhostTrack? _open;
     private Dictionary<(GhostKind, int), TimeSpan?> _times = [];
@@ -193,15 +197,25 @@ public sealed class GhostsPage : UserControl
             Margin = new Thickness(12, 0),
         };
         _yoursHeading = Heading("Yours", HorizontalAlignment.Center);
+        _gapHeading = Heading("Gap", HorizontalAlignment.Center);
+        _gapHeading.Background = Brushes.Transparent;
+        _gapHeading.Cursor = new Cursor(StandardCursorType.Hand);
+        _gapHeading.PointerReleased += (_, e) =>
+        {
+            if (e.InitialPressMouseButton != MouseButton.Left)
+                return;
+            _sortByGap = !_sortByGap;
+            ShowTable();
+        };
         Control[] headings =
         [
             Heading("Track", HorizontalAlignment.Left),
             _yoursHeading,
             Heading("WR", HorizontalAlignment.Center),
-            Heading("Gap", HorizontalAlignment.Center),
+            _gapHeading,
         ];
         ToolTip.SetTip(headings[2], "The world record for these filters");
-        ToolTip.SetTip(headings[3], "How far your ghost is from the world record");
+        ToolTip.SetTip(headings[3], "How far your ghost is from the world record. Click to list the furthest first.");
         for (var i = 0; i < headings.Length; i++)
         {
             Grid.SetColumn(headings[i], i);
@@ -449,6 +463,9 @@ public sealed class GhostsPage : UserControl
 
         // Each ghost file is read once per redraw: the count and the rows share it.
         _times = all.ToDictionary(track => (track.Kind, track.Index), track => _importer.CurrentTime(track, _filter.Cc));
+        _gapHeading.Text = _sortByGap ? "Gap ▼" : "Gap";
+        if (_sortByGap && _records is not null)
+            tracks = tracks.OrderBy(track => GapMs(track) is null).ThenByDescending(track => GapMs(track) ?? 0).ToList();
         var withGhost = _times.Values.Count(time => time is not null);
         _summary.Text =
             _candidates is not null ? $"{tracks.Count} {(tracks.Count == 1 ? "track fits" : "tracks fit")} this ghost"
@@ -464,6 +481,17 @@ public sealed class GhostsPage : UserControl
 
         for (var i = 0; i < tracks.Count; i++)
             _rows.Children.Add(Row(tracks[i], i % 2 == 1));
+    }
+
+    // Milliseconds your ghost is behind the record (zero or less when it is the record), or null without a ghost or a record.
+    private int? GapMs(GhostTrack track)
+    {
+        var key = (track.Kind, track.Index);
+        if (_records is null || !_records.TryGetValue(key, out var record) || record is null)
+            return null;
+        return _times.TryGetValue(key, out var time) && time is { } yours
+            ? (int)Math.Round(yours.TotalMilliseconds) - record.FinishTimeMs
+            : null;
     }
 
     private static bool Same(GhostTrack? a, GhostTrack? b) => a is not null && b is not null && a.Kind == b.Kind && a.Index == b.Index;
@@ -570,6 +598,25 @@ public sealed class GhostsPage : UserControl
             var chosen = speed;
             export.Click += async (_, _) => await ExportAsync(track, chosen);
             panel.Children.Add(export);
+        }
+
+        foreach (var speed in new[] { 150, 200 })
+        {
+            if (_importer.Previous(track, speed) is not { } previous)
+                continue;
+            var undo = Button(
+                $"Undo {speed}cc",
+                null,
+                $"Put back the ghost this track had before ({GhostFile.Format(previous.Time)}); the current one is kept"
+            );
+            undo.Margin = new Thickness(0, 0, 6, 6);
+            var chosen = speed;
+            undo.Click += (_, _) =>
+            {
+                Say(_importer.RestorePrevious(track, chosen).Message);
+                ShowTable();
+            };
+            panel.Children.Add(undo);
         }
 
         var top = Button("Get top ghost", "Download", "This track's fastest times on rwfc.net/tt, with these filters");

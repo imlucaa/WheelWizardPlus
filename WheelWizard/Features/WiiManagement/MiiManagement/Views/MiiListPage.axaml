@@ -9,6 +9,9 @@
               x:Class="WheelWizard.WiiManagement.MiiManagement.Views.MiiListPage"
         xmlns:miis="clr-namespace:WheelWizard.WiiManagement.MiiManagement.Views">
     <UserControl.Styles>
+        <Style Selector="TextBlock.OnlineMiiFriendCode:pointerover">
+            <Setter Property="Foreground" Value="{DynamicResource Neutral50}" />
+        </Style>
         <Style Selector="Border.MiiModeSwitcherCard">
             <Setter Property="Background" Value="{DynamicResource LauncherPanelBrush}" />
             <Setter Property="BorderBrush" Value="Transparent" />
@@ -279,7 +282,7 @@
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <miis:MiiBlock Width="108" Height="108" Margin="6,8"
-                                                                Mii="{Binding Mii}" IsGlobal="{Binding IsGlobal}"
+                                                                Mii="{Binding Mii}"
                                                                 GroupName="{Binding SelectionGroup}"
                                                                 IsChecked="{Binding IsSelected, Mode=TwoWay}"
                                                                 Click="MiiBlock_OnClick">
@@ -354,7 +357,9 @@
                     <StackPanel Grid.Column="3" Spacing="3" VerticalAlignment="Center" Margin="4,0,0,0">
                         <TextBlock x:Name="OnlineMiiName" Text="Select a player to preview their Mii"
                                    TextWrapping="Wrap" TextAlignment="Center" HorizontalAlignment="Center" FontSize="16" FontWeight="Bold" MaxLines="2" TextTrimming="CharacterEllipsis" />
-                        <TextBlock x:Name="OnlineMiiFriendCode" Classes="TinyText" HorizontalAlignment="Center" TextAlignment="Center" Foreground="{DynamicResource Neutral400}" />
+                        <TextBlock x:Name="OnlineMiiFriendCode" Classes="TinyText OnlineMiiFriendCode" HorizontalAlignment="Center" TextAlignment="Center"
+                                   Foreground="{DynamicResource Neutral400}" Cursor="Hand" ToolTip.Tip="Click to copy"
+                                   PointerPressed="OnlineMiiFriendCode_OnPointerPressed" />
                         <TextBlock x:Name="OnlineMiiLookupStatus" Classes="TinyText" TextWrapping="Wrap" TextAlignment="Center" HorizontalAlignment="Center"
                                    Foreground="{DynamicResource Neutral400}" />
                         <components:Button x:Name="ImportOnlineMiiButton" Text="{loc:T action.import}"

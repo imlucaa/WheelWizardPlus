@@ -12,14 +12,14 @@ public class MacApplicationMenuTests
         var app = new App(() => throw new InvalidOperationException("Startup should not run during initialization."));
         app.Initialize();
 
-        Assert.Equal("Wheel Wizard", app.Name);
+        Assert.Equal("Wheel Wizard+", app.Name);
         if (!OperatingSystem.IsMacOS())
             return;
 
         var menu = NativeMenu.GetMenu(app);
         Assert.NotNull(menu);
         Assert.Equal(
-            new[] { "About Wheel Wizard…", "Settings…", "GitHub", "Discord", "Support Wheel Wizard" },
+            new[] { "About Wheel Wizard+…", "Settings…", "GitHub", "Discord", "Support Wheel Wizard+" },
             menu.Items.OfType<NativeMenuItem>().Where(item => item is not NativeMenuItemSeparator).Select(item => item.Header)
         );
     }

@@ -139,6 +139,9 @@ public partial class ThemesPage : UserControl
             MinimalHomeArtworkCheckBox.IsChecked = SettingsService.LAUNCHER_MINIMAL_HOME_ARTWORK.Get();
             HideHomeTitleCheckBox.IsChecked = SettingsService.LAUNCHER_HIDE_HOME_TITLE.Get();
             CleanSidebarCheckBox.IsChecked = SettingsService.LAUNCHER_CLEAN_SIDEBAR.Get();
+            ProfileOutlineCheckBox.IsChecked = SettingsService.LAUNCHER_PROFILE_OUTLINE.Get();
+            ProfileOutlineOpacitySlider.Value = SettingsService.LAUNCHER_PROFILE_OUTLINE_OPACITY.Get();
+            ProfileOutlineOpacitySlider.IsEnabled = ProfileOutlineCheckBox.IsChecked == true;
             FontFileText.Text = string.IsNullOrWhiteSpace(SettingsService.LAUNCHER_FONT.Get())
                 ? t("theme.default")
                 : SettingsService.LAUNCHER_FONT.Get();
@@ -285,6 +288,12 @@ public partial class ThemesPage : UserControl
             SettingsService.Set(SettingsService.LAUNCHER_SURFACE_OPACITY, e.NewValue);
     }
 
+    private void ProfileOutlineOpacity_OnChanged(object? sender, Avalonia.Controls.Primitives.RangeBaseValueChangedEventArgs e)
+    {
+        if (!_loadingAppearance)
+            SettingsService.Set(SettingsService.LAUNCHER_PROFILE_OUTLINE_OPACITY, e.NewValue);
+    }
+
     private void AppearanceToggle_OnChanged(object? sender, RoutedEventArgs e)
     {
         if (_loadingAppearance)
@@ -292,6 +301,8 @@ public partial class ThemesPage : UserControl
         SettingsService.Set(SettingsService.LAUNCHER_MINIMAL_HOME_ARTWORK, MinimalHomeArtworkCheckBox.IsChecked == true);
         SettingsService.Set(SettingsService.LAUNCHER_HIDE_HOME_TITLE, HideHomeTitleCheckBox.IsChecked == true);
         SettingsService.Set(SettingsService.LAUNCHER_CLEAN_SIDEBAR, CleanSidebarCheckBox.IsChecked == true);
+        SettingsService.Set(SettingsService.LAUNCHER_PROFILE_OUTLINE, ProfileOutlineCheckBox.IsChecked == true);
+        ProfileOutlineOpacitySlider.IsEnabled = ProfileOutlineCheckBox.IsChecked == true;
     }
 
     private async void ImportFont_OnClick(object? sender, RoutedEventArgs e)

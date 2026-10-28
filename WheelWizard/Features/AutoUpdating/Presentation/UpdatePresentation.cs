@@ -1,11 +1,12 @@
 ﻿using Avalonia.Threading;
 using WheelWizard.AutoUpdating;
 using WheelWizard.Shared.Downloads;
+using WheelWizard.Shared.Platform;
 using WheelWizard.Views.Dialogs;
 
 namespace WheelWizard.AutoUpdating.Presentation;
 
-public sealed class UpdatePresentation : IUpdatePresentation
+public sealed class UpdatePresentation(IRuntimeEnvironment environment) : IUpdatePresentation
 {
     public async Task<bool> ConfirmUpdateAsync(string latestVersion, string currentVersion) =>
         await Dispatcher.UIThread.InvokeAsync(
@@ -13,7 +14,7 @@ public sealed class UpdatePresentation : IUpdatePresentation
                 new YesNoWindow()
                     .SetButtonText(t("action.update"), t("action.maybe_later"))
                     .SetMainText("Update available")
-                    .SetExtraText($"BetterWheelWizard {latestVersion} is out. You have {currentVersion}.")
+                    .SetExtraText($"Wheel Wizard+ {latestVersion} is out. You have {currentVersion}.")
                     .AwaitAnswer()
         );
 
@@ -23,7 +24,7 @@ public sealed class UpdatePresentation : IUpdatePresentation
                 new YesNoWindow()
                     .SetButtonText(t("action.update"), t("action.maybe_later"))
                     .SetMainText("Update available")
-                    .SetExtraText($"BetterWheelWizard {latestVersion} is out. You have {currentVersion}.\n\nWhat's new:\n{releaseNotes}")
+                    .SetExtraText($"Wheel Wizard+ {latestVersion} is out. You have {currentVersion}.\n\nWhat's new:\n{releaseNotes}")
                     .AwaitAnswer()
         );
 
@@ -48,25 +49,29 @@ public sealed class UpdatePresentation : IUpdatePresentation
             () =>
                 new MessageBoxWindow()
                     .SetMessageType(MessageBoxWindow.MessageType.Warning)
-                    .SetTitleText("Unable to update BetterWheelWizard")
+                    .SetTitleText("Unable to update Wheel Wizard+")
                     .SetInfoText(message)
                     .ShowDialog()
         );
 
     public async Task ShowManualUpdateAsync(string latestVersion, string currentVersion) =>
-        await Dispatcher.UIThread.InvokeAsync(
-            () =>
-                new MessageBoxWindow()
-                    .SetTitleText("New Wheel Wizard version")
-                    .SetWindowTitle("Update available")
-                    .SetTag($"v{latestVersion}")
-                    .SetInfoText(
-                        $"There is a new Wheel Wizard version available!\nVersion {latestVersion} (You are currently on {currentVersion})\n\n"
-                            + "You can manually update it by going to the GitHub releases at:"
-                    )
-                    .SetLink("https://github.com/imlucaa/BetterWheelWizard/releases")
-                    .Show()
-        );
+        await Dispatcher.UIThread.InvokeAsync(() =>
+        {
+            var message = new MessageBoxWindow()
+                .SetTitleText("New Wheel Wizard+ version")
+                .SetWindowTitle("Update available")
+                .SetTag($"v{latestVersion}")
+                .SetInfoText(
+                    $"There is a new Wheel Wizard+ version available!\nVersion {latestVersion} (You are currently on {currentVersion})\n\n"
+                        + (
+                            environment.IsLinux
+                                ? "Update Wheel Wizard+ through your package manager.\n\nRelease details:"
+                                : "You can manually update it by going to the GitHub releases at:"
+                        )
+                );
+            message.SetLink("https://github.com/imlucaa/WheelWizardPlus/releases");
+            message.Show();
+        });
 
     public async Task<OperationResult> RunUpdateAsync(
         Func<IProgress<DownloadProgress>, CancellationToken, Task<OperationResult>> operation

@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using WheelWizard.AutoUpdating;
 using WheelWizard.GameBanana.InstallRequests;
 using WheelWizard.Launching;
+using WheelWizard.Models.Enums;
 using WheelWizard.Mods;
 using WheelWizard.Settings;
 using WheelWizard.WheelWizardData;
@@ -20,7 +21,7 @@ public sealed class ApplicationStartup(
     IWhWzDataSingletonService badges,
     IApplicationLiveUpdates liveUpdates,
     ISettingsManager settings,
-    IRetroRewindLaunchService launch,
+    ILauncherProvider launchers,
     ILogger<ApplicationStartup> logger
 ) : IApplicationStartup
 {
@@ -54,8 +55,16 @@ public sealed class ApplicationStartup(
 
             if (options.LaunchRetroRewind || (!openedProtocol && settings.Get<bool>(settings.LAUNCH_RR_ON_STARTUP)))
             {
-                // #todo: (#484) use the active launcher for startup too, and test both dolphin and recomp.
-                var result = await launch.LaunchAsync().WaitAsync(cancellationToken);
+                var launcher = launchers.GetActiveLauncher();
+                // With an update out, launching now would start the old version every time. The Update button on Home
+                // takes care of it, so the automatic launch waits for that. Anything else (offline, unknown) still launches.
+                if (await launcher.GetCurrentStatus().WaitAsync(cancellationToken) == WheelWizardStatus.OutOfDate)
+                {
+                    logger.LogInformation("Retro Rewind has an update, so it was not launched on startup.");
+                    return;
+                }
+
+                var result = await launcher.Launch().WaitAsync(cancellationToken);
                 if (result.IsFailure)
                     logger.LogError(result.Error.Exception, "Failed to launch Retro Rewind on startup: {Message}", result.Error.Message);
             }

@@ -9,6 +9,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 using WheelWizard.RrRooms;
 using WheelWizard.Shared.Desktop.Storage;
 using WheelWizard.Shared.Services;
@@ -41,6 +42,9 @@ public partial class OverlaySettings : UserControl
     private readonly IApiCaller<IRwfcApi> _api;
     private readonly OverlayLive _live;
     private readonly OverlayBackground _background;
+    private readonly IRoomPresence _presence;
+    private readonly DispatcherTimer _poll = new();
+    private int? _lastVr;
     private string _loadedImage = string.Empty;
     private int _lookupVersion;
     private readonly List<Action> _syncs = [];
@@ -68,9 +72,11 @@ public partial class OverlaySettings : UserControl
         IFilePickerService filePicker,
         IApiCaller<IRwfcApi> api,
         OverlayLive live,
-        OverlayBackground background
+        OverlayBackground background,
+        IRoomPresence presence
     )
     {
+        _presence = presence;
         _background = background;
         _api = api;
         _live = live;
@@ -134,16 +140,19 @@ public partial class OverlaySettings : UserControl
     private static string Link => OverlayLive.LocalUrl;
 
     /// <summary>Loads the name, VR and rank of the typed friend code, so the preview shows that player.</summary>
-    private async void LookupPlayerAsync()
+    private async void LookupPlayerAsync(bool refresh = false)
     {
-        var version = ++_lookupVersion;
+        // A refresh waits its turn: it must not cancel a lookup of a code that was just typed.
+        var version = refresh ? _lookupVersion : ++_lookupVersion;
         if (!HasValidCode)
         {
             _preview.SetPlayer(null, null, null);
             return;
         }
 
-        await Task.Delay(500);
+        // A refresh keeps what is shown when it fails, and is not held back by typing.
+        if (!refresh)
+            await Task.Delay(500);
         if (version != _lookupVersion)
             return;
 
@@ -155,7 +164,8 @@ public partial class OverlaySettings : UserControl
 
         if (result.IsFailure || result.Value is null)
         {
-            _preview.SetPlayer(null, null, null);
+            if (!refresh)
+                _preview.SetPlayer(null, null, null);
             return;
         }
 
@@ -165,7 +175,12 @@ public partial class OverlaySettings : UserControl
             && MiiSerializer.Deserialize(result.Value.MiiData) is { IsSuccess: true } parsed
         )
             mii = parsed.Value;
-        _preview.SetPlayer(result.Value.Name, result.Value.Vr, result.Value.Rank, mii);
+        var vr = OverlayLive.CurrentVr(_presence, code, result.Value.Vr, await OverlayLive.RoomVrAsync(_api, code));
+        var moved = refresh && _lastVr is { } before && vr != before;
+        _lastVr = vr;
+        _preview.SetPlayer(result.Value.Name, vr, result.Value.Rank, mii, samePlayer: refresh);
+        if (moved)
+            _preview.Replay();
     }
 
     /// <summary>
@@ -177,7 +192,7 @@ public partial class OverlaySettings : UserControl
         if (OverlayWindow.Current is not null)
             OverlayWindow.CloseIfOpen();
         else
-            OverlayWindow.ShowOrActivate(_config, _api, _live, _background);
+            OverlayWindow.ShowOrActivate(_config, _api, _live, _background, _presence);
     }
 
     private void UpdateWindowButton() => WindowButton.Text = OverlayWindow.Current is null ? "Open as window" : "Close window";
@@ -187,11 +202,25 @@ public partial class OverlaySettings : UserControl
         base.OnAttachedToVisualTree(e);
         OverlayWindow.OpenChanged += UpdateWindowButton;
         UpdateWindowButton();
+        // The preview follows the player like the overlay does, instead of showing the VR from when the page opened.
+        _poll.Tick += Poll_OnTick;
+        _poll.Interval = PollInterval();
+        _poll.Start();
+    }
+
+    private TimeSpan PollInterval() => TimeSpan.FromSeconds(Math.Clamp(_config.GetNumber("data.pollSeconds"), 5, 600));
+
+    private void Poll_OnTick(object? sender, EventArgs e)
+    {
+        _poll.Interval = PollInterval();
+        LookupPlayerAsync(refresh: true);
     }
 
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
         OverlayWindow.OpenChanged -= UpdateWindowButton;
+        _poll.Stop();
+        _poll.Tick -= Poll_OnTick;
         base.OnDetachedFromVisualTree(e);
     }
 

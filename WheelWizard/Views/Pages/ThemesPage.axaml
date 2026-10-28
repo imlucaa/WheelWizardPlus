@@ -268,6 +268,16 @@
                                                        IsCheckedChanged="AppearanceToggle_OnChanged" />
                             <components:ToggleCheckBox x:Name="CleanSidebarCheckBox" Content="{loc:T theme.clean_sidebar}"
                                                        IsCheckedChanged="AppearanceToggle_OnChanged" />
+                            <components:ToggleCheckBox x:Name="ProfileOutlineCheckBox" Content="Outline around your profile"
+                                                       IsCheckedChanged="AppearanceToggle_OnChanged" />
+                            <Grid ColumnDefinitions="*,180" ColumnSpacing="12" Margin="30,0,0,0">
+                                <StackPanel VerticalAlignment="Center" Spacing="1">
+                                    <TextBlock Text="Outline opacity" FontWeight="SemiBold" FontSize="14" />
+                                    <TextBlock Text="How strong the outline is" Classes="TinyText" TextWrapping="Wrap" />
+                                </StackPanel>
+                                <Slider Grid.Column="1" x:Name="ProfileOutlineOpacitySlider" Minimum="0" Maximum="1"
+                                        TickFrequency="0.05" VerticalAlignment="Center" ValueChanged="ProfileOutlineOpacity_OnChanged" />
+                            </Grid>
                         </StackPanel>
 
                         <Border Height="1" Background="{DynamicResource Neutral800}" />

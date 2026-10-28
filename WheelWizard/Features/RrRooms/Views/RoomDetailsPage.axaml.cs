@@ -86,9 +86,10 @@ public partial class RoomDetailsPage : UserControl, INotifyPropertyChanged, IPol
         GameDataService = gameDataService;
         MiiDbService = miiDbService;
         SettingsService = settingsService;
+        // Set before the page is built, or every Room.* binding is evaluated against null and logs a warning.
+        _room = room;
         InitializeComponent();
         DataContext = this;
-        Room = room;
 
         PlayerFlags.Apply([Room], PlayerFlags.Load(SettingsService));
         PlayersList = new(Room.Players);

@@ -35,13 +35,21 @@ public sealed class OverlayWindow : Window
     private readonly OverlayLive _live;
     private readonly OverlayBackground _background;
     private readonly OverlayPreview _preview;
+    private readonly IRoomPresence? _presence;
     private readonly DispatcherTimer _poll = new();
     private string _loadedImage = string.Empty;
     private int? _lastVr;
+    private string _shownCode = string.Empty;
     private bool _loading;
 
     /// <summary>Opens the overlay window, or brings it forward when it is already open.</summary>
-    public static void ShowOrActivate(OverlayConfig config, IApiCaller<IRwfcApi> api, OverlayLive live, OverlayBackground background)
+    public static void ShowOrActivate(
+        OverlayConfig config,
+        IApiCaller<IRwfcApi> api,
+        OverlayLive live,
+        OverlayBackground background,
+        IRoomPresence? presence = null
+    )
     {
         if (_open is not null)
         {
@@ -49,13 +57,20 @@ public sealed class OverlayWindow : Window
             return;
         }
 
-        _open = new OverlayWindow(config, api, live, background);
+        _open = new OverlayWindow(config, api, live, background, presence);
         _open.Show();
         OpenChanged?.Invoke();
     }
 
-    private OverlayWindow(OverlayConfig config, IApiCaller<IRwfcApi> api, OverlayLive live, OverlayBackground background)
+    private OverlayWindow(
+        OverlayConfig config,
+        IApiCaller<IRwfcApi> api,
+        OverlayLive live,
+        OverlayBackground background,
+        IRoomPresence? presence
+    )
     {
+        _presence = presence;
         _config = config;
         _api = api;
         _live = live;
@@ -160,9 +175,18 @@ public sealed class OverlayWindow : Window
             )
                 mii = parsed.Value;
 
-            var moved = _lastVr is { } before && result.Value.Vr != before;
-            _lastVr = result.Value.Vr;
-            _preview.SetPlayer(result.Value.Name, result.Value.Vr, result.Value.Rank, mii);
+            // Another license picked in Settings is another player: start the change from zero.
+            var samePlayer = code == _shownCode;
+            if (!samePlayer)
+            {
+                _shownCode = code;
+                _lastVr = null;
+            }
+
+            var vr = OverlayLive.CurrentVr(_presence, code, result.Value.Vr, await OverlayLive.RoomVrAsync(_api, code));
+            var moved = _lastVr is { } before && vr != before;
+            _lastVr = vr;
+            _preview.SetPlayer(result.Value.Name, vr, result.Value.Rank, mii, samePlayer);
             if (moved)
                 _preview.Replay();
         }

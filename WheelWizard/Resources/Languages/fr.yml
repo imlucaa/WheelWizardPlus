@@ -208,7 +208,7 @@ fr:
       Pour rejoindre une salle spécifique, vous devez soit la rejoindre via un ami, soit espérer la rejoindre via les serveurs en ligne.
     friends_page_disclaimer: "Pour ajouter des amis, rendez-vous en jeu."
     region_user_selection: "Ceci montre les régions dans lesquelles VOUS avez joué"
-    primary_profile: "Le profil principal est utilisé en tant que référence dans Wheel Wizard"
+    primary_profile: "Le profil principal est utilisé en tant que référence dans Wheel Wizard+"
   empty_content:
     no_profiles: "Vous devez lancer le jeu au moins une fois pour voir vos profils apparaître ici"
     no_friends_title: "Pas d'amis pour le moment !"
@@ -241,8 +241,8 @@ fr:
     installing_mods_count: "Installation de %{amount} mods"
     processing_xof_y: "Traitement de %{processed} sur %{total} fichiers"
     update_rr: "Mise à jour de Retro Rewind"
-    latest_wh_wz_github: "Obtention de la dernière version de Wheel Wizard depuis Github"
-    update_wh_wz: "Mise à jour de Wheel Wizard"
+    latest_wh_wz_github: "Obtention de la dernière version de Wheel Wizard+ depuis Github"
+    update_wh_wz: "Mise à jour de Wheel Wizard+"
     installing_rr: "Installation de Retro Rewind"
     installing_rr_first_time: "Installation de Retro Rewind pour la première fois"
     installing_dolphin: "Installation de Dolphin Emulator"
@@ -296,9 +296,9 @@ fr:
       title: "Voulez-vous appliquer la nouvelle échelle ?"
       extra: "Cette modification va être rétablie dans %{remainingTime} sauf si vous choisissez de la garder."
     move_data:
-      title: "Déplacer les données de Wheel Wizard ?"
+      title: "Déplacer les données de Wheel Wizard+ ?"
       extra: |-
-        Wheel Wizard déplacera ses fichiers vers:
+        Wheel Wizard+ déplacera ses fichiers vers:
         %{path}
         Cela peut prendre un moment selon la quantité de données.
     dolphin_found:
@@ -319,8 +319,8 @@ fr:
 
         Émulateur Dolphin trouvé. Voulez-vous l'utiliser ?
     new_version_wh_wz:
-      title: "Mise à jour de Wheel Wizard disponible !"
-      extra: "La version %{latestVersion} de Wheel Wizard est disponible (Version actuelle: %{currentVersion}). Voulez-vous mettre à jour maintenant ?"
+      title: "Mise à jour de Wheel Wizard+ disponible !"
+      extra: "La version %{latestVersion} de Wheel Wizard+ est disponible (Version actuelle: %{currentVersion}). Voulez-vous mettre à jour maintenant ?"
     update_admin:
       title: "Mettre à jour en Administrateur"
       extra: "Parfois, une mise à jour demande les droits d'admin. Voulez-vous les activer pour cette mise à jour ?"
@@ -375,7 +375,7 @@ fr:
     dolphin_version_unverified:
       title: "Nous n'avons pas pu vérifier la version de votre émulateur Dolphin"
       extra: |-
-        Wheel Wizard n'a pas pu lire la version de l'émulateur Dolphin que vous avez installé, donc il ne peut pas déterminer si l'émulateur a les correctifs de sécurité.
+        Wheel Wizard+ n'a pas pu lire la version de l'émulateur Dolphin que vous avez installé, donc il ne peut pas déterminer si l'émulateur a les correctifs de sécurité.
 
         Vérifiez que vous êtes sur la version %{minimumVersion} ou ultérieure. Les anciennes versions ont une faille de sécurité connue qui permet aux fichiers de jeu, mods, ou tricheurs en ligne d'infecter votre PC avec des logiciels malveillants.
     dolphin_tool_selected:
@@ -387,12 +387,12 @@ fr:
     unable_update_wh_wz:
       extra:
         reason_network: |-
-          Impossible de vérifier si Wheel Wizard est mis à jour.
+          Impossible de vérifier si Wheel Wizard+ est mis à jour.
           Vous avez peut-être des problèmes de connexion.
         reason_location: |-
-          Impossible de mettre à jour Wheel Wizard. Veuillez bien vérifier que l'application se trouve dans un dossier dans lequel on peut écrire.
+          Impossible de mettre à jour Wheel Wizard+. Veuillez bien vérifier que l'application se trouve dans un dossier dans lequel on peut écrire.
           Nous n'avons pas pu trouver le dossier actuel.
-      title: "Impossible de mettre à jour Wheel Wizard."
+      title: "Impossible de mettre à jour Wheel Wizard+."
     no_connect_server:
       extra: "Nous n'avons pas pu nous connecter au serveur. Veuillez réessayer plus tard."
       title: "Nous n'avons pas pu nous connecter au serveur"
@@ -432,7 +432,7 @@ fr:
         failed_update_delete: "Échec de la suppression de fichiers pour la mise à jour. Annulation"
         failed_update_apply: "Échec d'application de la mise à jour. Annulation."
         invalid_file_path: |-
-          Le chemin du fichier est incorrect. Veuillez contacter les développeurs de Wheel Wizard.
+          Le chemin du fichier est incorrect. Veuillez contacter les développeurs de Wheel Wizard+.
           Erreur Serveur: %{error}
       title: "Annulation de la mise à jour de RR"
     restart_admin_fail:
@@ -459,7 +459,7 @@ fr:
     data_folder_moved:
       title: "Mise à jour du dossier de données"
       extra: |-
-        Les données de Wheel Wizard sont désormais ici:
+        Les données de Wheel Wizard+ sont désormais ici:
         %{path}
     rr_up_to_date:
       title: "Retro Rewind est bien à jour."
@@ -496,7 +496,7 @@ fr:
     mii_failure_create: "Échec de la création du Mii '%{error}'"
     mii_failure_duplicate: "Échec de la copie des Miis '%{error}'"
   helper_note:
-    name_must_between: "Les noms doivent être composés de 3 à 10 caractères."
+    name_must_between: "Les noms doivent être composés de 1 à 10 caractères."
     creator_name_less11: "Le nom de l'auteur doit faire moins de 11 caractères."
     creator_name_less10: "Le nom de l'auteur doit faire moins de 10 caractères."
   file_picker:
@@ -521,7 +521,7 @@ fr:
     unsupported_loose_override_extension: "%{fileName} utilise une extension de remplacement loose non prise en charge (.kcl, .kmp, .slt)."
     whole_file_baseline: "Ce SZS est stocké comme base de références du fichier complet. Exportation d’un remplacement du fichier complet."
   option:
-    wh_wz_language: "Langue de Wheel Wizard"
+    wh_wz_language: "Langue de Wheel Wizard+"
     force_disable_wiimote: "Forcer la désactivation des Wiimotes"
     launch_with_dolphin: "Lancer le jeu avec la fenêtre de Dolphin"
     launch_rr_on_startup: "Lancer Retro Rewind au démarrage"
@@ -535,7 +535,7 @@ fr:
     renderer: "Moteur de Rendu"
     window_scale: "Taille de la fenêtre"
     open_config: "Ouvrir le dossier de configuration"
-    wheel_wizard_data_folder: "Dossier de données Wheel Wizard"
+    wheel_wizard_data_folder: "Dossier de données Wheel Wizard+"
     retro_rewind_folder: "Dossier de Retro Rewind"
     reset_data_folder: "Utiliser le chemin par défaut"
     dolphin_user_path: "Dossier d'utilisateur Dolphin"
@@ -562,7 +562,7 @@ fr:
     performance: "Paramètres de performance"
     renderer: "Paramètres de Rendu"
     location_paths: "Paramètres de localisation"
-    wh_wz_appearance: "Apparence de Wheel Wizard"
+    wh_wz_appearance: "Apparence de Wheel Wizard+"
     installation: "Installation"
     setup: "Configuration"
     recomp: "WiiCompiled (bêta)"
@@ -578,7 +578,7 @@ fr:
     recomp_dolphin_data_not_found: "Définissez un chemin vers le dossier utilisateur de Dolphin dans les paramètres de localisation. Il doit contenir un dossier Wii."
     recomp_prevent_stutters: "Lors de la compilation d'un shader, les objets qui en ont besoin sont ignorés pendant quelques frames au lieu de bloquer le jeu jusqu'à ce que la compilation soit terminée, provoquant un léger effet de \"pop-in\" au lieu d'un ralentissement"
     launch_with_dolphin: "Affichera la fenêtre d'accueil de Dolphin en plus de celle du jeu"
-    launch_rr_on_startup: "Démarre automatiquement Retro Rewind quand Wheel Wizard se lance"
+    launch_rr_on_startup: "Démarre automatiquement Retro Rewind quand Wheel Wizard+ se lance"
     installed_version: "Version installée : %{version}"
     force_disable_wiimote: "Ce paramètre désactivera les Wiimotes en jeu, mais les activera dans le menu Wii"
     resolution_scale: "1x est la résolution native"
@@ -586,12 +586,12 @@ fr:
     v_sync: "Synchronise la fréquence d'images par seconde (FPS) avec votre écran pour empêcher les déchirements d'écran."
     recommended: "Ce paramètre changera certains paramètres Dolphin pour réduire les saccades et les pics de lag"
     30_fps: "Ce paramètre forcera le jeu à tourner en 30 FPS (au lieu de 60)"
-    wheel_wizard_data_folder: "Choisissez là où Wheel Wizard stocke ses fichiers. Le déplacement peut prendre un moment."
+    wheel_wizard_data_folder: "Choisissez là où Wheel Wizard+ stocke ses fichiers. Le déplacement peut prendre un moment."
     retro_rewind_folder: "Ouvre le dossier qui contient les fichiers Retro Rewind installés."
     end_with_exe: "Le chemin doit se finir en .exe"
-    enable_animations: "Cette option active les animations dans l'application Wheel Wizard"
+    enable_animations: "Cette option active les animations dans l'application Wheel Wizard+"
     end_with_x: "Le chemin doit se finir avec:"
-    wh_wz_language: "Change uniquement la langue de Wheel Wizard, pas celle du jeu"
+    wh_wz_language: "Change uniquement la langue de Wheel Wizard+, pas celle du jeu"
     optional: "Optionnel"
     must_set_paths: "Vous devez impérativement définir ces 3 chemins afin de jouer à Retro Rewind"
     must_set_game_path: "Vous devez sélectionner votre fichier de jeu Mario Kart Wii avant de pouvoir jouer à WiiCompiled"

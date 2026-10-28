@@ -4,6 +4,7 @@ using System.IO.Abstractions;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
 using Avalonia.VisualTree;
 using Testably.Abstractions;
@@ -316,6 +317,18 @@ public partial class MiiListPage : UserControl
     {
         var digits = new string((friendCode ?? string.Empty).Where(char.IsDigit).ToArray());
         return digits.Length == 12 ? $"{digits[..4]}-{digits.Substring(4, 4)}-{digits.Substring(8, 4)}" : null;
+    }
+
+    private async void OnlineMiiFriendCode_OnPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        var friendCode = OnlineMiiFriendCode.Text;
+        if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed || string.IsNullOrWhiteSpace(friendCode))
+            return;
+        if (TopLevel.GetTopLevel(this)?.Clipboard is not { } clipboard)
+            return;
+
+        await clipboard.SetTextAsync(friendCode);
+        ViewUtils.ShowSnackbar("Friend code copied.");
     }
 
     private void SetOnlineMii(Mii mii, string playerName, string friendCode)
@@ -1204,7 +1217,7 @@ public partial class MiiListPage : UserControl
 
     public static string ReplaceInvalidFileNameChars(string filename)
     {
-        var invalid = Path.GetInvalidFileNameChars();
+        var invalid = new Testably.Abstractions.RealFileSystem().Path.GetInvalidFileNameChars();
         return string.Join("_", filename.Split(invalid, StringSplitOptions.RemoveEmptyEntries));
     }
 

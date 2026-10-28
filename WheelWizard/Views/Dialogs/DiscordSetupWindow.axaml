@@ -32,8 +32,21 @@
                 <components:InputField x:Name="AppIdBox" PlaceholderText="Application ID" MinWidth="0" />
             </StackPanel>
 
-            <!-- 3: image -->
+            <!-- 3: app icon -->
             <StackPanel x:Name="Step3" Spacing="10" IsVisible="False">
+                <TextBlock Text="Add an App icon" Classes="TitleText" FontSize="18"
+                           Foreground="{StaticResource FormFieldLabelColor}" />
+                <TextBlock Classes="BodyText" TextWrapping="Wrap"
+                           Text="On General Information, click the App Icon box and upload a picture, then Save Changes. This is the small square next to your name in Discord's member list; without it Discord shows a ?." />
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <components:Button Text="Open General Information" Variant="Default" Click="OpenInformation_OnClick" />
+                    <components:Button Text="Check again" Variant="Default" Click="CheckIcon_OnClick" />
+                </StackPanel>
+                <TextBlock x:Name="IconCheckText" Classes="TinyText" TextWrapping="Wrap" />
+            </StackPanel>
+
+            <!-- 4: image -->
+            <StackPanel x:Name="Step4" Spacing="10" IsVisible="False">
                 <TextBlock Text="Add your image" Classes="TitleText" FontSize="18"
                            Foreground="{StaticResource FormFieldLabelColor}" />
                 <TextBlock Classes="BodyText" TextWrapping="Wrap"
@@ -49,8 +62,8 @@
                 <TextBlock Classes="TinyText" Text="A new image can take up to 20 minutes to show." />
             </StackPanel>
 
-            <!-- 4: finish -->
-            <StackPanel x:Name="Step4" Spacing="10" IsVisible="False">
+            <!-- 5: finish -->
+            <StackPanel x:Name="Step5" Spacing="10" IsVisible="False">
                 <TextBlock Text="Done" Classes="TitleText" FontSize="18"
                            Foreground="{StaticResource FormFieldLabelColor}" />
                 <TextBlock x:Name="SummaryText" Classes="BodyText" TextWrapping="Wrap" />

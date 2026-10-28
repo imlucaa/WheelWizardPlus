@@ -81,7 +81,7 @@ public sealed partial class RrLoungeImages(IApplicationDataLocation? location)
         {
             Directory.CreateDirectory(Path.GetDirectoryName(file)!);
             var staging = file + ".part";
-            bitmap.Save(staging);
+            bitmap.Save(staging, new PngBitmapEncoderOptions());
             File.Move(staging, file, overwrite: true);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)

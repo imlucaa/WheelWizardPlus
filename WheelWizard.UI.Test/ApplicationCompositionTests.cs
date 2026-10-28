@@ -49,6 +49,8 @@ public class ApplicationCompositionTests
         var previousUiCulture = CultureInfo.CurrentUICulture;
         var previousDefaultCulture = CultureInfo.DefaultThreadCurrentCulture;
         var previousDefaultUiCulture = CultureInfo.DefaultThreadCurrentUICulture;
+        // Every page and the main window are built below; none may leave a binding that cannot reach its property.
+        using var bindingWarnings = new BindingWarningSink();
         var fileSystem = new MockFileSystem();
         var directory = Path.Combine(Path.GetTempPath(), "wheelwizard-ui-composition");
         fileSystem.Directory.CreateDirectory(directory);
@@ -61,6 +63,7 @@ public class ApplicationCompositionTests
         var modsLoaded = new TaskCompletionSource<OperationResult>();
         var mods = Substitute.For<IModManager>();
         mods.ReloadAsync().Returns(modsLoaded.Task);
+        mods.Mods.Returns([]);
         registrations.AddSingleton(mods);
         TimerCallback? expire = null;
         object? timerState = null;
@@ -169,6 +172,31 @@ public class ApplicationCompositionTests
                     Assert.Equal(sidebarPosition, sidebar.TranslatePoint(default, original));
                 }
             }
+            // Every settings page too, so a binding that cannot resolve in any of them is caught here.
+            Type[] settingsPages =
+            [
+                typeof(WhWzSettings),
+                typeof(AppearanceSettings),
+                typeof(OtherSettings),
+                typeof(DiscordSettings),
+                typeof(OverlaySettings),
+                typeof(RecompSettings),
+                typeof(VideoSettings),
+                typeof(FriendCodeSettings),
+                typeof(GameDiscSettings),
+                typeof(LineColorSettings),
+                typeof(BackupSettings),
+                typeof(AppInfo),
+            ];
+            foreach (var settingsPageType in settingsPages)
+            {
+                navigation.NavigateTo<SettingsPage>(settingsPageType);
+                original.UpdateLayout();
+                await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+                var shown = Assert.IsType<SettingsPage>(navigation.CurrentPage).FindControl<ContentControl>("SettingsContent")!.Content;
+                Assert.IsType(settingsPageType, shown);
+            }
+
             navigation.NavigateTo<SettingsPage>(typeof(LanguageSettings));
             original.UpdateLayout();
             await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
@@ -227,6 +255,8 @@ public class ApplicationCompositionTests
             CultureInfo.DefaultThreadCurrentUICulture = previousDefaultUiCulture;
             LocalizationProvider.Use(previousLocalization);
         }
+
+        Assert.True(bindingWarnings.Broken.Count == 0, string.Join(Environment.NewLine, bindingWarnings.Broken));
     }
 
     public sealed class OfflineApiCaller<TApi> : IApiCaller<TApi>

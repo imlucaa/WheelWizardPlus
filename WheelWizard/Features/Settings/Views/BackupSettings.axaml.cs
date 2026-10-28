@@ -172,7 +172,7 @@ public partial class BackupSettings : UserControl
         MarioKartWiiEnums.Regions.Korea,
     ];
 
-    private static string KindText(string kind) =>
+    internal static string KindText(string kind) =>
         kind switch
         {
             "manual" => "Manual",
@@ -180,8 +180,106 @@ public partial class BackupSettings : UserControl
             "undo" => "Before an undo",
             "before-restore" => "Before a restore",
             "before-import" => "Before an import",
+            "before-license-import" => "Before a license import",
+            "restore-change" => "Before a friend code restore",
             _ => kind,
         };
+
+    private const int KeepWhenCleaning = 10;
+
+    /// <summary>A backup is listed by the name it was given, or by when it was made.</summary>
+    internal static string Title(SaveBackup backup) => backup.Label ?? $"{backup.Time:d MMM yyyy, HH:mm}";
+
+    private string Detail(SaveBackup backup)
+    {
+        var codes = string.Join("\n", _licenses.GetBackupLicenses(backup.Name).Select(l => l.FriendCode));
+        return backup.Label is null ? codes : $"{backup.Time:d MMM yyyy, HH:mm}\n{codes}".TrimEnd();
+    }
+
+    /// <summary>Save a copy of the save now, name an earlier save, delete one, or clear out the old ones.</summary>
+    private async void ManageBackups_OnClick(object? sender, RoutedEventArgs e)
+    {
+        var backups = _licenses.ListBackups();
+        var options = backups
+            .Select(b => new ChoiceOption(Title(b), KindText(b.Kind), Detail: Detail(b)))
+            .Prepend(
+                new ChoiceOption(
+                    "Clear out old saves",
+                    $"Keep the newest {KeepWhenCleaning}",
+                    Detail: "Saves with a name and friend code changes stay"
+                )
+            )
+            .Prepend(new ChoiceOption("Back up now", "Copy", Detail: "Keeps the save as it is; name it afterwards"))
+            .ToList();
+        var picked = await _popups
+            .CreateChoiceList(
+                "Earlier saves",
+                "Choose a save",
+                "Make a copy now, name or delete an earlier save, or clear out the old ones.",
+                options
+            )
+            .AwaitAnswer();
+        if (picked is not { } index || index < 0 || index >= options.Count)
+            return;
+
+        if (index == 0)
+        {
+            var made = _licenses.BackupSaveNow();
+            Report(made.IsFailure ? made.Error.Message : "Backed up the save. Use Manage to give it a name.");
+            return;
+        }
+
+        if (index == 1)
+        {
+            var removed = _licenses.PruneBackups(KeepWhenCleaning);
+            Report(removed == 0 ? "Nothing to clear out." : $"Deleted {removed} old {(removed == 1 ? "save" : "saves")}.");
+            return;
+        }
+
+        var backup = backups[index - 2];
+        var action = await _popups
+            .CreateChoiceList(
+                "Earlier saves",
+                Title(backup),
+                KindText(backup.Kind),
+                [
+                    new ChoiceOption(
+                        backup.Label is null ? "Give it a name" : "Change the name",
+                        "Name",
+                        Detail: "A named save is never cleared out"
+                    ),
+                    new ChoiceOption("Delete it", "Delete", Detail: "This cannot be undone"),
+                ]
+            )
+            .AwaitAnswer();
+        if (action == 0)
+        {
+            var label = await _popups
+                .Create<TextInputWindow>()
+                .SetMainText("Name this save")
+                .SetExtraText("Leave it empty to remove the name.")
+                .SetPlaceholderText("For example: before the tournament")
+                .SetInitialText(backup.Label ?? "")
+                .SetButtonText("Cancel", "Save")
+                .ShowDialog();
+            if (label is null)
+                return;
+            var named = _licenses.NameBackup(backup.Name, label);
+            Report(named.IsFailure ? named.Error.Message : "Saved.");
+        }
+        else if (action == 1)
+        {
+            var yes = await _popups
+                .Create<YesNoWindow>()
+                .SetMainText($"Delete {Title(backup)}?")
+                .SetExtraText("This save is removed for good.")
+                .AwaitAnswer();
+            if (!yes)
+                return;
+            var deleted = _licenses.DeleteBackup(backup.Name);
+            Report(deleted.IsFailure ? deleted.Error.Message : "Deleted.");
+        }
+    }
 
     /// <summary>Puts back one of the copies kept before each change to the save, after showing its friend codes.</summary>
     private async void RestoreRksys_OnClick(object? sender, RoutedEventArgs e)
@@ -193,13 +291,7 @@ public partial class BackupSettings : UserControl
             return;
         }
 
-        var options = backups
-            .Select(b =>
-            {
-                var codes = _licenses.GetBackupLicenses(b.Name).Select(l => l.FriendCode);
-                return new ChoiceOption($"{b.Time:d MMM yyyy, HH:mm}", KindText(b.Kind), Detail: string.Join("\n", codes));
-            })
-            .ToList();
+        var options = backups.Select(b => new ChoiceOption(Title(b), KindText(b.Kind), Detail: Detail(b))).ToList();
         var index = await _popups
             .CreateChoiceList("Restore a save", "Choose a save", "You see its friend codes before anything changes.", options)
             .AwaitAnswer();
@@ -216,7 +308,7 @@ public partial class BackupSettings : UserControl
                 : string.Join("\n", licenses.Select(l => $"{(string.IsNullOrWhiteSpace(l.Name) ? "No name" : l.Name)}   {l.FriendCode}"));
         var yes = await _popups
             .Create<YesNoWindow>()
-            .SetMainText($"Restore the save from {backup.Time:d MMM, HH:mm}?")
+            .SetMainText(backup.Label is null ? $"Restore the save from {backup.Time:d MMM, HH:mm}?" : $"Restore \"{backup.Label}\"?")
             .SetExtraText($"{codes}\n\nYour current save is kept first.")
             .AwaitAnswer();
         if (!yes)

@@ -22,8 +22,8 @@
         </Style>
 
         <Style Selector="Border#StatusPill">
-            <Setter Property="Background" Value="{DynamicResource Neutral800}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource Neutral700}" />
+            <Setter Property="Background" Value="{DynamicResource Brand900}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource Brand800}" />
         </Style>
 
         <Style Selector="Border#StatusPill.ready">
@@ -42,7 +42,7 @@
         </Style>
 
         <Style Selector="PathIcon#StatusIcon">
-            <Setter Property="Foreground" Value="{DynamicResource Neutral400}" />
+            <Setter Property="Foreground" Value="{DynamicResource Brand300}" />
         </Style>
 
         <Style Selector="Border#StatusPill.ready PathIcon#StatusIcon">
@@ -100,21 +100,17 @@
 
         <Grid Grid.Row="1" RowDefinitions="*,Auto" Margin="10,0">
             <Border Grid.Row="0" Classes="ExclusivePanel" CornerRadius="{StaticResource GlobalCornerRadius}"
-                    ClipToBounds="True" BorderBrush="{DynamicResource Neutral700}" BorderThickness="1"
+                    ClipToBounds="True" BorderBrush="{DynamicResource Brand700}" BorderThickness="1"
                     BoxShadow="0 16 36 0 #28000000" Margin="0,14,0,10">
                 <Border.Background>
-                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                        <GradientStop Color="{DynamicResource Neutral900}" Offset="0" />
-                        <GradientStop Color="{DynamicResource Brand950}" Offset="0.58" />
-                        <GradientStop Color="{StaticResource Black}" Offset="1" />
-                    </LinearGradientBrush>
+                    <SolidColorBrush Color="{DynamicResource Brand950}" Opacity="0.55" />
                 </Border.Background>
 
                 <Panel>
                     <PathIcon Data="{StaticResource WheelIcon}" Width="310" Height="310"
                               Opacity="0.055" Margin="-118,-82,0,0"
                               VerticalAlignment="Top" HorizontalAlignment="Left"
-                              Foreground="{DynamicResource Neutral50}" />
+                              Foreground="{DynamicResource Brand100}" />
                     <PathIcon Data="{StaticResource WheelIcon}" Width="210" Height="210"
                               Opacity="0.045" Margin="0,0,-66,-64"
                               VerticalAlignment="Bottom" HorizontalAlignment="Right"
@@ -123,7 +119,7 @@
                     <Grid RowDefinitions="Auto,*,Auto" Margin="24">
                         <Grid ColumnDefinitions="Auto,14,*" RowDefinitions="Auto,Auto">
                             <Border Grid.RowSpan="2" Width="46" Height="46" CornerRadius="999"
-                                    Background="{DynamicResource Neutral800}"
+                                    Background="{DynamicResource Brand900}"
                                     BorderBrush="{DynamicResource Brand700}"
                                     BorderThickness="1">
                                 <PathIcon Data="{StaticResource Code}" Width="21" Height="21"
@@ -133,41 +129,41 @@
                             <TextBlock Grid.Column="2" Text="Retro Rewind"
                                        Classes="TitleText"
                                        FontSize="24"
-                                       Foreground="{DynamicResource Neutral50}"
+                                       Foreground="{DynamicResource Brand100}"
                                        VerticalAlignment="Bottom" />
                             <TextBlock Grid.Row="1" Grid.Column="2" Text="Private beta build"
                                        Classes="TinyText"
-                                       Foreground="{DynamicResource Neutral300}"
+                                       Foreground="{DynamicResource Brand200}"
                                        FontSize="13" />
                         </Grid>
 
                         <StackPanel Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="16">
                             <Border HorizontalAlignment="Center"
-                                    Background="{StaticResource Warning800}"
-                                    BorderBrush="{StaticResource Warning500}"
+                                    Background="{DynamicResource Brand800}"
+                                    BorderBrush="{DynamicResource Brand500}"
                                     BorderThickness="1"
                                     CornerRadius="999"
                                     Padding="18,7"
                                     BoxShadow="0 8 22 0 #22000000">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <PathIcon Data="{StaticResource Award}" Width="14" Height="14"
-                                              Foreground="{StaticResource Warning200}" />
+                                              Foreground="{DynamicResource Brand100}" />
                                     <TextBlock Text="EXCLUSIVE ACCESS"
                                                FontSize="12"
                                                FontWeight="Bold"
-                                               Foreground="{StaticResource Warning100}" />
+                                               Foreground="{DynamicResource Brand100}" />
                                 </StackPanel>
                             </Border>
 
                             <PathIcon Data="{StaticResource WheelIcon}"
                                       Width="106" Height="106"
-                                      Foreground="{DynamicResource Neutral500}"
+                                      Foreground="{DynamicResource Brand400}"
                                       Opacity="0.72" />
 
                             <TextBlock Text="Test the next build before everyone else."
                                        Classes="BodyText"
                                        FontSize="15"
-                                       Foreground="{DynamicResource Neutral300}"
+                                       Foreground="{DynamicResource Brand200}"
                                        TextAlignment="Center"
                                        HorizontalAlignment="Center"
                                        MaxWidth="280" />
@@ -185,7 +181,7 @@
                                 <TextBlock x:Name="StatusText" Grid.Column="2"
                                            Text="Checking status..."
                                            Classes="TinyText"
-                                           Foreground="{DynamicResource Neutral200}"
+                                           Foreground="{DynamicResource Brand100}"
                                            FontSize="13"
                                            FontWeight="SemiBold"
                                            VerticalAlignment="Center"
@@ -203,7 +199,7 @@
         <Grid Grid.Row="2" Margin="10,10,10,0">
             <Panel>
                 <components:ActionButton x:Name="InstallButton"
-                                   Tone="Secondary"
+                                   Tone="Brand"
                                    Text="Install Beta"
                                    IconData="{StaticResource Download}"
                                    Click="InstallButton_OnClick"

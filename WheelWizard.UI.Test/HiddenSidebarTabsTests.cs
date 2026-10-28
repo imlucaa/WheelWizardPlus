@@ -33,18 +33,19 @@ public class HiddenSidebarTabsTests
             var window = new Window { Content = settings };
             window.Show();
 
-            Assert.True(settings.FindControl<StackPanel>("HiddenTabsPanel")!.IsVisible);
-            var hidden = settings.FindControl<SegmentedControl>("HiddenPages")!;
-            Assert.Equal(["RR Lounge", "Ghosts"], hidden.Items.OfType<SegmentOption>().Select(option => option.Text));
+            var tabs = settings.FindControl<SegmentedControl>("SettingPages")!;
+            // They sit at the end of the same list as the other settings tabs.
+            Assert.Equal(["RR Lounge", "Ghosts"], tabs.Items.OfType<SegmentOption>().TakeLast(2).Select(option => option.Text));
+            var before = tabs.SelectedItem;
 
-            hidden.SelectedIndex = 1;
+            tabs.SelectedItem = tabs.Items.OfType<SegmentOption>().Last();
             navigation.Received(1).NavigateTo(typeof(GhostsPage));
-            // Nothing stays selected, so the same tab can be opened again.
-            Assert.Null(hidden.SelectedItem);
+            // The tab you were on stays selected, so the same tab can be opened again.
+            Assert.Same(before, tabs.SelectedItem);
 
-            // Showing every tab again empties the list.
+            // Showing every tab again takes them off the list.
             HiddenSidebarTabs.Set([]);
-            Assert.False(settings.FindControl<StackPanel>("HiddenTabsPanel")!.IsVisible);
+            Assert.DoesNotContain(tabs.Items.OfType<SegmentOption>(), option => option.Text == "Ghosts");
             window.Close();
         }
         finally

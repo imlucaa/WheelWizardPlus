@@ -24,10 +24,12 @@ public partial class PlayerProfileWindow : PopupContent, INotifyPropertyChanged
         : base(true, true, false, "Player Profile")
     {
         ApiCaller = apiCaller;
+        // Set before the XAML builds its bindings: the base popup is already inside its window by now, so they would first
+        // bind to that window (and log a failed cast for every field) before this line ran.
+        DataContext = this;
         InitializeComponent();
         HistoryHost.Content = historyGraph;
-        historyGraph.Bind(VrHistoryGraph.FriendCodeProperty, new Binding("Profile.FriendCode") { Source = this });
-        DataContext = this;
+        historyGraph.Bind(VrHistoryGraph.FriendCodeProperty, new Binding(nameof(ProfileFriendCode)) { Source = this });
         Window.WindowTitle = friendCode;
         LoadProfile(friendCode);
     }
@@ -39,6 +41,9 @@ public partial class PlayerProfileWindow : PopupContent, INotifyPropertyChanged
         {
             _profile = value;
             OnPropertyChanged(nameof(Profile));
+            OnPropertyChanged(nameof(ProfileName));
+            OnPropertyChanged(nameof(ProfileFriendCode));
+            OnPropertyChanged(nameof(IsSuspicious));
             OnPropertyChanged(nameof(DisplayMii));
             OnPropertyChanged(nameof(LastSeenText));
             OnPropertyChanged(nameof(Vr24HoursText));
@@ -51,6 +56,14 @@ public partial class PlayerProfileWindow : PopupContent, INotifyPropertyChanged
             OnPropertyChanged(nameof(VrMonthBrush));
         }
     }
+
+    // The page binds to these, not to Profile.Name and so on: before the profile has loaded the latter walk through a null
+    // and log a warning for each field.
+    public string ProfileName => Profile?.Name ?? string.Empty;
+
+    public string? ProfileFriendCode => Profile?.FriendCode;
+
+    public bool IsSuspicious => Profile?.IsSuspicious ?? false;
 
     public bool IsLoading
     {

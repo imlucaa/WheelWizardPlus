@@ -420,8 +420,8 @@ en:
     installing_mods_count: "Installing %{amount} mods"
     processing_xof_y: "Processing %{processed} of %{total} files..."
     update_rr: "Updating Retro Rewind"
-    latest_wh_wz_github: "Getting the latest Wheel Wizard from github releases"
-    update_wh_wz: "Updating Wheel Wizard"
+    latest_wh_wz_github: "Getting the latest Wheel Wizard+ from github releases"
+    update_wh_wz: "Updating Wheel Wizard+"
     installing_rr: "Installing Retro Rewind"
     installing_rr_first_time: "Installing Retro Rewind for the first time"
     installing_dolphin: "Installing Dolphin Emulator"
@@ -478,9 +478,9 @@ en:
       title: "Do you want to apply the new scale?"
       extra: "This change will revert in %{remainingTime} unless you decide to keep the change."
     move_data:
-      title: "Move Wheel Wizard data?"
+      title: "Move Wheel Wizard+ data?"
       extra: |-
-        Wheel Wizard will move its files to:
+        Wheel Wizard+ will move its files to:
         %{path}
         This may take a while depending on the amount of data.
     dolphin_found:
@@ -501,8 +501,8 @@ en:
 
         Dolphin Emulator found. Would you like to use this?
     new_version_wh_wz:
-      title: "Wheel Wizard Update Available"
-      extra: "Version %{latestVersion} of Wheel Wizard is available (currently on %{currentVersion}). Do you want to update now?"
+      title: "Wheel Wizard+ Update Available"
+      extra: "Version %{latestVersion} of Wheel Wizard+ is available (currently on %{currentVersion}). Do you want to update now?"
     update_admin:
       title: "Update using admin"
       extra: "Sometimes an update requires admin rights, do you want to active them for this update?"
@@ -557,7 +557,7 @@ en:
     dolphin_version_unverified:
       title: "Could not verify your Dolphin Emulator version"
       extra: |-
-        Wheel Wizard could not read the version of the Dolphin Emulator you have configured, so it cannot tell whether it has the security fixes.
+        Wheel Wizard+ could not read the version of the Dolphin Emulator you have configured, so it cannot tell whether it has the security fixes.
 
         Please check yourself that you are on %{minimumVersion} or newer. Older versions have a known security issue where malicious game files, mods, or cheating online players can infect your PC with malware.
     dolphin_tool_selected:
@@ -569,12 +569,12 @@ en:
     unable_update_wh_wz:
       extra:
         reason_network: |-
-          Unable to check if Wheel Wizard is up to date.
+          Unable to check if Wheel Wizard+ is up to date.
           You might be experiencing network issues.
         reason_location: |-
-          Unable to update Wheel Wizard. Please ensure the application is located in a folder that can be written to.
+          Unable to update Wheel Wizard+. Please ensure the application is located in a folder that can be written to.
           Could not find current folder.
-      title: "Unable to update Wheel Wizard."
+      title: "Unable to update Wheel Wizard+."
     no_connect_server:
       extra: "Could not connect to the server. Please try again later."
       title: "Could not connect to the server"
@@ -643,7 +643,7 @@ en:
     data_folder_moved:
       title: "Data folder updated"
       extra: |-
-        Wheel Wizard data is now stored in:
+        Wheel Wizard+ data is now stored in:
         %{path}
     rr_up_to_date:
       title: "Retro Rewind is up to date."
@@ -691,7 +691,7 @@ en:
     mii_failure_create: "Failed to create Mii '%{error}'"
     mii_failure_duplicate: "Failed to duplicate Mii(s) '%{error}'"
   helper_note:
-    name_must_between: "Names must be between 3 and 10 characters long."
+    name_must_between: "Names must be between 1 and 10 characters long."
     creator_name_less11: "Creator name must be less than 11 characters long."
     creator_name_less10: "Creator name must be less than 10 characters long."
   file_picker:
@@ -716,7 +716,7 @@ en:
     unsupported_loose_override_extension: "%{fileName} uses an unsupported loose override extension (.kcl, .kmp, .slt)."
     whole_file_baseline: "This SZS is stored as a whole-file baseline. Exporting a whole-file override."
   option:
-    wh_wz_language: "Wheel Wizard Language"
+    wh_wz_language: "Wheel Wizard+ Language"
     force_disable_wiimote: "Force Disable Wiimote"
     launch_with_dolphin: "Launch Game With Dolphin Window"
     launch_rr_on_startup: "Launch Retro Rewind On Startup"
@@ -730,7 +730,7 @@ en:
     renderer: "Renderer"
     window_scale: "Window Scale"
     open_config: "Open Config Folder"
-    wheel_wizard_data_folder: "Wheel Wizard data folder"
+    wheel_wizard_data_folder: "Wheel Wizard+ data folder"
     retro_rewind_folder: "Retro Rewind Folder"
     reset_data_folder: "Use default location"
     dolphin_user_path: "Dolphin User Folder"
@@ -758,7 +758,7 @@ en:
     performance: "Performance Settings"
     renderer: "Renderer Settings"
     location_paths: "Location Settings"
-    wh_wz_appearance: "Wheel Wizard appearance"
+    wh_wz_appearance: "Wheel Wizard+ appearance"
     installation: "Installation"
     setup: "Setup"
     recomp: "WiiCompiled (beta)"
@@ -821,7 +821,7 @@ en:
       custom: "Using custom location."
       moving: "Moving data, please wait..."
   value:
-    wheel_wizard: "Wheel Wizard"
+    wheel_wizard: "Wheel Wizard+"
     language:
       france: "French"
       dutch: "Dutch"

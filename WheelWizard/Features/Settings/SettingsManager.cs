@@ -223,6 +223,9 @@ public class SettingsManager : ISettingsManager, IDisposable
         OVERLAY_PRESETS = RegisterWhWz("OverlayPresets", "");
         OVERLAY_FRIEND_CODE = RegisterWhWz("OverlayFriendCode", "");
         GAME_DISCS = RegisterWhWz("GameDiscs", "");
+        WIT_LOCATION = RegisterWhWz("WitLocation", "");
+        LINE_COLOR_ORIGINALS = RegisterWhWz("LineColorOriginals", "");
+        ROOMS_VIEW = RegisterWhWz("RoomsView", "");
         DISCORD_LARGE_IMAGE = RegisterWhWz("DiscordLargeImage", "");
         DISCORD_LARGE_TEXT = RegisterWhWz("DiscordLargeText", "");
         DISCORD_DETAILS = RegisterWhWz("DiscordDetails", "Playing Retro Rewind");
@@ -269,6 +272,8 @@ public class SettingsManager : ISettingsManager, IDisposable
         LAUNCHER_MINIMAL_HOME_ARTWORK = RegisterWhWz("LauncherMinimalHomeArtwork", false);
         LAUNCHER_HIDE_HOME_TITLE = RegisterWhWz("LauncherHideHomeTitle", false);
         LAUNCHER_CLEAN_SIDEBAR = RegisterWhWz("LauncherCleanSidebar", false);
+        LAUNCHER_PROFILE_OUTLINE = RegisterWhWz("LauncherProfileOutline", true);
+        LAUNCHER_PROFILE_OUTLINE_OPACITY = RegisterWhWz("LauncherProfileOutlineOpacity", 0.6, value => value is >= 0.0 and <= 1.0);
         LAUNCHER_FONT = RegisterWhWz(
             "LauncherFont",
             "",
@@ -383,6 +388,9 @@ public class SettingsManager : ISettingsManager, IDisposable
     public Setting<string> OVERLAY_PRESETS { get; }
     public Setting<string> OVERLAY_FRIEND_CODE { get; }
     public Setting<string> GAME_DISCS { get; }
+    public Setting<string> WIT_LOCATION { get; }
+    public Setting<string> LINE_COLOR_ORIGINALS { get; }
+    public Setting<string> ROOMS_VIEW { get; }
     public Setting<string> DISCORD_LARGE_IMAGE { get; }
     public Setting<string> DISCORD_LARGE_TEXT { get; }
     public Setting<string> DISCORD_DETAILS { get; }
@@ -419,6 +427,8 @@ public class SettingsManager : ISettingsManager, IDisposable
     public Setting<bool> LAUNCHER_MINIMAL_HOME_ARTWORK { get; }
     public Setting<bool> LAUNCHER_HIDE_HOME_TITLE { get; }
     public Setting<bool> LAUNCHER_CLEAN_SIDEBAR { get; }
+    public Setting<bool> LAUNCHER_PROFILE_OUTLINE { get; }
+    public Setting<double> LAUNCHER_PROFILE_OUTLINE_OPACITY { get; }
     public Setting<string> LAUNCHER_FONT { get; }
 
     public Setting<string> NAND_ROOT_PATH { get; }

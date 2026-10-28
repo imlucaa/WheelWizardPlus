@@ -96,6 +96,86 @@ public class RoomPresenceTests
     }
 
     [Fact]
+    public void AFriendInARoom_ShowsTheRoomsCurrentVrAndBr_AndKeepsThemWhenTheyLeave()
+    {
+        var presence = new RoomPresence();
+        var service = new GameLicenseSingletonService(
+            Substitute.For<IMiiDbService>(),
+            Substitute.For<IFileSystem>(),
+            Substitute.For<IWhWzDataSingletonService>(),
+            Substitute.For<IRrRatingReader>(),
+            Substitute.For<ISettingsManager>(),
+            Substitute.For<ISaveRegionService>(),
+            Substitute.For<IDolphinPaths>(),
+            Substitute.For<ICustomDistributionPaths>(),
+            presence,
+            Substitute.For<IPollingScheduler>(),
+            TimeProvider.System,
+            NullLogger<GameLicenseSingletonService>.Instance
+        );
+        var user = new LicenseProfile
+        {
+            FriendCode = "user",
+            Vr = 5000,
+            Br = 5000,
+            RegionId = 0,
+            Mii = null,
+            TotalRaceCount = 0,
+            TotalWinCount = 0,
+        };
+        FriendProfile Friend(string code) =>
+            new()
+            {
+                FriendCode = code,
+                Vr = 4000,
+                Br = 4100,
+                RegionId = 0,
+                Mii = null,
+                Wins = 0,
+                Losses = 0,
+                CountryCode = 0,
+            };
+        var inRoom = Friend("in-room");
+        var noRatings = Friend("no-ratings");
+        var away = Friend("away");
+        user.Friends.AddRange([inRoom, noRatings, away]);
+        service.LicenseCollection.Users.Add(user);
+        var changed = new List<string>();
+        inRoom.PropertyChanged += (_, args) => changed.Add(args.PropertyName!);
+
+        presence.Replace(["in-room", "no-ratings"]);
+        presence.SetRatings(
+            [
+                new()
+                {
+                    Pid = "1",
+                    Name = "a",
+                    FriendCode = "in-room",
+                    Vr = 9123,
+                    Br = 8456,
+                },
+                new()
+                {
+                    Pid = "2",
+                    Name = "b",
+                    FriendCode = "no-ratings",
+                },
+            ]
+        );
+        service.RefreshOnlineStatus();
+
+        Assert.Equal((9123u, 8456u), (inRoom.Vr, inRoom.Br));
+        Assert.Contains("Vr", changed);
+        Assert.Equal((4000u, 4100u), (noRatings.Vr, noRatings.Br)); // the room did not give any
+        Assert.Equal((4000u, 4100u), (away.Vr, away.Br)); // not in a room: what the save says
+
+        presence.Replace([]);
+        presence.SetRatings([]);
+        service.RefreshOnlineStatus();
+        Assert.Equal((9123u, 8456u), (inRoom.Vr, inRoom.Br));
+    }
+
+    [Fact]
     public async Task FailedRoomRefresh_ClearsPresenceBeforeRefreshingProfiles()
     {
         var presence = new RoomPresence();

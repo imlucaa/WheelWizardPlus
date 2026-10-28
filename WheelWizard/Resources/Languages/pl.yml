@@ -223,7 +223,7 @@ pl:
     installing_mods_count: "Instalowanie %{amount} modów"
     processing_xof_y: "Procesowanie %{processed} z %{total} Plików"
     update_rr: "Aktualizowanie Retro Rewind"
-    update_wh_wz: "Aktualizowanie Wheel Wizard"
+    update_wh_wz: "Aktualizowanie Wheel Wizard+"
     installing_rr: "Instalowanie Retro Rewind"
     installing_rr_first_time: "Instalowanie Retro Rewind pierwszy raz"
     installing_dolphin: "Instalowanie Emulatora Dolphin"
@@ -248,9 +248,9 @@ pl:
       title: "Czy chcesz zastosować nową skalę?"
       extra: "Ta zmiana zostanie cofnięta za %{remainingTime} może, że postanowisz ją zastosować."
     move_data:
-      title: "Przenieść dane z Wheel Wizard?"
+      title: "Przenieść dane z Wheel Wizard+?"
       extra: |-
-        Wheel Wizard przeniesie swoje pliki do:
+        Wheel Wizard+ przeniesie swoje pliki do:
         %{path}
         to może zająć chwile zależnie od ilości danych.
     dolphin_found:
@@ -259,8 +259,8 @@ pl:
         Jeżeli nie wiesz co to wszystko znaczy poprostu naciśnij tak :)
         Znaleziono folder Emulatora Dolphin. Chciałbyś użyć ten folder?
     new_version_wh_wz:
-      title: "Aktualizacja do Wheel Wizard dostępna"
-      extra: "Wersja %{latestVersion} Wheel Wizard jest dostępna (obecnie na %{currentVersion}). Chcesz aktualizować teraz?"
+      title: "Aktualizacja do Wheel Wizard+ dostępna"
+      extra: "Wersja %{latestVersion} Wheel Wizard+ jest dostępna (obecnie na %{currentVersion}). Chcesz aktualizować teraz?"
     update_admin:
       title: "Aktualizuj używając uprawnień administratora"
       extra: "Czasami aktualizacja wymaga uprawnień administratora czy chcesz je aktywować dla tej aktualizacji?"
@@ -312,12 +312,12 @@ pl:
     unable_update_wh_wz:
       extra:
         reason_network: |-
-          Nie można sprawdzić czy Wheel Wizard jest na najnowszej wersji.
+          Nie można sprawdzić czy Wheel Wizard+ jest na najnowszej wersji.
           Możesz mieć problem z internetem.
         reason_location: |-
-          Nie można zaktualizować Wheel Wizard. Proszę upewnij się, że aplikacja jest zlokalizowana w folderze, który ma możliwość zapisu.
+          Nie można zaktualizować Wheel Wizard+. Proszę upewnij się, że aplikacja jest zlokalizowana w folderze, który ma możliwość zapisu.
           Nie można znaleść obecnego folderu.
-      title: "Nie można zaktualizować Wheel Wizard."
+      title: "Nie można zaktualizować Wheel Wizard+."
     no_connect_server:
       extra: "Nie można połączyć się ze serwerem. Spróbuj ponownie później."
       title: "Nie można połączyć się ze serwerem"
@@ -384,7 +384,7 @@ pl:
     data_folder_moved:
       title: "Zaktualizowano folder danych"
       extra: |-
-        Dane Wheel Wizard są teraz przechowywane w:
+        Dane Wheel Wizard+ są teraz przechowywane w:
         %{path}
     rr_up_to_date:
       title: "Retro Rewind jest na najnowszej wersji."
@@ -416,7 +416,7 @@ pl:
     mii_failure_create: "Nie udało się stworzyć Mii \"%{error}\""
     mii_failure_duplicate: "Nie udało się skopiować Mii \"%{error}\""
   helper_note:
-    name_must_between: "Nazwy muszą mieć od 3 do 10 znaków."
+    name_must_between: "Nazwy muszą mieć od 1 do 10 znaków."
     creator_name_less11: "Nazwa twórcy musi mieć mniej niż 11 znaków."
     creator_name_less10: "Nazwa twórcy musi mieć mniej niż 10 znaków."
   file_picker:
@@ -426,16 +426,16 @@ pl:
       message: "Ten mod jest niekompatybilny z innymi modami. Uruchamianie gry z tym modem może spowodować niepoprawne zachowanie albo nagłe wyłączenie gry. Rozważ skonwertowanie go na poprawki poprzez klikanie na moda prawym przyciskiem myszy."
       title: "MOD NIEKOMPATYBILNY"
   option:
-    wh_wz_language: "Język Wheel Wizard"
+    wh_wz_language: "Język Wheel Wizard+"
     force_disable_wiimote: "Zmuś Wyłączenie Wiimota"
     launch_with_dolphin: "Uruchom grę razem z oknem Dolphina"
-    launch_rr_on_startup: "Uruchom Retro Rewind razem z uruchomieniem Wheel Wizard."
+    launch_rr_on_startup: "Uruchom Retro Rewind razem z uruchomieniem Wheel Wizard+."
     v_sync: "VSync"
     recommended: "Polecane ustawienia"
     show_fps: "Pokaż FPS"
     window_scale: "Skala Okna"
     open_config: "Otwórz folder konfiguracji"
-    wheel_wizard_data_folder: "Folder danych Wheel Wizard"
+    wheel_wizard_data_folder: "Folder danych Wheel Wizard+"
     reset_data_folder: "Użyj domyślnej lokacji"
     dolphin_user_path: "Folder Użytkownika Dolphina"
     mario_kart_game: "Plik gry Mario Kart Wii"
@@ -449,7 +449,7 @@ pl:
     resolution: "Rezolucja"
     performance: "Ustawienia Wydajności"
     location_paths: "Ustawienia Lokacji"
-    wh_wz_appearance: "Wygląd Wheel Wizard"
+    wh_wz_appearance: "Wygląd Wheel Wizard+"
     installation: "Instalacja"
   category:
     other: "Inne"

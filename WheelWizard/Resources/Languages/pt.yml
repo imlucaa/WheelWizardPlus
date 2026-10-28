@@ -199,7 +199,7 @@ pt:
     rooms_page_disclaimer: "Tem em conta que esta página não te oferece a funcionalidade de entrares  diretamente numa sala. Para entrares numa sala em específico, terás de entrar através de um amigo, ou então esperas que entres na sala ao entrares nos servers online"
     friends_page_disclaimer: "Para adicionar amigos precisas de adicioná-los dentro do jogo."
     region_user_selection: "Isto só mostra regiões onde TU já jogaste."
-    primary_profile: "O perfil primário é usado como referência no cliente do Wheel Wizard."
+    primary_profile: "O perfil primário é usado como referência no cliente do Wheel Wizard+."
   empty_content:
     no_profiles: "Tens de jogar o jogo pelo menos uma vez para poderes ver o teu perfil aqui escrito"
     no_friends_title: "Ainda não adicionaste amigos!"
@@ -232,8 +232,8 @@ pt:
     installing_mods_count: "Instalando %{amount} mods"
     processing_xof_y: "A processar %{processed} de %{total} ficheiros..."
     update_rr: "Atualizar Retro Rewind"
-    latest_wh_wz_github: "Obtendo a ultima versão do Wheel Wizard pelo github"
-    update_wh_wz: "Atualizar Wheel Wizard"
+    latest_wh_wz_github: "Obtendo a ultima versão do Wheel Wizard+ pelo github"
+    update_wh_wz: "Atualizar Wheel Wizard+"
     installing_rr: "Instalando Retro Rewind"
     installing_rr_first_time: "Instalando Retro Rewind pela primeira vez"
     installing_dolphin: "A instalar o Dolphin Emulator"
@@ -258,9 +258,9 @@ pt:
       title: "Gostarias de aplicar a nova escala?"
       extra: "Esta alteração será revertida em %{remainingTime} a menos que decida manter a alteração."
     move_data:
-      title: "Mover a data do Wheel Wizard?"
+      title: "Mover a data do Wheel Wizard+?"
       extra: |-
-        O Wheel Wizard vai mover os seus ficheiros para :
+        O Wheel Wizard+ vai mover os seus ficheiros para :
         %{path}
         Pode demorar bastante tempo, dependendo da quantidade de dados.
     dolphin_found:
@@ -269,8 +269,8 @@ pt:
         Se não sabes o que isto significa, clica só que sim :)
         Pasta do Dolphin Emulator encontrada. Gostarias de usar esta pasta?
     new_version_wh_wz:
-      title: "Atualização do Wheel Wizard Disponível"
-      extra: "Versão %{latestVersion} do Wheel Wizard está disponível (de momento encontra-se na versão %{currentVersion}). Queres atualizar agora?"
+      title: "Atualização do Wheel Wizard+ Disponível"
+      extra: "Versão %{latestVersion} do Wheel Wizard+ está disponível (de momento encontra-se na versão %{currentVersion}). Queres atualizar agora?"
     update_admin:
       title: "Atualiza usando administrador"
       extra: "Às vezes uma atualização requere direitos de administrador. Desejas usar direitos de administrador para esteja atualização?"
@@ -328,12 +328,12 @@ pt:
     unable_update_wh_wz:
       extra:
         reason_network: |-
-          Impossível verificar se o Wheel Wizard está atualizado.
+          Impossível verificar se o Wheel Wizard+ está atualizado.
           Talvez estejas a experienciar problemas de net
         reason_location: |-
-          Incapaz de atualizar o Wheel Wizard. Garante que a aplicação se encontra numa pasta que pode ser localizada.
+          Incapaz de atualizar o Wheel Wizard+. Garante que a aplicação se encontra numa pasta que pode ser localizada.
           Falha a encontar a pasta atual
-      title: "Não é possível atualizar o Wheel Wizard"
+      title: "Não é possível atualizar o Wheel Wizard+"
     no_connect_server:
       extra: "Falha ao conectar ao servidor. Tente de novo mais tarde"
       title: "Não é possível conectar ao servidor."
@@ -400,7 +400,7 @@ pt:
     data_folder_moved:
       title: "Pasta de dados atualizada."
       extra: |-
-        Dados do Wheel Wizard são agora guardados em:
+        Dados do Wheel Wizard+ são agora guardados em:
         %{path}
     rr_up_to_date:
       title: "A tua versão do Retro Rewind é a mais recente"
@@ -436,10 +436,10 @@ pt:
     mii_failure_create: "Falha ao criar o Mii '%{error}'"
     mii_failure_duplicate: "Falha ao duplicar Mii(s) '%{error}'"
   helper_note:
-    name_must_between: "Nomes tem de ter entre 3 a 10 caracteres."
+    name_must_between: "Nomes tem de ter entre 1 a 10 caracteres."
     creator_name_less10: "Nome de criador tem de ter menos de 10 caracteres."
   option:
-    wh_wz_language: "Idioma do Wheel Wizard"
+    wh_wz_language: "Idioma do Wheel Wizard+"
     force_disable_wiimote: "Força a desativar o Wiimote"
     launch_with_dolphin: "Abrir o jogo com a janela do Dolphin"
     v_sync: "VSync"
@@ -465,7 +465,7 @@ pt:
     performance: "Definições de Performance"
     renderer: "Definições de Renderização"
     location_paths: "Definições da Localização"
-    wh_wz_appearance: "Aparência do Wheel Wizard"
+    wh_wz_appearance: "Aparência do Wheel Wizard+"
     installation: "Instalação"
   helper_text:
     topbar:
@@ -476,7 +476,7 @@ pt:
     recommended: "Esta definição vai alterar algumas definições do dolphin para reduzir stutters e picos de lag"
     30_fps: "Esta definição vai forçar o jogo a correr a 30 FPS (normalmente é 60)"
     end_with_exe: "O caminho deve acabar com .exe"
-    enable_animations: "Isto ativa as animações na app Wheel Wizard"
+    enable_animations: "Isto ativa as animações na app Wheel Wizard+"
     end_with_x: "O caminho pode acabar com:"
     optional: "Opcional"
     must_set_paths: "Precisas de configurar estes 3 caminhos antes de começar a jogar Retro Rewind."

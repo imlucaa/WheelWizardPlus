@@ -20,9 +20,27 @@
                         <components:Dropdown x:Name="RegionPicker" Grid.Column="1" Width="150" ZIndex="2" />
                     </Grid>
                     <Border Height="1" Background="{DynamicResource Neutral700}" Opacity="0.6" />
-                    <components:FormFieldLabel Text="License" />
+                    <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="6">
+                        <components:FormFieldLabel Text="License" VerticalAlignment="Center" />
+                        <components:Button Grid.Column="1" x:Name="ExportLicenseButton" Text="Export" ButtonSize="Compact"
+                                           ToolTip.Tip="Save the selected license as a .rkp file"
+                                           Click="ExportLicense_OnClick" />
+                        <components:Button Grid.Column="2" x:Name="ExportAllButton" Text="Export all" ButtonSize="Compact"
+                                           ToolTip.Tip="Save every license of this save as .rkp files in a folder you pick"
+                                           Click="ExportAll_OnClick" />
+                        <components:Button Grid.Column="3" x:Name="ImportLicenseButton" Text="Import" ButtonSize="Compact"
+                                           ToolTip.Tip="Put a license from a .rkp file, an earlier save or a save file into this save"
+                                           Click="ImportLicense_OnClick" />
+                    </Grid>
                     <UniformGrid x:Name="LicenseList" Columns="2" Margin="-3,-6,-3,0" />
                     <TextBlock x:Name="LicenseNote" Classes="TinyText" TextWrapping="Wrap" IsVisible="False" />
+                    <!-- The ids of the license picked above: what a duplicate checker would look at. -->
+                    <Grid x:Name="IdStatusRow" ColumnDefinitions="*,Auto" ColumnSpacing="8" IsVisible="False">
+                        <TextBlock x:Name="IdStatusText" Classes="TinyText" TextWrapping="Wrap" VerticalAlignment="Center" />
+                        <components:Button Grid.Column="1" x:Name="FixIdsButton" Text="Fix IDs" ButtonSize="Compact"
+                                           ToolTip.Tip="Give this license new pseudo and authentic IDs, and keep its friend code"
+                                           Click="FixIds_OnClick" IsVisible="False" />
+                    </Grid>
                 </StackPanel>
             </Border>
 
@@ -37,7 +55,7 @@
                     </Grid>
                     <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6">
                         <TextBlock Classes="TinyText" TextWrapping="Wrap" VerticalAlignment="Center"
-                                   Text="Make sure nobody else uses it." />
+                                   Text="Also search the code on the Retro Rewind Discord." />
                         <components:Button Grid.Column="1" Text="Database" ButtonSize="Compact" Click="Database_OnClick" />
                         <components:Button Grid.Column="2" Text="Godtool" ButtonSize="Compact" Click="Godtool_OnClick" />
                     </Grid>
@@ -52,6 +70,12 @@
                         <TextBlock x:Name="ResultVerdict" FontWeight="Bold" TextWrapping="Wrap" Margin="0,4,0,0" />
                     </StackPanel>
                     <StackPanel x:Name="ApplyPanel" Spacing="8" IsVisible="False">
+                        <!-- One more check before taking a code: the community player list has players who are no longer online. -->
+                        <Grid x:Name="DatabaseRow" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                            <TextBlock x:Name="DatabaseText" Classes="TinyText" TextWrapping="Wrap" VerticalAlignment="Center" />
+                            <components:Button Grid.Column="1" x:Name="DatabaseSearchButton" Text="Search database"
+                                               ButtonSize="Compact" Click="SearchDatabase_OnClick" />
+                        </Grid>
                         <components:ToggleCheckBox x:Name="AckBox" Variant="Checkbox">
                             <TextBlock Text="Nobody else uses this code." />
                         </components:ToggleCheckBox>
@@ -61,11 +85,14 @@
                 </StackPanel>
             </Border>
 
-            <!-- Undo the last code change. Save backups live in the Backup tab. -->
+            <!-- Undo the last code change, and every earlier one in a popup. Save backups live in the Backup tab. -->
             <Border x:Name="UndoCard" Classes="SettingsBlockStyle SettingsRowStyle" IsVisible="False">
-                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" Margin="0,6">
+                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6" Margin="0,6">
                     <TextBlock x:Name="UndoText" Classes="TinyText" VerticalAlignment="Center" TextWrapping="Wrap" />
-                    <components:Button Grid.Column="1" Text="Undo last change" ButtonSize="Compact" Click="Undo_OnClick" />
+                    <components:Button Grid.Column="1" x:Name="HistoryButton" Text="History" ButtonSize="Compact"
+                                       Click="History_OnClick" />
+                    <components:Button Grid.Column="2" x:Name="UndoButton" Text="Undo last change" ButtonSize="Compact"
+                                       Click="Undo_OnClick" />
                 </Grid>
             </Border>
 

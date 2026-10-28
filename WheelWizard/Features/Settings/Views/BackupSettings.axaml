@@ -32,8 +32,13 @@
                 <Border Classes="SettingsBlockStyle SettingsRowStyle SettingsRowMiddle">
                     <Grid ColumnDefinitions="*,Auto" MinHeight="56" ColumnSpacing="16">
                         <components:FormFieldLabel Text="Earlier saves" VerticalAlignment="Center" />
-                        <components:ActionButton Grid.Column="1" Tone="Secondary" Size="Compact" Text="Restore"
-                                                 VerticalAlignment="Center" Click="RestoreRksys_OnClick" />
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                            <components:ActionButton Tone="Secondary" Size="Compact" Text="Manage"
+                                                     ToolTip.Tip="Name an earlier save, delete one, or clear out the old ones"
+                                                     Click="ManageBackups_OnClick" />
+                            <components:ActionButton Tone="Secondary" Size="Compact" Text="Restore"
+                                                     Click="RestoreRksys_OnClick" />
+                        </StackPanel>
                     </Grid>
                 </Border>
 

@@ -59,7 +59,7 @@
 
             </Grid>
 
-            <ListBox SelectionMode="Single" Padding="0" ItemsSource="{Binding Rooms}"
+            <ListBox x:Name="RoomsListBox" SelectionMode="Single" Padding="0" ItemsSource="{Binding Rooms}"
                      Background="Transparent" BorderThickness="0" Grid.Row="1"
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                      ScrollViewer.VerticalScrollBarVisibility="Auto"

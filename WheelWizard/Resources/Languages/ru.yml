@@ -218,8 +218,8 @@ ru:
     installing_mods_count: "Устанавливаем %{amount} модов"
     processing_xof_y: "Обработка %{processed} из %{total} файлов..."
     update_rr: "Обновляем Retro Rewind"
-    latest_wh_wz_github: "Получаем последнюю версию Wheel Wizard из GitHub"
-    update_wh_wz: "Обновляем Wheel Wizard"
+    latest_wh_wz_github: "Получаем последнюю версию Wheel Wizard+ из GitHub"
+    update_wh_wz: "Обновляем Wheel Wizard+"
     installing_rr: "Устанавливаем Retro Rewind"
     installing_rr_first_time: "Устанавливаем Retro Rewind в первый раз"
     installing_dolphin: "Установка эмулятора Dolphin"
@@ -239,8 +239,8 @@ ru:
         Если ты понятия не имеешь что это значит, просто нажми да :D
         Папка эмулятора Dolphin найдена. Хотите её использовать?
     new_version_wh_wz:
-      title: "Доступно обновление Wheel Wizard"
-      extra: "Версия %{latestVersion} Wheel Wizard'а доступна (прямо сейчас. вы на %{currentVersion}). Хотите произвести обновление?"
+      title: "Доступно обновление Wheel Wizard+"
+      extra: "Версия %{latestVersion} Wheel Wizard+'а доступна (прямо сейчас. вы на %{currentVersion}). Хотите произвести обновление?"
     update_admin:
       title: "Обновитесь через права администратора."
       extra: "Иногда, для обновления нужны права администратора. Хотите ли вы их активировать ради этого обновления?"
@@ -281,12 +281,12 @@ ru:
     unable_update_wh_wz:
       extra:
         reason_network: |-
-          Не удалось проверить, обновлён ли Wheel Wizard до последней версии?
+          Не удалось проверить, обновлён ли Wheel Wizard+ до последней версии?
           Вы возможно испытываете проблемы с подключеним.
         reason_location: |-
-          Не удалось обновить Wheel Wizard. Пожалуйста убедитесь, что исполняемый файл находится в папке куда можно добавлять файлы.
+          Не удалось обновить Wheel Wizard+. Пожалуйста убедитесь, что исполняемый файл находится в папке куда можно добавлять файлы.
           Не удалось найти текущую папку.
-      title: "Не удалось обновить Wheel Wizard."
+      title: "Не удалось обновить Wheel Wizard+."
     no_connect_server:
       extra: "Не удалось подключиться к серверу. Попробуйте чуть позже."
     cannot_delete_fav_mii:
@@ -343,11 +343,11 @@ ru:
     mii_failure_create: "Не удалось создать Mii '%{error}'"
     mii_failure_duplicate: "Не удалось дублировать Mii '%{error}'"
   helper_note:
-    name_must_between: "Имена должны быть длиной от 3 до 10 символов."
+    name_must_between: "Имена должны быть длиной от 1 до 10 символов."
     creator_name_less11: "Имя создателя должно быть длиной в меньше 11 символов."
     creator_name_less10: "Имя создателя должно быть длиной в меньше 10 символов."
   option:
-    wh_wz_language: "Язык Wheel Wizard"
+    wh_wz_language: "Язык Wheel Wizard+"
     force_disable_wiimote: "Принудительно выключить Wii Remote"
     launch_with_dolphin: "Запустить игру с окном Dolphin"
     v_sync: "VSync"
@@ -373,7 +373,7 @@ ru:
     performance: "Настройки производительности"
     renderer: "Настройки движка рендеринга"
     location_paths: "Настройки расположения файлов"
-    wh_wz_appearance: "Внешний вид Wheel Wizard"
+    wh_wz_appearance: "Внешний вид Wheel Wizard+"
     installation: "Установка"
   helper_text:
     topbar:
@@ -384,7 +384,7 @@ ru:
     recommended: "Это изменит некоторые некоторые настройки Dolphin'а, чтобы избежать фризов и лагов."
     30_fps: "Эта настройка поставит максимальное количество FPS на 30 (стандарт - 60)"
     end_with_exe: "Путь должен заканчиваться на .exe"
-    enable_animations: "Эта настройка включает анимации в лаунчере Wheel Wizard."
+    enable_animations: "Эта настройка включает анимации в лаунчере Wheel Wizard+."
     end_with_x: "Путь может заканчиваться на:"
   category:
     about: "О нас"

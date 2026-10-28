@@ -55,7 +55,7 @@
 
                             <PathIcon Data="{StaticResource StarIcon}" Height="17"
                                       IsVisible="{TemplateBinding IsFavorite}" HorizontalAlignment="Left" VerticalAlignment="Top"
-                                      Margin="6" Width="17" Foreground="{StaticResource Warning400}" />
+                                      Margin="6" Width="17" Foreground="{DynamicResource Brand400}" />
 
                             <StackPanel HorizontalAlignment="Right" VerticalAlignment="Top" Margin="6" Width="17" Spacing="6">
                                 <PathIcon Data="{StaticResource Global}" Height="17" Width="17"
@@ -92,13 +92,13 @@
         </Style>
 
         <Style Selector="^[IsFavorite=True] /template/ Border#PART_MainBorder">
-            <Setter Property="BorderBrush" Value="{StaticResource Warning500}"></Setter>
+            <Setter Property="BorderBrush" Value="{DynamicResource Brand500}"></Setter>
             <Style Selector="^ PathIcon#PART_AddIcon">
-                <Setter Property="Foreground" Value="{StaticResource Warning500}" />
+                <Setter Property="Foreground" Value="{DynamicResource Brand500}" />
             </Style>
             <Style Selector="^ Border#PART_BackgroundBlur">
                 <Setter Property="IsVisible" Value="True" />
-                <Setter Property="Background" Value="{StaticResource Warning300}" />
+                <Setter Property="Background" Value="{DynamicResource Brand300}" />
             </Style>
         </Style>
 

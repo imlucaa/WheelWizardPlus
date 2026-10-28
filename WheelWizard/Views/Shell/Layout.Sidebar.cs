@@ -213,7 +213,6 @@ public partial class Layout
         SidebarMii.HorizontalAlignment = HorizontalAlignment.Left;
         SidebarMii.VerticalAlignment = VerticalAlignment.Bottom;
 
-        OtherSectionText.IsVisible = TestingButton.IsVisible;
         foreach (var button in SidePanelButtons.Children.OfType<SidebarRadioButton>())
         {
             button.Classes.Set("compact", compact);

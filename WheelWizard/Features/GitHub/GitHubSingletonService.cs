@@ -18,7 +18,7 @@ public interface IGitHubSingletonService
 
 public class GitHubSingletonService(IApiCaller<IGitHubApi> apiService) : IGitHubSingletonService
 {
-    public async Task<OperationResult<List<GithubRelease>>> GetReleasesAsync() => await GetReleasesAsync("imlucaa", "BetterWheelWizard");
+    public async Task<OperationResult<List<GithubRelease>>> GetReleasesAsync() => await GetReleasesAsync("imlucaa", "WheelWizardPlus");
 
     public async Task<OperationResult<List<GithubRelease>>> GetReleasesAsync(string owner, string repository, int count = 3)
     {

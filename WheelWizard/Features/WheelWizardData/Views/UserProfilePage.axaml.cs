@@ -491,12 +491,10 @@ public partial class UserProfilePage : UserControl, INotifyPropertyChanged
         ViewUtils.ShowSnackbar(t("snackbar_success.copied_fc"));
     }
 
-    // This is intentionally a separate validation method besides the true name validation. That name validation allows less than 3.
-    // But we as team wheel wizard don't think it makes sense to have a mii name shorter than 3, and so from the UI we don't allow it
     private OperationResult ValidateMiiName(string? oldName, string newName)
     {
         newName = (newName ?? string.Empty).Trim();
-        if (newName.Length is > 10 or < 3)
+        if (newName.Length is > 10 or < 1)
             return Fail(t("helper_note.name_must_between"));
 
         return Ok();

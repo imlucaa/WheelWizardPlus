@@ -3,6 +3,7 @@ using WheelWizard.ApplicationLifecycle;
 using WheelWizard.AutoUpdating;
 using WheelWizard.GameBanana.InstallRequests;
 using WheelWizard.Launching;
+using WheelWizard.Models.Enums;
 using WheelWizard.Mods;
 using WheelWizard.Settings;
 using WheelWizard.WheelWizardData;
@@ -36,9 +37,26 @@ public class ApplicationStartupTests
         fixture.Settings.Get<bool>(fixture.Settings.LAUNCH_RR_ON_STARTUP).Returns(saved);
         await fixture.Startup.RunAsync(new StartupOptions(protocol ? "wheelwizard://123" : null, cli));
 
-        await fixture.Launch.Received(expected ? 1 : 0).LaunchAsync(false);
+        fixture.Launchers.Received(expected ? 1 : 0).GetActiveLauncher();
+        await fixture.Launch.Received(expected ? 1 : 0).Launch();
         fixture.Live.Received(1).Start();
         await fixture.Requests.Received(protocol ? 1 : 0).HandleAsync(Arg.Any<string>());
+    }
+
+    [Theory]
+    [InlineData(WheelWizardStatus.OutOfDate, false)]
+    [InlineData(WheelWizardStatus.Ready, true)]
+    [InlineData(WheelWizardStatus.NoServerButInstalled, true)]
+    [InlineData(WheelWizardStatus.NotInstalled, true)]
+    public async Task StartupLaunch_WaitsForTheUpdateButton_OnlyWhenRetroRewindHasAnUpdate(WheelWizardStatus status, bool launches)
+    {
+        var fixture = new Fixture();
+        fixture.Settings.Get<bool>(fixture.Settings.LAUNCH_RR_ON_STARTUP).Returns(true);
+        fixture.Launch.GetCurrentStatus().Returns(status);
+
+        await fixture.Startup.RunAsync(new StartupOptions(null, false));
+
+        await fixture.Launch.Received(launches ? 1 : 0).Launch();
     }
 
     [Fact]
@@ -68,7 +86,8 @@ public class ApplicationStartupTests
 
         fixture.Live.DidNotReceive().Start();
         await fixture.Badges.DidNotReceive().LoadBadgesAsync();
-        await fixture.Launch.DidNotReceiveWithAnyArgs().LaunchAsync(default);
+        fixture.Launchers.DidNotReceive().GetActiveLauncher();
+        await fixture.Launch.DidNotReceive().Launch();
     }
 
     [Theory]
@@ -108,7 +127,8 @@ public class ApplicationStartupTests
             fixture.Updates.DidNotReceive().CheckForUpdatesAsync();
         fixture.Badges.DidNotReceive().LoadBadgesAsync();
         fixture.Live.DidNotReceive().Start();
-        fixture.Launch.DidNotReceiveWithAnyArgs().LaunchAsync(default);
+        fixture.Launchers.DidNotReceive().GetActiveLauncher();
+        fixture.Launch.DidNotReceive().Launch();
     }
 
     private sealed class QueuedContext : SynchronizationContext
@@ -146,7 +166,8 @@ public class ApplicationStartupTests
         public IWhWzDataSingletonService Badges { get; } = Substitute.For<IWhWzDataSingletonService>();
         public IApplicationLiveUpdates Live { get; } = Substitute.For<IApplicationLiveUpdates>();
         public ISettingsManager Settings { get; } = Substitute.For<ISettingsManager>();
-        public IRetroRewindLaunchService Launch { get; } = Substitute.For<IRetroRewindLaunchService>();
+        public ILauncherProvider Launchers { get; } = Substitute.For<ILauncherProvider>();
+        public ILauncher Launch { get; } = Substitute.For<ILauncher>();
         public ApplicationStartup Startup { get; }
 
         public Fixture()
@@ -154,7 +175,8 @@ public class ApplicationStartupTests
             Mods.ReloadAsync().Returns(Ok());
             Requests.HandleAsync(Arg.Any<string>()).Returns(Ok());
             Badges.LoadBadgesAsync().Returns(Ok());
-            Launch.LaunchAsync(Arg.Any<bool>()).Returns(Ok());
+            Launchers.GetActiveLauncher().Returns(Launch);
+            Launch.Launch().Returns(Ok());
             Startup = new ApplicationStartup(
                 Mods,
                 Requests,
@@ -162,7 +184,7 @@ public class ApplicationStartupTests
                 Badges,
                 Live,
                 Settings,
-                Launch,
+                Launchers,
                 NullLogger<ApplicationStartup>.Instance
             );
         }

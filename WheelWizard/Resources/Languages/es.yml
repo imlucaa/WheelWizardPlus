@@ -209,7 +209,7 @@ es:
       Para unirte a una sala en específico, necesitarás unirte mediante un amigo, o con suerte, encontrando la sala en VS Mundial.
     friends_page_disclaimer: "Para añadir amigos necesitas añadirlos dentro del juego."
     region_user_selection: "Esto solo muestra las regiones en las que TÚ has jugado."
-    primary_profile: "El perfil principal es usado como referencia en Wheel Wizard."
+    primary_profile: "El perfil principal es usado como referencia en Wheel Wizard+."
   empty_content:
     no_profiles: "Tienes que jugar el juego mínimo una vez para poder ver aquí tus perfiles."
     no_friends_title: "¡Aún no has agregado amigos!"
@@ -252,8 +252,8 @@ es:
     installing_mods_count: "Instalando %{amount} mods"
     processing_xof_y: "Procesando %{processed} de %{total} archivos..."
     update_rr: "Actualizando Retro Rewind"
-    latest_wh_wz_github: "Obteniendo la ultima versión de Wheel Wizard desde GitHub"
-    update_wh_wz: "Actualizando Wheel Wizard"
+    latest_wh_wz_github: "Obteniendo la ultima versión de Wheel Wizard+ desde GitHub"
+    update_wh_wz: "Actualizando Wheel Wizard+"
     installing_rr: "Instalando Retro Rewind"
     installing_rr_first_time: "Instalando Retro Rewind por primera vez"
     installing_dolphin: "Instalando el emulador Dolphin"
@@ -292,8 +292,8 @@ es:
         Si no sabes lo que significa, ante la duda marca que Sí :)
         Carpeta del emulador Dolphin encontrado. ¿Deseas usar esta carpeta?
     new_version_wh_wz:
-      title: "Actualización de Wheel Wizard disponible"
-      extra: "La versión %{latestVersion} de Wheel Wizard está disponible (actualmente en %{currentVersion}). ¿Deseas actualizar ahora?"
+      title: "Actualización de Wheel Wizard+ disponible"
+      extra: "La versión %{latestVersion} de Wheel Wizard+ está disponible (actualmente en %{currentVersion}). ¿Deseas actualizar ahora?"
     update_admin:
       title: "Actualizando usando administrador"
       extra: "A veces una actualización requiere derechos de administrador. ¿Deseas activarlo para esta actualización?"
@@ -330,9 +330,9 @@ es:
       title: "¿Reemplazar el clonado privado de Dolphin?"
       extra: "Esto reemplaza el clonado actual con los datos de Dolphin. Se perderán los guardados, Miis y ajustes de Wii que se hayan cambiado solamente en WiiCompiled."
     move_data:
-      title: "¿Mover datos de Wheel Wizard?"
+      title: "¿Mover datos de Wheel Wizard+?"
       extra: |-
-        Wheel Wizard moverá sus archivos a:
+        Wheel Wizard+ moverá sus archivos a:
         %{path}
         Puede tardar un rato dependiendo de la cantidad de datos.
     dolphin_outdated:
@@ -389,12 +389,12 @@ es:
     unable_update_wh_wz:
       extra:
         reason_network: |-
-          No se puedo confirmar la actualidad de su versión de Wheel Wizard.
+          No se puedo confirmar la actualidad de su versión de Wheel Wizard+.
           Podrías estar experimentando problemas de conexión.
         reason_location: |-
-          No se pudo actualizar Wheel Wizard. Asegúrate de que la aplicación está ubicada en una carpeta que se puede editar.
+          No se pudo actualizar Wheel Wizard+. Asegúrate de que la aplicación está ubicada en una carpeta que se puede editar.
           No se encontró la carpeta actual.
-      title: "No se pudo actualizar Wheel Wizard."
+      title: "No se pudo actualizar Wheel Wizard+."
     no_connect_server:
       extra: "No se pudo conectar al servidor. Inténtalo de nuevo más tarde."
       title: "No se pudo conectar al servidor."
@@ -412,7 +412,7 @@ es:
     dolphin_version_unverified:
       title: "No se pudo verificar tu versión del Emulador Dolphin."
       extra: |-
-        Wheel Wizard no pudo averiguar la versión del Emulador Dolphin que tienes configurada. Por lo tanto no puede determinar si contiene los parches de seguridad.
+        Wheel Wizard+ no pudo averiguar la versión del Emulador Dolphin que tienes configurada. Por lo tanto no puede determinar si contiene los parches de seguridad.
 
         Por favor comprueba tú mismo si estás en la versión %{minimumVersion} o una más reciente. Versiones más antiguas contienen una vulnerabilidad de seguridad donde archivos maliciosos, mods o hackers pueden infectar tu PC con malware.
     dolphin_tool_selected:
@@ -477,7 +477,7 @@ es:
     data_folder_moved:
       title: "Carpeta de datos actualizada"
       extra: |-
-        Los datos de Wheel Wizard ahora se almacenan en:
+        Los datos de Wheel Wizard+ ahora se almacenan en:
         %{path}
     mod_converted_to_patches:
       title: "Convertido a parches"
@@ -508,11 +508,11 @@ es:
     mii_failure_create: "Se produjo un error al crear Mii '%{error}'"
     mii_failure_duplicate: "Se produjo un error al duplicar Mii(s) '%{error}'"
   helper_note:
-    name_must_between: "Los nombres tienen que tener entre 3 y 10 caracteres."
+    name_must_between: "Los nombres tienen que tener entre 1 y 10 caracteres."
     creator_name_less11: "El nombre del creador tiene que tener menos de 11 caracteres."
     creator_name_less10: "El nombre del creador tiene que tener menos de 10 caracteres."
   option:
-    wh_wz_language: "Idioma de Wheel Wizard"
+    wh_wz_language: "Idioma de Wheel Wizard+"
     force_disable_wiimote: "Forzar a desactivar Wiimote"
     launch_with_dolphin: "Lanzar juego con la ventana de Dolphin"
     launch_rr_on_startup: "Lanzar Retro Rewind al iniciar"
@@ -526,7 +526,7 @@ es:
     renderer: "Renderizar"
     window_scale: "Escala de la ventana"
     open_config: "Abrir carpeta de configuraciones"
-    wheel_wizard_data_folder: "Carpeta de datos de Wheel Wizard"
+    wheel_wizard_data_folder: "Carpeta de datos de Wheel Wizard+"
     retro_rewind_folder: "Carpeta de Retro Rewind"
     reset_data_folder: "Usar ubicación por defecto"
     dolphin_user_path: "Carpeta de Usuario de Dolphin"
@@ -554,7 +554,7 @@ es:
     performance: "Ajustes de Rendimiento"
     renderer: "Ajustes de Renderizado"
     location_paths: "Ajustes de Ubicación"
-    wh_wz_appearance: "Apariencia de Wheel Wizard"
+    wh_wz_appearance: "Apariencia de Wheel Wizard+"
     installation: "Instalación"
     setup: "Configuración"
     recomp: "WiiCompiled (beta)"
@@ -572,7 +572,7 @@ es:
     recomp_dolphin_data_not_found: "Indica antes en los Ajustes de Ubicación una Carpeta de Usuario Dolphin que ya exista. Es necesario que contenga una carpeta Wii."
     recomp_prevent_stutters: "Mientras un sombreador se compila, los objetos que lo requieren son omitidos por unos pocos fotogramas, en vez de que se quede el juego estancado hasta que esté listo. Recibirás pequeñas apariciones repentinas en vez de caídas de FPS (stuttering)."
     launch_with_dolphin: "Se lanzará la ventana principal de Dolphin junto con el juego"
-    launch_rr_on_startup: "Lanza automáticamente Retro Rewind cuando se inicia Wheel Wizard"
+    launch_rr_on_startup: "Lanza automáticamente Retro Rewind cuando se inicia Wheel Wizard+"
     retro_rewind_version: "Versión instalada: %{version}"
     installed_version: "Versión instalada: %{version}"
     force_disable_wiimote: "Este ajuste desactiva el Wiimote en juego, pero lo activa para el Canal Wii"
@@ -581,14 +581,14 @@ es:
     v_sync: "Sincroniza los FPS del juego con tu pantalla para prevenir el rasgado de imagen (tearing)."
     recommended: "Este ajuste cambiará ciertos ajustes de Dolphin para reducir caídas de FPS (stuttering) y picos de lag."
     30_fps: "Este ajuste forzará al juego a ejecutarse a 30 FPS (por defecto es 60)"
-    wheel_wizard_data_folder: "Indica dónde almacena Wheel Wizard sus archivos. Puede tardar un rato en moverlos."
+    wheel_wizard_data_folder: "Indica dónde almacena Wheel Wizard+ sus archivos. Puede tardar un rato en moverlos."
     retro_rewind_folder: "Abre la carpeta que contiene los archivos de Retro Rewind instalados."
     end_with_exe: "La ruta debe terminar en .exe"
     select_dolphin_linux: "Selecciona el ejecutable Dolphin o introduce un comando de lanzamiento"
     select_dolphin_macos: "Selecciona Dolphin.app"
-    enable_animations: "Esto activa las animaciones en la aplicación Wheel Wizard"
+    enable_animations: "Esto activa las animaciones en la aplicación Wheel Wizard+"
     end_with_x: "Las rutas pueden acabar en:"
-    wh_wz_language: "Cambia el idioma usado por Wheel Wizard, no el idioma del juego."
+    wh_wz_language: "Cambia el idioma usado por Wheel Wizard+, no el idioma del juego."
     optional: "Opcional"
     must_set_paths: "Debes establecer estas 3 rutas antes de poder jugar a Retro Rewind"
     must_set_game_path: "Debes seleccionar tu archivo de juego Mario Kart Wii antes de empezar a jugar WiiCompiled"

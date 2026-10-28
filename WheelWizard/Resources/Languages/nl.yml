@@ -190,7 +190,7 @@ nl:
       Om aan een specifieke kamer deel te nemen, moet je dit óf via een vriend óf via de online servers doen.
     friends_page_disclaimer: "Om vrienden toe te voegen moet je ze in het spel toevoegen."
     region_user_selection: "Dit toont alleen regio's waarop JIJ hebt gespeeld."
-    primary_profile: "Het hoofdprofiel wordt gebruikt als referentie in Wheel Wizard."
+    primary_profile: "Het hoofdprofiel wordt gebruikt als referentie in Wheel Wizard+."
   empty_content:
     no_profiles: "Je moet het spel minimaal één keer hebben gespeeld om hier jouw profielen te kunnen bekijken."
     no_friends_title: "Je hebt nog geen vrienden!"
@@ -223,8 +223,8 @@ nl:
     installing_mods_count: "%{amount} mods installeren"
     processing_xof_y: "Verwerken van %{processed} uit %{total} bestanden..."
     update_rr: "Retro Rewind updaten"
-    latest_wh_wz_github: "Ophalen van de nieuwste Wheel Wizard van GitHub-releases."
-    update_wh_wz: "Wheel Wizard updaten"
+    latest_wh_wz_github: "Ophalen van de nieuwste Wheel Wizard+ van GitHub-releases."
+    update_wh_wz: "Wheel Wizard+ updaten"
     installing_rr: "Retro Rewind installeren"
     installing_rr_first_time: "Retro Rewind voor de eerste keer installeren."
     installing_dolphin: "Dolphin-emulator installeren"
@@ -246,8 +246,8 @@ nl:
         Als je niet weet wat dit allemaal betekent, druk op ja :)
         Dolphin-emulator-map gevonden. Wil je deze gebruiken?
     new_version_wh_wz:
-      title: "Wheel Wizard-update beschikbaar"
-      extra: "Versie %{latestVersion} van Wheel Wizard is beschikbaar (momenteel op %{currentVersion}). Wil je nu updaten?"
+      title: "Wheel Wizard+-update beschikbaar"
+      extra: "Versie %{latestVersion} van Wheel Wizard+ is beschikbaar (momenteel op %{currentVersion}). Wil je nu updaten?"
     update_admin:
       title: "Update met administrator"
       extra: "Soms zijn er voor een update administratorrechten nodig. Wil je deze activeren voor deze update?"
@@ -295,12 +295,12 @@ nl:
     unable_update_wh_wz:
       extra:
         reason_network: |-
-          Kan niet controleren of Wheel Wizard up-to-date is.
+          Kan niet controleren of Wheel Wizard+ up-to-date is.
           Er zijn mogelijk netwerkproblemen.
         reason_location: |-
-          Wheel Wizard kan niet worden geüpdatet. Zorg ervoor dat de applicatie zich in een map bevindt waarnaar kan worden geschreven.
+          Wheel Wizard+ kan niet worden geüpdatet. Zorg ervoor dat de applicatie zich in een map bevindt waarnaar kan worden geschreven.
           Kan de huidige map niet vinden.
-      title: "Wheel Wizard kan niet worden geüpdatet."
+      title: "Wheel Wizard+ kan niet worden geüpdatet."
     no_connect_server:
       extra: "Kan geen verbinding maken met de server. Probeer het later opnieuw."
       title: "Kan geen verbinding maken met de server."
@@ -386,11 +386,11 @@ nl:
     mii_failure_create: "Creëren van Mii \"%{error}\" mislukt."
     mii_failure_duplicate: "Kopiëren van Mii \"%{error}\" mislukt."
   helper_note:
-    name_must_between: "Naam moet tussen de 3 en 10 tekens lang zijn."
+    name_must_between: "Naam moet tussen de 1 en 10 tekens lang zijn."
     creator_name_less11: "Naam moet korter dan 11 tekens zijn."
     creator_name_less10: "Naam moet korter dan 10 tekens zijn."
   option:
-    wh_wz_language: "Wheel Wizard-taal"
+    wh_wz_language: "Wheel Wizard+-taal"
     force_disable_wiimote: "Forceer uitschakelen Wii-afstandsbediening"
     launch_with_dolphin: "Start spel met Dolphin-venster"
     v_sync: "VSync"
@@ -416,7 +416,7 @@ nl:
     performance: "Prestatie-instellingen"
     renderer: "Renderer-instellingen"
     location_paths: "Locatie-instellingen"
-    wh_wz_appearance: "Wheel Wizard-weergave"
+    wh_wz_appearance: "Wheel Wizard+-weergave"
     installation: "Installatie"
   helper_text:
     topbar:
@@ -427,7 +427,7 @@ nl:
     recommended: "Deze instelling verandert sommige Dolphin-instellingen voor een optimale ervaring."
     30_fps: "Met deze instelling wordt het spel gedwongen om te draaien op 30 FPS (standaard is 60)."
     end_with_exe: "Locatie moet eindigen met \".exe\"."
-    enable_animations: "Dit schakelt de animaties in de Wheel Wizard-app in."
+    enable_animations: "Dit schakelt de animaties in de Wheel Wizard+-app in."
     end_with_x: "Locatie kan eindigen met:"
     optional: "Optioneel"
     must_set_paths: "Je moet deze 3 locaties instellen voordat je Retro Rewind kunt spelen."

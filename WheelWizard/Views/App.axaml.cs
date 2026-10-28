@@ -24,7 +24,7 @@ public class App : Application
     public override void Initialize()
     {
         // macOS reads the name before deferred visual resources load for the splash startup.
-        Name = "Wheel Wizard";
+        Name = "Wheel Wizard+";
         if (_createStartup is null)
             LoadVisualResources();
         InstallMacApplicationMenu();
@@ -43,12 +43,12 @@ public class App : Application
         {
             var menu = new NativeMenu();
             var appItems = new List<NativeMenuItem>();
-            AddItem("About Wheel Wizard…", window => window.ShowAppInfo());
+            AddItem("About Wheel Wizard+…", window => window.ShowAppInfo());
             AddItem("Settings…", window => window.ShowSettings(), new KeyGesture(Key.OemComma, KeyModifiers.Meta));
             menu.Add(new NativeMenuItemSeparator());
             AddItem("GitHub", window => window.OpenCommunityLink("github"));
             AddItem("Discord", window => window.OpenCommunityLink("discord"));
-            AddItem("Support Wheel Wizard", window => window.OpenCommunityLink("support"));
+            AddItem("Support Wheel Wizard+", window => window.OpenCommunityLink("support"));
             menu.NeedsUpdate += (_, _) =>
             {
                 var enabled =

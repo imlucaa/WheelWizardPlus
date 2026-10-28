@@ -26,6 +26,8 @@ public partial class RoomsPage : UserControl, INotifyPropertyChanged, IPollingLi
     private int? _maximumAverageVr;
     private int _averageVrSort;
     private bool _friendsOnly;
+    private bool _refreshing;
+    private readonly DispatcherTimer _autoTimer = new() { Interval = TimeSpan.FromSeconds(10) };
     private readonly DispatcherTimer _raceTimer = new() { Interval = TimeSpan.FromSeconds(1) };
 
     private readonly ObservableCollection<RrRoom> _rooms = [];
@@ -73,7 +75,19 @@ public partial class RoomsPage : UserControl, INotifyPropertyChanged, IPollingLi
         GameLicenseService = gameLicenseService;
         InitializeComponent();
         DataContext = this;
+        // The sort, the VR range and friends-only come back the way they were left.
+        var saved = RoomsViewState.Parse(Settings.Get<string>(Settings.ROOMS_VIEW));
+        _averageVrSort = saved.Sort;
+        _minimumAverageVr = saved.MinimumVr;
+        _maximumAverageVr = saved.MaximumVr;
+        _friendsOnly = saved.FriendsOnly;
+        ShowFriendsButton();
+        ShowFilterButtons();
+        _autoTimer.Tick += AutoTimer_OnTick;
+        _autoTimer.Start();
         LiveRooms.Subscribe(this);
+        // The friends come from the save, which is read after the first room list: the page redraws when it is.
+        GameLicenseService.Subscribe(this);
         _raceTimer.Tick += RaceTimer_OnTick;
         _raceTimer.Start();
 
@@ -84,7 +98,11 @@ public partial class RoomsPage : UserControl, INotifyPropertyChanged, IPollingLi
     public void OnUpdate(ObservablePollingService sender)
     {
         if (sender is not LiveRoomsService liveRooms)
+        {
+            if (_friendsOnly && LiveRooms.RoomCount > 0)
+                ApplyFilters();
             return;
+        }
 
         var count = liveRooms.RoomCount;
         EmptyRoomsView.IsVisible = count == 0;
@@ -92,10 +110,10 @@ public partial class RoomsPage : UserControl, INotifyPropertyChanged, IPollingLi
         if (count == 0)
             return;
 
-        ApplyFilters();
+        ApplyFilters(keepScroll: true);
     }
 
-    private void ApplyFilters()
+    private void ApplyFilters(bool keepScroll = false)
     {
         var query = _searchQuery?.Trim();
         var friendCodes = _friendsOnly ? CurrentFriendCodes() : null;
@@ -125,11 +143,16 @@ public partial class RoomsPage : UserControl, INotifyPropertyChanged, IPollingLi
         };
 
         var visibleRooms = filteredRooms.ToList();
+        // A refresh redraws the list; the place in it is kept so it does not jump to the top.
+        var scroller = keepScroll ? RoomsListBox.Scroll as ScrollViewer : null;
+        var offset = scroller?.Offset;
         // Players you flagged show in red, and their rooms get a red flag.
         PlayerFlags.Apply(LiveRooms.CurrentRooms, PlayerFlags.Load(Settings));
         Rooms.Clear();
         foreach (var room in visibleRooms)
             Rooms.Add(room);
+        if (scroller is not null && offset is { Y: > 0 } restore)
+            Dispatcher.UIThread.Post(() => scroller.Offset = restore, DispatcherPriority.Background);
 
         Players.Clear();
         RoomsListItemCount.Text = visibleRooms.Count.ToString();
@@ -175,7 +198,9 @@ public partial class RoomsPage : UserControl, INotifyPropertyChanged, IPollingLi
     private void RoomsPage_Unloaded(object? sender, RoutedEventArgs e)
     {
         _raceTimer.Stop();
+        _autoTimer.Stop();
         LiveRooms.Unsubscribe(this);
+        GameLicenseService.Unsubscribe(this);
     }
 
     private void RaceTimer_OnTick(object? sender, EventArgs e)
@@ -202,11 +227,55 @@ public partial class RoomsPage : UserControl, INotifyPropertyChanged, IPollingLi
     private void RoomsFriendsButton_OnClick(object? sender, RoutedEventArgs e)
     {
         _friendsOnly = !_friendsOnly;
+        ShowFriendsButton();
+        SaveView();
+        ApplyFilters();
+    }
+
+    private void ShowFriendsButton() =>
         RoomsFriendsButton.Variant = _friendsOnly
             ? WheelWizard.Views.Components.Button.ButtonsVariantType.Primary
             : WheelWizard.Views.Components.Button.ButtonsVariantType.Default;
-        ApplyFilters();
+
+    // A saved sort or VR range is easy to forget, so the buttons stay lit while they are on.
+    private void ShowFilterButtons()
+    {
+        RoomsVrFilterButton.Variant =
+            _minimumAverageVr.HasValue || _maximumAverageVr.HasValue
+                ? WheelWizard.Views.Components.Button.ButtonsVariantType.Primary
+                : WheelWizard.Views.Components.Button.ButtonsVariantType.Default;
+        RoomsSortButton.Variant =
+            _averageVrSort != 0
+                ? WheelWizard.Views.Components.Button.ButtonsVariantType.Primary
+                : WheelWizard.Views.Components.Button.ButtonsVariantType.Default;
     }
+
+    // The room list is read again every 10 seconds while this page is open (the background poll is every 40).
+    private async void AutoTimer_OnTick(object? sender, EventArgs e)
+    {
+        if (_refreshing)
+            return;
+        _refreshing = true;
+        try
+        {
+            await LiveRooms.RefreshNowAsync();
+            OnUpdate(LiveRooms);
+        }
+        catch (Exception)
+        {
+            // A failed refresh keeps the list as it is; the next tick tries again.
+        }
+        finally
+        {
+            _refreshing = false;
+        }
+    }
+
+    private void SaveView() =>
+        Settings.Set(
+            Settings.ROOMS_VIEW,
+            new RoomsViewState(_averageVrSort, _minimumAverageVr, _maximumAverageVr, _friendsOnly).Serialize()
+        );
 
     /// <summary>The friend codes (digits only) of the focused license's friends.</summary>
     private HashSet<string> CurrentFriendCodes()
@@ -231,6 +300,8 @@ public partial class RoomsPage : UserControl, INotifyPropertyChanged, IPollingLi
 
         _minimumAverageVr = range.Min;
         _maximumAverageVr = range.Max;
+        ShowFilterButtons();
+        SaveView();
         ApplyFilters();
     }
 
@@ -241,6 +312,8 @@ public partial class RoomsPage : UserControl, INotifyPropertyChanged, IPollingLi
             return;
 
         _averageVrSort = selected.Value;
+        ShowFilterButtons();
+        SaveView();
         ApplyFilters();
     }
 

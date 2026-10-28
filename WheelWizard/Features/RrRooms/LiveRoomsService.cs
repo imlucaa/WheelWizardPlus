@@ -107,6 +107,7 @@ public class LiveRoomsService : ObservablePollingService
     {
         CurrentRooms = rooms;
         _presence.Replace(rooms.SelectMany(room => room.Players).Select(player => player.FriendCode));
+        _presence.SetRatings(rooms.SelectMany(room => room.Players));
         _gameLicenseService.RefreshOnlineStatus();
     }
 

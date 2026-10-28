@@ -238,7 +238,7 @@
                             </Style>
                             <Style Selector="components|ActionButton.favorite">
                                 <Setter Property="IconData" Value="{StaticResource StarIcon}" />
-                                <Setter Property="Foreground" Value="{StaticResource Warning500}" />
+                                <Setter Property="Foreground" Value="{DynamicResource Brand400}" />
                             </Style>
                         </components:ActionButton.Styles>
                     </components:ActionButton>

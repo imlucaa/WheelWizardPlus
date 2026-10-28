@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-BetterWheelWizard: an unofficial GPL-3 fork of [TeamWheelWizard/WheelWizard](https://github.com/TeamWheelWizard/WheelWizard), a cross-platform Avalonia (C#/.NET 10) launcher for the Mario Kart Wii **Retro Rewind** mod pack. It installs/updates Retro Rewind, launches Dolphin or WiiCompiled, manages GameBanana mods, edits Miis, and shows live RWFC rooms and leaderboard (`https://rwfc.net`). The fork adds launcher theming, leaderboard search/paging, room filters, an online Mii downloader and save backups, and ships its own updater feed (`imlucaa/BetterWheelWizard` releases).
+BetterWheelWizard: an unofficial GPL-3 fork of [TeamWheelWizard/WheelWizard](https://github.com/TeamWheelWizard/WheelWizard), a cross-platform Avalonia (C#/.NET 10) launcher for the Mario Kart Wii **Retro Rewind** mod pack. It installs/updates Retro Rewind, launches Dolphin or WiiCompiled, manages GameBanana mods, edits Miis, and shows live RWFC rooms and leaderboard (`https://rwfc.net`). The fork adds launcher theming, leaderboard search/paging, room filters, an online Mii downloader and save backups, and ships its own updater feed (`imlucaa/WheelWizardPlus` releases).
 
 This branch (`better-v261-migration`) is BWW's features ported onto **upstream v2.6.x's rewritten architecture** (constructor injection, typed settings, `Features/*/Views`). The older `custom` branch is built on upstream 2.5.7 (static `PathManager`, untyped settings) and does not share this structure or history with upstream. Assembly name is `BetterWheelWizard` (the project folder and namespace stay `WheelWizard`).
 
@@ -59,7 +59,7 @@ Notes that are easy to trip over:
 
 **RWFC data.** `IApiCaller<IRwfcApi>` (Refit) against `rwfc.net`: `roomstatus`, `leaderboard` (paged, `?search=`), player profile/history. Live rooms are polled by `Features/RrRooms` (`LiveRoomsService`) and mapped to `RrRoom`.
 
-**Self-update.** `Features/AutoUpdating` + `Features/GitHub` read releases from `imlucaa/BetterWheelWizard`, take the newest published release that has a platform asset (`BetterWheelWizard.exe`, `BetterWheelWizard_Linux`, `BetterWheelWizard_ARM64_Linux`), and swap the exe via a PowerShell script on Windows. There is no checksum verification. Release CI (`.github/workflows/release.yml`) builds Windows/Linux only; there are no macOS builds.
+**Self-update.** `Features/AutoUpdating` + `Features/GitHub` read releases from `imlucaa/WheelWizardPlus`, take the newest published release that has a platform asset (`BetterWheelWizard.exe`, `BetterWheelWizard_Linux`, `BetterWheelWizard_ARM64_Linux`), and swap the exe via a PowerShell script on Windows. There is no checksum verification. Release CI (`.github/workflows/release.yml`) builds Windows/Linux only; there are no macOS builds.
 
 ## Skills
 

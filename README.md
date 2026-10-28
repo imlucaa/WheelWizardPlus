@@ -1,4 +1,4 @@
-# BetterWheelWizard
+# Wheel Wizard+
 
 Quality-of-life upgrades for [WheelWizard](https://github.com/TeamWheelWizard/WheelWizard).
 
@@ -6,9 +6,9 @@ Quality-of-life upgrades for [WheelWizard](https://github.com/TeamWheelWizard/Wh
 
 | Platform | Download |
 | --- | --- |
-| Windows x64 | [BetterWheelWizard.exe](https://github.com/imlucaa/BetterWheelWizard/releases/latest/download/BetterWheelWizard.exe) |
-| Linux x64 | [BetterWheelWizard_Linux](https://github.com/imlucaa/BetterWheelWizard/releases/latest/download/BetterWheelWizard_Linux) |
-| Linux ARM64 | [BetterWheelWizard_ARM64_Linux](https://github.com/imlucaa/BetterWheelWizard/releases/latest/download/BetterWheelWizard_ARM64_Linux) |
+| Windows x64 | [BetterWheelWizard.exe](https://github.com/imlucaa/WheelWizardPlus/releases/latest/download/BetterWheelWizard.exe) |
+| Linux x64 | [BetterWheelWizard_Linux](https://github.com/imlucaa/WheelWizardPlus/releases/latest/download/BetterWheelWizard_Linux) |
+| Linux ARM64 | [BetterWheelWizard_ARM64_Linux](https://github.com/imlucaa/WheelWizardPlus/releases/latest/download/BetterWheelWizard_ARM64_Linux) |
 
 All builds are standalone single files. No installer or separate .NET installation is required.
 
@@ -33,7 +33,7 @@ All builds are standalone single files. No installer or separate .NET installati
 
 1. Open [discord.com/developers/applications](https://discord.com/developers/applications), click **New Application** and name it **Retro Rewind**.
 2. Under **Rich Presence > Art Assets**, upload a square image and give it a name, for example `my_image`. Save, then wait a few minutes.
-3. In BetterWheelWizard open **Settings > Discord RPC** and press **Run setup**.
+3. In Wheel Wizard+ open **Settings > Discord RPC** and press **Run setup**.
 4. Paste your **Application ID** (from General Information), pick your image, and press **Finish**.
 5. Restart Dolphin and start the game.
 
@@ -45,7 +45,7 @@ The View Player and View Room buttons are only shown to other people looking at 
 
 ### Does it change the Retro Rewind pack?
 
-No. The game files stay untouched, so online play works as normal. BetterWheelWizard reads the game screen from Dolphin and sends the status to Discord itself.
+No. The game files stay untouched, so online play works as normal. Wheel Wizard+ reads the game screen from Dolphin and sends the status to Discord itself.
 
 ## Screenshots
 
@@ -83,7 +83,7 @@ No. The game files stay untouched, so online play works as normal. BetterWheelWi
 
 ## Build from source
 
-BetterWheelWizard requires the .NET 10 SDK.
+Wheel Wizard+ requires the .NET 10 SDK.
 
 ```sh
 dotnet test WheelWizard.sln --configuration Release
@@ -92,4 +92,4 @@ dotnet build WheelWizard.sln --configuration Release
 
 ## License
 
-BetterWheelWizard is an unofficial fork of WheelWizard and is licensed under the [GNU GPL v3](LICENSE).
+Wheel Wizard+ (formerly BetterWheelWizard) is an unofficial fork of WheelWizard and is licensed under the [GNU GPL v3](LICENSE).

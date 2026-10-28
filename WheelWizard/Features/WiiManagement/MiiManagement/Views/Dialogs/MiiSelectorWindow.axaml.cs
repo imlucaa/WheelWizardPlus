@@ -44,7 +44,6 @@ public partial class MiiSelectorWindow : PopupContent
             var miiBlock = new MiiBlock
             {
                 Mii = mii,
-                IsGlobal = mii.IsGlobal(localMacAddress),
                 Width = 90,
                 Height = 90,
                 Margin = new(8, 10),

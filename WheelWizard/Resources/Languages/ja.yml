@@ -328,7 +328,7 @@ ja:
       特定のルームに参加するには、フレンドを通して合流するか、オンラインサーバーに参加して合流する必要があります。
     friends_page_disclaimer: "フレンドを追加するためにはゲーム内で追加する必要があります"
     region_user_selection: "これはあなたがプレイした地域のみを表示します"
-    primary_profile: "メインのプロファイルはWheel Wizardクライアントで参照されます"
+    primary_profile: "メインのプロファイルはWheel Wizard+クライアントで参照されます"
   empty_content:
     no_mii_name: "不明なプレイヤー"
     no_vr_history_title: "VR履歴がありません"
@@ -373,8 +373,8 @@ ja:
     installing_mods_count: "%{amount}個のModをインストール"
     processing_xof_y: "%{total}個中%{processed} 個のファイルを処理しています..."
     update_rr: "Retro Rewindをアップデート"
-    latest_wh_wz_github: "githubから最新のWheel Wizardを入手"
-    update_wh_wz: "Wheel Wizardをアップデート"
+    latest_wh_wz_github: "githubから最新のWheel Wizard+を入手"
+    update_wh_wz: "Wheel Wizard+をアップデート"
     installing_rr: "Retro Rewindをインストール"
     installing_rr_first_time: "Retro Rewindをインストール (初回)"
     installing_dolphin: "Dolphinエミュレーターをインストール"
@@ -401,8 +401,8 @@ ja:
         意味がよく分からなければ、「はい」をクリックしてください。
         Dolphinエミュレーターのフォルダーが見つかりました。このフォルダーを使用しますか？
     new_version_wh_wz:
-      title: "Wheel Wizardのアップデートがあります"
-      extra: "Wheel Wizardのバージョン%{latestVersion} (現在のバージョンは%{currentVersion}) が利用できます。すぐにアップデートしますか？"
+      title: "Wheel Wizard+のアップデートがあります"
+      extra: "Wheel Wizard+のバージョン%{latestVersion} (現在のバージョンは%{currentVersion}) が利用できます。すぐにアップデートしますか？"
     update_admin:
       title: "管理者権限で更新する"
       extra: "アップデートには管理者権限が必要な場合があります。今回のアップデートで管理者権限を有効にしますか?"
@@ -452,12 +452,12 @@ ja:
     unable_update_wh_wz:
       extra:
         reason_network: |-
-          Wheel Wizardが最新かどうか確認できません。
+          Wheel Wizard+が最新かどうか確認できません。
           ネットワークの問題が発生している可能性があります。
         reason_location: |-
-          Wheel Wizardが更新できません。アプリが書き込み可能なフォルダーにあることを確認してください。
+          Wheel Wizard+が更新できません。アプリが書き込み可能なフォルダーにあることを確認してください。
           現在のフォルダーが見つかりません。
-      title: "Wheel Wizardのアップデートを無効にする"
+      title: "Wheel Wizard+のアップデートを無効にする"
     no_connect_server:
       extra: "サーバーに接続できませんでした。後でもう一度試してください。"
       title: "サーバーに接続できませんでした"
@@ -554,7 +554,7 @@ ja:
     mii_failure_create: "Mii '%{error}'の作成に失敗しました"
     mii_failure_duplicate: "Mii '%{error}'のコピーに失敗しました"
   helper_note:
-    name_must_between: "名前の長さは3文字から10文字にしてください"
+    name_must_between: "名前の長さは1文字から10文字にしてください"
     creator_name_less11: "作成者の名前の長さは10文字以下にしてください"
     creator_name_less10: "作成者の名前の長さは10文字以下にしてください"
   option:
@@ -563,11 +563,11 @@ ja:
     installation_folder: "インストールフォルダ"
     recomp_resolution: "解像度"
     recomp_graphics_api: "グラフィックスAPI"
-    wheel_wizard_data_folder: "Wheel Wizardのデータフォルダー"
+    wheel_wizard_data_folder: "Wheel Wizard+のデータフォルダー"
     retro_rewind_folder: "Retro Rewindフォルダー"
     save_folder: "セーブフォルダー"
     reset_data_folder: "デフォルトの場所を使用"
-    wh_wz_language: "Wheel Wizardの言語"
+    wh_wz_language: "Wheel Wizard+の言語"
     force_disable_wiimote: "Wiiリモコンを強制的に無効にする"
     launch_with_dolphin: "Dolphinウィンドウでゲームを起動する"
     v_sync: "VSync(垂直同期)"
@@ -593,7 +593,7 @@ ja:
     performance: "パフォーマンス設定"
     renderer: "レンダラー設定"
     location_paths: "パス設定"
-    wh_wz_appearance: "Wheel Wizardの外観"
+    wh_wz_appearance: "Wheel Wizard+の外観"
     installation: "インストール"
     setup: "セットアップ"
     retro_rewind: "Retro Rewind"
@@ -601,12 +601,12 @@ ja:
   helper_text:
     renderer: "Dolphinがゲームを描画する際のグラフィックスバックエンドを選択します。"
     v_sync: "ゲームのフレームレートをディスプレイと同期し、画面のティアリングを防ぎます。"
-    launch_rr_on_startup: "Wheel Wizardの起動時にRetro Rewindを自動的に起動します"
+    launch_rr_on_startup: "Wheel Wizard+の起動時にRetro Rewindを自動的に起動します"
     retro_rewind_version: "インストール済みのバージョン: %{version}"
     installed_version: "インストール済みのバージョン: %{version}"
     select_dolphin_linux: "Dolphinの実行ファイルを選択するか、起動コマンドを入力してください"
     select_dolphin_macos: "Dolphin.appを選択してください"
-    wh_wz_language: "ゲーム内の言語ではなく、Wheel Wizardで使用する言語を変更します。"
+    wh_wz_language: "ゲーム内の言語ではなく、Wheel Wizard+で使用する言語を変更します。"
     topbar:
       location_warning: "設定が無効になっています。最初にパス設定を完了させてください"
     launch_with_dolphin: "ゲームと一緒にDolphinのメインウィンドウを起動します"
@@ -615,11 +615,11 @@ ja:
     recommended: "スタッタリングやラグスパイクなどを軽減するために、特定のDolphinの設定を変更します"
     30_fps: "ゲームが30FPSで動作するようになります(通常は60FPS)"
     end_with_exe: "パスの拡張子は必ず .exe にしてください"
-    enable_animations: "Wheel Wizard内のアニメーションを有効にします"
+    enable_animations: "Wheel Wizard+内のアニメーションを有効にします"
     end_with_x: "パスは次のもので終わります:"
     optional: "任意"
     must_set_paths: "Retro Rewindをプレイする前に、これらの3つのパスを設定する必要があります"
-    wheel_wizard_data_folder: "Wheel Wizardがファイルを保存する場所を選択します。移動には時間がかかる場合があります。"
+    wheel_wizard_data_folder: "Wheel Wizard+がファイルを保存する場所を選択します。移動には時間がかかる場合があります。"
     retro_rewind_folder: "インストールされたRetro Rewindファイルを含むフォルダーを開きます。"
   category:
     graphics: "グラフィックス"
@@ -632,7 +632,7 @@ ja:
     general: "一般"
     video: "映像"
   value:
-    wheel_wizard: "Wheel Wizard"
+    wheel_wizard: "Wheel Wizard+"
     language:
       france: "フランス語"
       dutch: "オランダ語"

@@ -1,10 +1,60 @@
-# Changelog
+﻿# Changelog
 
-User-facing changes to BetterWheelWizard are recorded here. Versions follow
-the BetterWheelWizard release sequence rather than the upstream Wheel Wizard
+User-facing changes to Wheel Wizard+ (formerly BetterWheelWizard) are recorded here. Versions follow
+the Wheel Wizard+ release sequence rather than the upstream Wheel Wizard
 version sequence.
 
 ## [Unreleased]
+
+### Changed
+
+- Settings: tabs hidden from the sidebar are listed at the end of the settings tabs, not under a separate heading.
+- Themes: an option to show or hide the outline around your profile in the sidebar (it shows on any picture and at any panel opacity, and has an opacity slider); the Install Beta button on the Testing Mode page uses the theme colour.
+- Testing Mode page follows the theme colours.
+- Mii names can be 1 to 10 characters (the minimum was 3).
+- Favourite Miis (the outline and the star) follow the theme colour instead of gold.
+- Click a friend code in Discover Miis to copy it.
+- Renamed the app to Wheel Wizard+. The download files keep their names, so updates keep working.
+- WiiCompiled v0.9.0 is picked up automatically; it also accepts NTSC-U and NTSC-J discs.
+
+### Added
+
+- Licenses can be exported as .rkp files (Settings > Friend codes).
+- Import a license from a .rkp file, an earlier save or any rksys.dat: pick the save, then the license in it, then the slot it goes into.
+- A friend code history lists every change for each license, and an old code can be restored.
+- Friend codes: a line under the licenses says whether the picked license's IDs are in order (unique, and the pseudo and authentic IDs equal), with a Fix IDs button when new IDs can sort it out. Importing a license warns about clashing IDs too.
+- Friend codes: after a code passes the checks, Search database looks it up in the community player list (about 29 MB, downloaded once and kept for a week) and marks a code that is in it as taken.
+- Discs in CISO and GCZ format are now accepted, and a file that is not a disc says so.
+- Friend codes: Export all saves every license as a .rkp file in a folder you pick, and importing from a save or an earlier save can bring back all licenses at once, each into its own slot.
+- Backup: Manage names an earlier save, deletes one, or clears out the old ones. Saves are also cleared out on their own, keeping the newest 30; named saves and friend code changes are never removed.
+- Friend codes: double-click a license to copy its friend code; a license without a name says No name.
+- Rooms: the sort, the VR filter and Friends are remembered when you close the app, and their buttons stay lit while they are on. Friends redraws as soon as your save is read, so it no longer needs toggling off and on. The room list is read again every 10 seconds while the page is open, and your place in the list is kept.
+- Testing Mode can be unlocked again: press the version text under Settings > Wheel Wizard+ ten times.
+- Friend codes: pick several .rkp files at once and they are added to empty slots together (nothing that is there is replaced).
+- Backup: Manage > Back up now saves a copy of the save as it is.
+- Ghosts: click Gap to list the tracks furthest from the world record first, and Undo puts back the ghost a track had before an import.
+- Friends: a friend who is in a room shows their current VR and BR instead of the ones stored in the save.
+- Line colour is a tab in Settings (and can be pinned to the sidebar): it changes the colour of the line under your name online, inside a disc. Pick a disc and a colour, and Wheel Wizard uses Wiimm's ISO Tool to take it apart, change the region ID in main.dol and rebuild it, as a copy or over the original. The tool is asked for once, or the Download button on that tab fetches it from wit.wiimm.de (Windows) into Wheel Wizard+'s folder. A disc that was replaced remembers the colour it had, and the colour list offers Back to the original.
+- Testing Mode is a normal item in Arrange sidebar, so it can be moved or hidden like the others.
+
+### Removed
+
+- The Dev Tool button in Settings is hidden in debug builds unless `WHEELWIZARD_DEV=1` is set.
+- The globe marker on Miis in the Mii picker.
+
+### Fixed
+
+- VR overlay: the card showed a made-up +41 whatever your VR did; it now shows the real change since the card opened (and counts from the previous VR).
+- Discord RPC: Time Trials (and other offline modes) now show the track on PAL games; the pack keeps the track name at a different place there, and it is looked for when it is not where it should be.
+- Discord RPC: the check says when your Discord app has no App Icon, which is why Discord shows a ? next to your name; the setup popup has a step for it.
+- VR overlay: the preview in Settings keeps up with your VR instead of showing it from when the page opened, and both it and the overlay window read your VR from the live room list (the rwfc.net profile runs about a minute behind), so a change shows sooner.
+- Changing a friend code only changes the same license on your other regions' saves, not a different license that happens to sit in the same slot.
+- Reinstalling Retro Rewind no longer deletes your install and mod patches when the download fails or the server is down; the old install is put back. The Beta build is only replaced once the new one has downloaded.
+- Launch on startup no longer starts an out-of-date Retro Rewind; use the Update button on Home first.
+- The Mii rendering download error now names the site it downloads from, so a blocking firewall is easy to spot.
+- Player profile window no longer logs a failed binding for every field.
+- Starting the game automatically or with `--launch rr` now uses WiiCompiled when it is turned on (upstream PR #535).
+- Fixes from upstream Wheel Wizard: Retro WFC check uses the current HTTPS address, smoother Windows icon, clearer Linux update notices, Flatpak window grouping, German translation fix, and safer file paths.
 
 ## [2.6.7] - 2026-10-24
 
@@ -206,11 +256,11 @@ version sequence.
 - Applied theme colors across launcher navigation, actions, profiles, rooms, and status indicators.
 - Refined page headers, cards, tabs, buttons, spacing, and narrow layouts.
 
-[Unreleased]: https://github.com/imlucaa/BetterWheelWizard/compare/v2.6.0...HEAD
-[2.6.0]: https://github.com/imlucaa/BetterWheelWizard/compare/v2.5.14...v2.6.0
-[2.5.14]: https://github.com/imlucaa/BetterWheelWizard/compare/v2.5.13...v2.5.14
-[2.5.13]: https://github.com/imlucaa/BetterWheelWizard/compare/v2.5.12...v2.5.13
-[2.5.12]: https://github.com/imlucaa/BetterWheelWizard/compare/v2.5.11...v2.5.12
-[2.5.11]: https://github.com/imlucaa/BetterWheelWizard/compare/v2.5.10...v2.5.11
-[2.5.10]: https://github.com/imlucaa/BetterWheelWizard/compare/v2.5.9...v2.5.10
-[2.5.9]: https://github.com/imlucaa/BetterWheelWizard/releases/tag/v2.5.9
+[Unreleased]: https://github.com/imlucaa/WheelWizardPlus/compare/v2.6.0...HEAD
+[2.6.0]: https://github.com/imlucaa/WheelWizardPlus/compare/v2.5.14...v2.6.0
+[2.5.14]: https://github.com/imlucaa/WheelWizardPlus/compare/v2.5.13...v2.5.14
+[2.5.13]: https://github.com/imlucaa/WheelWizardPlus/compare/v2.5.12...v2.5.13
+[2.5.12]: https://github.com/imlucaa/WheelWizardPlus/compare/v2.5.11...v2.5.12
+[2.5.11]: https://github.com/imlucaa/WheelWizardPlus/compare/v2.5.10...v2.5.11
+[2.5.10]: https://github.com/imlucaa/WheelWizardPlus/compare/v2.5.9...v2.5.10
+[2.5.9]: https://github.com/imlucaa/WheelWizardPlus/releases/tag/v2.5.9

@@ -3,6 +3,7 @@ using WheelWizard.AutoUpdating.Platforms;
 using WheelWizard.Branding;
 using WheelWizard.GitHub;
 using WheelWizard.GitHub.Domain;
+using WheelWizard.Shared.Platform;
 
 namespace WheelWizard.AutoUpdating;
 
@@ -35,7 +36,9 @@ public class AutoUpdaterSingletonService(
     IUpdatePlatform updatePlatform,
     IBrandingSingletonService brandingService,
     IGitHubSingletonService gitHubService,
-    IUpdatePresentation presentation
+    IUpdatePresentation presentation,
+    IRuntimeEnvironment environment,
+    TimeProvider time
 ) : IAutoUpdaterSingletonService
 {
     private bool _manualUpdateShown;
@@ -160,8 +163,18 @@ public class AutoUpdaterSingletonService(
             if (release.Prerelease)
                 continue;
 
-            var releaseVersion = SemVersion.Parse(release.TagName.TrimStart('v'), SemVersionStyles.Any);
+            if (!SemVersion.TryParse(release.TagName.TrimStart('v'), SemVersionStyles.Any, out var releaseVersion))
+                continue;
             if (releaseVersion.ComparePrecedenceTo(currentVersion) <= 0)
+                continue;
+
+            // Package managers (Flatpak) lag behind GitHub, so wait a day before pointing them there. The standalone Linux
+            // builds update themselves from the release, so they get it straight away.
+            if (
+                environment.IsLinux
+                && !updatePlatform.SupportsAutomaticUpdate
+                && (release.PublishedAt is not { } publishedAt || time.GetUtcNow() - publishedAt < TimeSpan.FromDays(1))
+            )
                 continue;
 
             var asset = updatePlatform.GetAssetForCurrentPlatform(release);

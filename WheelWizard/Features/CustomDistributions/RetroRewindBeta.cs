@@ -54,10 +54,6 @@ public class RetroRewindBeta : IDistribution
 
         try
         {
-            var removeResult = await RemoveAsync(operation);
-            if (removeResult.IsFailure)
-                return removeResult;
-
             operation.Report(new(Message: "Downloading test build"));
             if (_fileSystem.Directory.Exists(tempRootPath))
                 _fileSystem.Directory.Delete(tempRootPath, recursive: true);
@@ -114,6 +110,12 @@ public class RetroRewindBeta : IDistribution
             if (!_fileSystem.Directory.Exists(xmlFolderSource))
                 return Fail($"Could not find a '{XMLFolderName}' folder inside {tempExtractionPath}");
 
+            // Everything the new build needs is here, so the old build can go now: a failed download or a wrong password
+            // before this point leaves it as it was.
+            var removeResult = await RemoveAsync(operation);
+            if (removeResult.IsFailure)
+                return removeResult;
+
             var moveResult = MoveExtractedFiles(tempExtractionPath);
             if (moveResult.IsFailure)
                 return moveResult;
@@ -139,37 +141,37 @@ public class RetroRewindBeta : IDistribution
 
     public Task<OperationResult> RemoveAsync(DistributionOperation operation)
     {
-        var rootPath = _paths.RootFolderPath;
+        var result = TryCatch(
+            () =>
+            {
+                var rootPath = _paths.RootFolderPath;
 
-        foreach (var entry in LoadManifest())
-        {
-            if (!PathSafety.TryGetPathWithinDirectory(rootPath, entry, out var fullPath))
-                continue;
+                foreach (var entry in LoadManifest())
+                {
+                    if (!PathSafety.TryGetPathWithinDirectory(rootPath, entry, out var fullPath))
+                        continue;
 
-            if (_fileSystem.File.Exists(fullPath))
-                _fileSystem.File.Delete(fullPath);
-            else if (_fileSystem.Directory.Exists(fullPath))
-                _fileSystem.Directory.Delete(fullPath, recursive: true);
-        }
+                    if (_fileSystem.File.Exists(fullPath))
+                        _fileSystem.File.Delete(fullPath);
+                    else if (_fileSystem.Directory.Exists(fullPath))
+                        _fileSystem.Directory.Delete(fullPath, recursive: true);
+                }
 
-        if (_fileSystem.Directory.Exists(_paths.BetaFolderPath))
-            _fileSystem.Directory.Delete(_paths.BetaFolderPath, recursive: true);
-        if (_fileSystem.File.Exists(_paths.BetaXmlFilePath))
-            _fileSystem.File.Delete(_paths.BetaXmlFilePath);
-        if (_fileSystem.File.Exists(_paths.BetaManifestFilePath))
-            _fileSystem.File.Delete(_paths.BetaManifestFilePath);
+                if (_fileSystem.Directory.Exists(_paths.BetaFolderPath))
+                    _fileSystem.Directory.Delete(_paths.BetaFolderPath, recursive: true);
+                if (_fileSystem.File.Exists(_paths.BetaXmlFilePath))
+                    _fileSystem.File.Delete(_paths.BetaXmlFilePath);
+                if (_fileSystem.File.Exists(_paths.BetaManifestFilePath))
+                    _fileSystem.File.Delete(_paths.BetaManifestFilePath);
+            },
+            $"Failed to remove the current {Title} install"
+        );
 
-        return Task.FromResult(Ok());
+        return Task.FromResult(result);
     }
 
-    public async Task<OperationResult> ReinstallAsync(DistributionOperation operation)
-    {
-        var removeResult = await RemoveAsync(operation);
-        if (removeResult.IsFailure)
-            return removeResult;
-
-        return await InstallAsync(operation);
-    }
+    // Installing already replaces the current build, and only after the new one is downloaded and unpacked.
+    public Task<OperationResult> ReinstallAsync(DistributionOperation operation) => InstallAsync(operation);
 
     public Task<OperationResult<WheelWizardStatus>> GetCurrentStatusAsync()
     {
@@ -261,7 +263,9 @@ public class RetroRewindBeta : IDistribution
     private bool TryGetRelativeExtractionPath(string normalizedPath, out string relativePath)
     {
         relativePath = string.Empty;
-        var archivePath = normalizedPath.Replace(Path.DirectorySeparatorChar, '/').Replace(Path.AltDirectorySeparatorChar, '/');
+        var archivePath = normalizedPath
+            .Replace(_fileSystem.Path.DirectorySeparatorChar, '/')
+            .Replace(_fileSystem.Path.AltDirectorySeparatorChar, '/');
 
         if (archivePath.Equals(FolderName, StringComparison.OrdinalIgnoreCase))
         {
@@ -271,7 +275,10 @@ public class RetroRewindBeta : IDistribution
 
         if (archivePath.StartsWith($"{FolderName}/", StringComparison.OrdinalIgnoreCase))
         {
-            relativePath = Path.Combine(FolderName, archivePath.Substring(FolderName.Length + 1).Replace('/', Path.DirectorySeparatorChar));
+            relativePath = _fileSystem.Path.Combine(
+                FolderName,
+                archivePath.Substring(FolderName.Length + 1).Replace('/', _fileSystem.Path.DirectorySeparatorChar)
+            );
             return true;
         }
 
@@ -283,9 +290,9 @@ public class RetroRewindBeta : IDistribution
 
         if (archivePath.StartsWith($"{XMLFolderName}/", StringComparison.OrdinalIgnoreCase))
         {
-            relativePath = Path.Combine(
+            relativePath = _fileSystem.Path.Combine(
                 XMLFolderName,
-                archivePath.Substring(XMLFolderName.Length + 1).Replace('/', Path.DirectorySeparatorChar)
+                archivePath.Substring(XMLFolderName.Length + 1).Replace('/', _fileSystem.Path.DirectorySeparatorChar)
             );
             return true;
         }
@@ -331,16 +338,18 @@ public class RetroRewindBeta : IDistribution
         return Ok(manifestEntries);
     }
 
-    private static bool IsRiivolutionPath(string relativePath)
+    private bool IsRiivolutionPath(string relativePath)
     {
-        var normalized = relativePath.Replace(Path.DirectorySeparatorChar, '/').Replace(Path.AltDirectorySeparatorChar, '/');
+        var normalized = relativePath
+            .Replace(_fileSystem.Path.DirectorySeparatorChar, '/')
+            .Replace(_fileSystem.Path.AltDirectorySeparatorChar, '/');
         return normalized.StartsWith("riivolution/", StringComparison.OrdinalIgnoreCase)
             || normalized.Equals("riivolution", StringComparison.OrdinalIgnoreCase);
     }
 
-    private static bool IsBetaRiivolutionFile(string relativePath)
+    private bool IsBetaRiivolutionFile(string relativePath)
     {
-        var fileName = Path.GetFileName(relativePath);
+        var fileName = _fileSystem.Path.GetFileName(relativePath);
         return fileName.StartsWith("RRBeta", StringComparison.OrdinalIgnoreCase);
     }
 

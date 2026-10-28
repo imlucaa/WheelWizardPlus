@@ -1,38 +1,23 @@
-using System.Text;
 using WheelWizard.GameDiscs;
 using WheelWizard.Models.Enums;
+using WheelWizard.WiiManagement.GameLicense;
 
 namespace WheelWizard.Test.Features.GameDiscs;
 
 public class RegionDiscsTests
 {
-    private static byte[] Head(string id, int offset, string? magic = null)
-    {
-        var head = new byte[0x300];
-        if (magic is not null)
-            Encoding.ASCII.GetBytes(magic).CopyTo(head, 0);
-        Encoding.ASCII.GetBytes(id).CopyTo(head, offset);
-        return head;
-    }
-
     [Theory]
     [InlineData("RMCE01", MarioKartWiiEnums.Regions.America)]
     [InlineData("RMCP01", MarioKartWiiEnums.Regions.Europe)]
     [InlineData("RMCJ01", MarioKartWiiEnums.Regions.Japan)]
     [InlineData("RMCK01", MarioKartWiiEnums.Regions.Korea)]
-    public void DetectRegion_ReadsTheGameId_FromIso_Wbfs_AndRvz(string id, MarioKartWiiEnums.Regions expected)
-    {
-        Assert.Equal(expected, RegionDiscs.DetectRegion(Head(id, 0)));
-        Assert.Equal(expected, RegionDiscs.DetectRegion(Head(id, 0x200, "WBFS")));
-        Assert.Equal(expected, RegionDiscs.DetectRegion(Head(id, 0x58, "RVZ\x01")));
-    }
-
-    [Fact]
-    public void DetectRegion_RejectsOtherGames_AndShortFiles()
-    {
-        Assert.Null(RegionDiscs.DetectRegion(Head("GALE01", 0)));
-        Assert.Null(RegionDiscs.DetectRegion(new byte[3]));
-    }
+    [InlineData("RMCX01", MarioKartWiiEnums.Regions.None)]
+    [InlineData("GALE01", MarioKartWiiEnums.Regions.None)]
+    [InlineData("RMC", MarioKartWiiEnums.Regions.None)]
+    [InlineData("", MarioKartWiiEnums.Regions.None)]
+    [InlineData(null, MarioKartWiiEnums.Regions.None)]
+    public void TheRegion_ComesFromTheGameId_OnlyForMarioKartWii(string? id, MarioKartWiiEnums.Regions expected) =>
+        Assert.Equal(expected, GameRegion.FromGameId(id));
 
     [Fact]
     public void StoredDiscs_RoundTrip_PerRegion()

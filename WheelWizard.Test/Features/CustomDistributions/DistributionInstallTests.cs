@@ -166,6 +166,139 @@ public class DistributionInstallTests
         Assert.False(fixture.Fs.Directory.Exists(beta ? fixture.Paths.BetaFolderPath : fixture.Paths.RetroRewindFolderPath));
     }
 
+    // An existing stable install with a mod patch inside it, as a user would have.
+    private static void ExistingInstall(Fixture fixture)
+    {
+        fixture.Fs.Directory.CreateDirectory(fixture.Fs.Path.Combine(fixture.Paths.RetroRewindFolderPath, "Patches"));
+        fixture.Fs.File.WriteAllText(fixture.Fs.Path.Combine(fixture.Paths.RetroRewindFolderPath, "version.txt"), "5.0.0");
+        fixture.Fs.File.WriteAllText(fixture.Fs.Path.Combine(fixture.Paths.RetroRewindFolderPath, "Patches", "MyPatch.szs"), "patch");
+        fixture.Fs.Directory.CreateDirectory(fixture.Fs.Path.GetDirectoryName(fixture.Paths.XmlFilePath)!);
+        fixture.Fs.File.WriteAllText(fixture.Paths.XmlFilePath, "old xml");
+    }
+
+    private static void AssertExistingInstallIsIntact(Fixture fixture)
+    {
+        Assert.Equal("5.0.0", fixture.Fs.File.ReadAllText(fixture.Fs.Path.Combine(fixture.Paths.RetroRewindFolderPath, "version.txt")));
+        Assert.Equal(
+            "patch",
+            fixture.Fs.File.ReadAllText(fixture.Fs.Path.Combine(fixture.Paths.RetroRewindFolderPath, "Patches", "MyPatch.szs"))
+        );
+        Assert.Equal("old xml", fixture.Fs.File.ReadAllText(fixture.Paths.XmlFilePath));
+        Assert.False(fixture.Fs.Directory.Exists(fixture.Paths.RetroRewindFolderPath + ".old"));
+        Assert.False(fixture.Fs.File.Exists(fixture.Paths.XmlFilePath + ".old"));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Reinstall_KeepsTheInstallAndItsPatches_WhenTheServerIsUnreachable(bool useReinstall)
+    {
+        var fixture = new Fixture();
+        ExistingInstall(fixture);
+        fixture.ServerDown = true;
+
+        var result = useReinstall ? await fixture.Stable.ReinstallAsync(new()) : await fixture.Stable.InstallAsync(new());
+
+        Assert.True(result.IsFailure);
+        AssertExistingInstallIsIntact(fixture);
+    }
+
+    [Fact]
+    public async Task Reinstall_KeepsTheInstall_WhenTheDownloadFails()
+    {
+        var fixture = new Fixture();
+        ExistingInstall(fixture);
+        fixture
+            .Downloads.DownloadAsync(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<bool>(),
+                Arg.Any<IProgress<DownloadProgress>>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(Fail("Connection lost"));
+
+        Assert.True((await fixture.Stable.ReinstallAsync(new())).IsFailure);
+
+        AssertExistingInstallIsIntact(fixture);
+    }
+
+    [Fact]
+    public async Task Reinstall_KeepsTheInstall_WhenTheDownloadIsNotARetroRewindArchive()
+    {
+        var fixture = new Fixture();
+        ExistingInstall(fixture);
+        fixture.Archive = Zip(("something-else/readme.txt", "no"));
+
+        Assert.True((await fixture.Stable.ReinstallAsync(new())).IsFailure);
+
+        AssertExistingInstallIsIntact(fixture);
+    }
+
+    [Fact]
+    public async Task Reinstall_ReplacesTheInstall_AndLeavesNoBackup_WhenItWorks()
+    {
+        var fixture = new Fixture();
+        ExistingInstall(fixture);
+        fixture.Archive = Zip(
+            ("RetroRewind6/version.txt", "6.0.0"),
+            ("RetroRewind6/data.bin", "new"),
+            ("riivolution/RetroRewind6.xml", "new xml")
+        );
+
+        var result = await fixture.Stable.ReinstallAsync(new());
+
+        Assert.True(result.IsSuccess, result.IsFailure ? result.Error.Message : "");
+        Assert.Equal("6.0.0", fixture.Stable.GetCurrentVersion()!.ToString());
+        Assert.Equal("new xml", fixture.Fs.File.ReadAllText(fixture.Paths.XmlFilePath));
+        Assert.False(fixture.Fs.Directory.Exists(fixture.Paths.RetroRewindFolderPath + ".old"));
+        Assert.False(fixture.Fs.File.Exists(fixture.Paths.XmlFilePath + ".old"));
+    }
+
+    [Fact]
+    public async Task Install_RecoversAnInstallLeftInTheBackup_ByAnInterruptedRun()
+    {
+        var fixture = new Fixture();
+        ExistingInstall(fixture);
+        // An earlier run was closed right after it moved the install aside.
+        fixture.Fs.Directory.Move(fixture.Paths.RetroRewindFolderPath, fixture.Paths.RetroRewindFolderPath + ".old");
+        fixture.Fs.File.Move(fixture.Paths.XmlFilePath, fixture.Paths.XmlFilePath + ".old");
+        fixture.ServerDown = true;
+
+        Assert.True((await fixture.Stable.ReinstallAsync(new())).IsFailure);
+
+        AssertExistingInstallIsIntact(fixture);
+    }
+
+    [Fact]
+    public async Task Remove_ReportsFailure_InsteadOfClaimingSuccess_WhenTheInstallCannotBeDeleted()
+    {
+        var fixture = new Fixture();
+        ExistingInstall(fixture);
+        fixture.Fs.Intercept.Event(_ => throw new IOException("The install is in use."));
+
+        var result = await fixture.Stable.RemoveAsync(new());
+
+        Assert.True(result.IsFailure);
+        Assert.Contains("Failed to remove", result.Error.Message);
+    }
+
+    [Fact]
+    public async Task BetaReinstall_KeepsTheOldBuild_WhenTheDownloadOrPasswordFails()
+    {
+        var fixture = new Fixture();
+        fixture.Archive = Zip(("RRBeta/data.bin", "old beta"), ("riivolution/RRBeta.xml", "old beta xml"));
+        Assert.True((await fixture.Beta.InstallAsync(new())).IsSuccess);
+
+        // A wrong password and nobody retrying: the new build never unpacks.
+        fixture.Prompts.RequestBetaPasswordAsync().Returns((string?)null);
+        Assert.True((await fixture.Beta.ReinstallAsync(new())).IsFailure);
+
+        Assert.Equal("old beta", fixture.Fs.File.ReadAllText(fixture.Fs.Path.Combine(fixture.Paths.BetaFolderPath, "data.bin")));
+        Assert.Equal("old beta xml", fixture.Fs.File.ReadAllText(fixture.Paths.BetaXmlFilePath));
+        Assert.True(fixture.Fs.File.Exists(fixture.Paths.BetaManifestFilePath));
+    }
+
     private sealed class Fixture
     {
         public MockFileSystem Fs { get; } = new();
@@ -173,6 +306,7 @@ public class DistributionInstallTests
         public IDistributionPrompts Prompts { get; } = Substitute.For<IDistributionPrompts>();
         public IDownloadService Downloads { get; } = Substitute.For<IDownloadService>();
         public byte[] Archive { get; set; } = [];
+        public bool ServerDown { get; set; }
         public RetroRewind Stable { get; }
         public RetroRewindBeta Beta { get; }
 
@@ -210,7 +344,11 @@ public class DistributionInstallTests
             var caller = Substitute.For<IApiCaller<IRetroRewindApi>>();
             caller
                 .CallApiAsync(Arg.Any<Expression<Func<IRetroRewindApi, Task<string>>>>())
-                .Returns(async call => Ok(await call.Arg<Expression<Func<IRetroRewindApi, Task<string>>>>().Compile()(api)));
+                .Returns(async call =>
+                    ServerDown
+                        ? Fail("Server offline")
+                        : Ok(await call.Arg<Expression<Func<IRetroRewindApi, Task<string>>>>().Compile()(api))
+                );
             Prompts.RequestBetaPasswordAsync().Returns("password");
             var settings = Substitute.For<ISettingsManager>();
             Stable = new(Fs, caller, NullLogger<IDistribution>.Instance, settings, downloads, Paths, dolphin, Prompts);

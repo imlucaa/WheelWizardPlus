@@ -24,7 +24,7 @@ public class RrLoungeImagesTests
     {
         Directory.CreateDirectory(Path.GetDirectoryName(file)!);
         using var bitmap = new WriteableBitmap(new PixelSize(4, 4), new Vector(96, 96), PixelFormat.Bgra8888, AlphaFormat.Premul);
-        bitmap.Save(file);
+        bitmap.Save(file, new PngBitmapEncoderOptions());
     }
 
     [Fact]

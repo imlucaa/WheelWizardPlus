@@ -1,7 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="WheelWizard.Views.Shell.Startup.SplashWindow"
-        Title="Wheel Wizard is starting" Width="280" Height="280"
+        Title="Wheel Wizard+ is starting" Width="280" Height="280"
         WindowStartupLocation="CenterScreen" WindowDecorations="None"
         CanResize="False" ShowInTaskbar="False"
         Background="Transparent" TransparencyLevelHint="Transparent">

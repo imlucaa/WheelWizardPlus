@@ -307,6 +307,56 @@ public sealed partial class GhostImporter(ICustomDistributionPaths paths, IFileS
         }
     }
 
+    /// <summary>The ghost this slot had before it was last replaced (kept in the <c>Replaced</c> folder), or null when there is none.</summary>
+    public (string Path, TimeSpan Time)? Previous(GhostTrack track, int speed)
+    {
+        var folder = fileSystem.Path.Combine(GhostsFolder, "Replaced", track.FolderName);
+        try
+        {
+            if (!fileSystem.Directory.Exists(folder))
+                return null;
+            foreach (var file in fileSystem.Directory.EnumerateFiles(folder, $"{track.Index}_{speed}-*.rkg").OrderDescending())
+            {
+                if (GhostFile.TryRead(fileSystem.File.ReadAllBytes(file), out var time))
+                    return (file, time);
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return null;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Puts the previous ghost of the slot back. The ghost that is there now goes to the <c>Replaced</c> folder in its
+    /// place, so doing it again swaps them back.
+    /// </summary>
+    public GhostImportResult RestorePrevious(GhostTrack track, int speed)
+    {
+        if (Previous(track, speed) is not { } previous)
+            return new(false, "There is no earlier ghost for that track.");
+
+        byte[] data;
+        try
+        {
+            data = fileSystem.File.ReadAllBytes(previous.Path);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return new(false, "Could not read the earlier ghost.");
+        }
+
+        var result = ImportData(data, track, speed);
+        return result.Success
+            ? result with
+            {
+                Message = $"{track.Name} ({speed}cc) is back to {GhostFile.Format(previous.Time)}.",
+            }
+            : result;
+    }
+
     /// <summary>The file name an exported ghost gets: just the finish time, like "1m34s086.rkg".</summary>
     public string ExportFileName(GhostTrack track, int speed) =>
         CurrentTime(track, speed) is { } finish

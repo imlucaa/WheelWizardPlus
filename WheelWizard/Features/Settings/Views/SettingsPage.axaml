@@ -42,20 +42,13 @@
                                Text="VR overlay" />
                 <components:SegmentOption HorizontalContentAlignment="Left" Padding="10,12" Tag="FriendCodeSettings"
                                Text="Friend codes" />
+                <components:SegmentOption HorizontalContentAlignment="Left" Padding="10,12" Tag="LineColorSettings"
+                               Text="Line colour" />
                 <components:SegmentOption HorizontalContentAlignment="Left" Padding="10,12" Tag="BackupSettings"
                                Text="{loc:T category.backup}" />
                 <components:SegmentOption HorizontalContentAlignment="Left" Padding="10,12" Tag="AppInfo"
                               Text="{loc:T category.about}" />
             </components:SegmentedControl>
-            <!-- Pages hidden from the sidebar, so they can still be opened. -->
-            <StackPanel x:Name="HiddenTabsPanel" IsVisible="False" Margin="0,14,0,0">
-                <TextBlock Text="Hidden tabs" Classes="TinyText" Margin="10,0,0,6"
-                           Foreground="{DynamicResource Neutral400}"
-                           ToolTip.Tip="Hidden from the sidebar. Show them again with the pencil under the sidebar." />
-                <components:SegmentedControl x:Name="HiddenPages" Orientation="Vertical" HasBorder="False" Variant="Dark"
-                                             Padding="0" HorizontalAlignment="Stretch"
-                                             SelectionChanged="HiddenPages_OnSelectionChanged" />
-            </StackPanel>
             </StackPanel>
             </ScrollViewer>
             </Grid>

@@ -34,6 +34,7 @@ public partial class Layout
         "competitive-ghosts",
     ];
     private const int GeneralItemCount = 5;
+    private const string TestingKey = "testing";
 
     // RR Lounge and Ghosts have a category of their own by default.
     private const string CompetitiveName = "Competitive";
@@ -48,7 +49,16 @@ public partial class Layout
     private Window? _sidebarEditor;
 
     private SidebarLayoutModel LoadSidebarLayout() =>
-        SidebarLayoutModel.Parse(SettingsService.SIDEBAR_LAYOUT.Get(), BuiltInKeys, GeneralItemCount, _pinKeys.Values, BuiltInCategories);
+        SidebarLayoutModel.Parse(
+            SettingsService.SIDEBAR_LAYOUT.Get(),
+            BuiltInKeys,
+            GeneralItemCount,
+            // Testing Mode is arranged like a pinned tab: it only exists once tester mode is on.
+            SettingsService.Get<bool>(SettingsService.TESTING_MODE_ENABLED)
+                ? _pinKeys.Values.Append(TestingKey)
+                : _pinKeys.Values,
+            BuiltInCategories
+        );
 
     private void SaveSidebarLayout(SidebarLayoutModel data) =>
         SettingsEditing.Set(SettingsService, SettingsService.SIDEBAR_LAYOUT, data.ToJson());
@@ -95,7 +105,7 @@ public partial class Layout
         }
 
         var layout = LoadSidebarLayout();
-        var buttons = new Dictionary<string, SidebarRadioButton>(_builtInButtons);
+        var buttons = new Dictionary<string, SidebarRadioButton>(_builtInButtons) { [TestingKey] = TestingButton };
         foreach (var (button, key) in _pinKeys)
             buttons[key] = button;
 
@@ -125,8 +135,13 @@ public partial class Layout
             header.IsVisible = anyShown;
         }
 
-        SidePanelButtons.Children.Add(OtherSectionText);
-        SidePanelButtons.Children.Add(TestingButton);
+        // Until tester mode is on Testing Mode has no place in the layout; it stays in the panel, out of sight.
+        if (!SidePanelButtons.Children.Contains(TestingButton))
+        {
+            TestingButton.IsVisible = false;
+            SidePanelButtons.Children.Add(TestingButton);
+        }
+
         HiddenSidebarTabs.Set(hidden);
     }
 
@@ -136,15 +151,14 @@ public partial class Layout
             OpenSidebarEditor();
     }
 
-    private string SidebarItemLabel(string key) =>
-        _builtInButtons is not null && _builtInButtons.TryGetValue(key, out var built)
-            ? built.Text
-            : _pinKeys.FirstOrDefault(pair => pair.Value == key).Key?.Text ?? key;
+    private SidebarRadioButton? SidebarButtonFor(string key) =>
+        key == TestingKey ? TestingButton
+        : _builtInButtons is not null && _builtInButtons.TryGetValue(key, out var built) ? built
+        : _pinKeys.FirstOrDefault(pair => pair.Value == key).Key;
 
-    private Geometry? SidebarItemIcon(string key) =>
-        _builtInButtons is not null && _builtInButtons.TryGetValue(key, out var built)
-            ? built.IconData
-            : _pinKeys.FirstOrDefault(pair => pair.Value == key).Key?.IconData;
+    private string SidebarItemLabel(string key) => SidebarButtonFor(key)?.Text ?? key;
+
+    private Geometry? SidebarItemIcon(string key) => SidebarButtonFor(key)?.IconData;
 
     private void OpenSidebarEditor()
     {

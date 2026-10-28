@@ -18,6 +18,12 @@ public sealed class OverlayPreview : Border
 {
     private const double SampleGain = 41;
     private double _targetVr = 87747;
+
+    // The change the card shows: a sample until a real player is shown, then what their VR did since the card first saw it.
+    private double _gain = SampleGain;
+    private string _deltaText = "+41";
+    private int? _firstVr;
+    private int? _lastVr;
     private int _rank = 279;
 
     private readonly OverlayConfig _config;
@@ -108,14 +114,39 @@ public sealed class OverlayPreview : Border
     }
 
     /// <summary>Shows a real player's name, VR and rank; null goes back to the sample values.</summary>
-    public void SetPlayer(string? name, int? vr, int? rank, Mii? mii = null)
+    public void SetPlayer(string? name, int? vr, int? rank, Mii? mii = null, bool samePlayer = false)
     {
         _mii = mii;
         if (!string.IsNullOrWhiteSpace(name))
             _playerName = name;
+        TrackChange(vr, samePlayer);
         _targetVr = vr ?? 87747;
         _rank = rank is > 0 ? rank.Value : 279;
         Rebuild();
+    }
+
+    // A real VR gives a real change: the step from the last VR, and the total since the card first saw the player.
+    private void TrackChange(int? vr, bool samePlayer)
+    {
+        if (vr is not { } now)
+        {
+            _firstVr = _lastVr = null;
+            _gain = SampleGain;
+            _deltaText = "+41";
+            return;
+        }
+
+        if (!samePlayer || _firstVr is null || _lastVr is null)
+        {
+            _firstVr = now;
+            _gain = 0;
+        }
+        else
+            _gain = now - _lastVr.Value;
+
+        _lastVr = now;
+        var total = now - _firstVr.Value;
+        _deltaText = total >= 0 ? $"+{total:N0}" : $"-{-total:N0}";
     }
 
     /// <summary>Plays the VR change the way the OBS overlay would.</summary>
@@ -328,7 +359,11 @@ public sealed class OverlayPreview : Border
             _vrHost = new Border { Child = _vrText, RenderTransformOrigin = RelativePoint.Center };
             line.Children.Add(_vrHost);
             if (_config.GetBool("visibility.delta"))
-                line.Children.Add(Pill("+41", Color.Parse("#7bffbd"), Color.Parse("#3020b26d")));
+                line.Children.Add(
+                    _deltaText.StartsWith('-')
+                        ? Pill(_deltaText, Color.Parse("#ff9d9d"), Color.Parse("#30c0392b"))
+                        : Pill(_deltaText, Color.Parse("#7bffbd"), Color.Parse("#3020b26d"))
+                );
             right.Children.Add(line);
         }
 
@@ -509,7 +544,7 @@ public sealed class OverlayPreview : Border
             return;
         }
 
-        _vrText.Text = (mode == "count" ? (_targetVr - SampleGain) + SampleGain * eased : _targetVr).ToString("N0");
+        _vrText.Text = (mode == "count" ? (_targetVr - _gain) + _gain * eased : _targetVr).ToString("N0");
         var scale = mode switch
         {
             "spring" => 0.65 + 0.35 * eased + Math.Sin(t * Math.PI) * 0.08,

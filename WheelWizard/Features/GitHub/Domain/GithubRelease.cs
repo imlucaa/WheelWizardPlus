@@ -6,4 +6,5 @@ public class GithubRelease
     public List<GithubAsset> Assets { get; set; } = [];
     public bool Prerelease { get; set; }
     public string? Body { get; set; }
+    public DateTimeOffset? PublishedAt { get; set; }
 }

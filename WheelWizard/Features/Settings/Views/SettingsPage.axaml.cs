@@ -50,33 +50,35 @@ public partial class SettingsPage : UserControl, ILockedSidebarPage
         var initialSettingsPage = Pages.Create(initialPage ?? typeof(WhWzSettings));
         SettingsContent.Content = initialSettingsPage;
         SetCheckedSidebarButton(initialSettingsPage);
+        _selectedTab = SettingPages.SelectedItem as SegmentOption;
         _navigationReady = true;
 
         ShowHiddenTabs();
         HiddenSidebarTabs.Changed += ShowHiddenTabs;
     }
 
-    // The pages hidden from the sidebar, under the settings tabs; one opens like it would from the sidebar.
+    private readonly List<SegmentOption> _hiddenTabOptions = [];
+    private SegmentOption? _selectedTab;
+
+    // The pages hidden from the sidebar join the end of the settings tabs; one opens like it would from the sidebar.
     private void ShowHiddenTabs()
     {
-        var tabs = HiddenSidebarTabs.Current;
-        HiddenPages.ItemsSource = tabs.Select(tab => new SegmentOption
+        foreach (var option in _hiddenTabOptions)
+            SettingPages.Items.Remove(option);
+        _hiddenTabOptions.Clear();
+
+        foreach (var tab in HiddenSidebarTabs.Current)
+        {
+            var option = new SegmentOption
             {
                 Text = tab.Label,
                 Tag = tab.Page,
                 Padding = new Avalonia.Thickness(10, 12),
                 HorizontalContentAlignment = Avalonia.Layout.HorizontalAlignment.Left,
-            })
-            .ToList();
-        HiddenTabsPanel.IsVisible = tabs.Count > 0;
-    }
-
-    private void HiddenPages_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
-    {
-        if (HiddenPages.SelectedItem is not SegmentOption { Tag: Type page })
-            return;
-        HiddenPages.SelectedItem = null;
-        Navigation?.NavigateTo(page);
+            };
+            _hiddenTabOptions.Add(option);
+            SettingPages.Items.Add(option);
+        }
     }
 
     protected override void OnUnloaded(RoutedEventArgs e)
@@ -118,6 +120,16 @@ public partial class SettingsPage : UserControl, ILockedSidebarPage
     {
         if (!_navigationReady || SettingsContent is null || SettingPages.SelectedItem is not SegmentOption radioButton)
             return;
+
+        // A page that is hidden from the sidebar opens as its own page; the tab you were on stays selected.
+        if (radioButton.Tag is Type page)
+        {
+            SettingPages.SelectedItem = _selectedTab;
+            Navigation?.NavigateTo(page);
+            return;
+        }
+
+        _selectedTab = radioButton;
 
         // Settings sub-pages stay in the nested Settings namespace.
         var settingsSubPagesNamespace = typeof(WhWzSettings).Namespace;

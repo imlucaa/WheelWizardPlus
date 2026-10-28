@@ -50,7 +50,7 @@
         </Grid>
 
         <!-- Keep page content measurement independent of the sidebar rows. -->
-         <Grid x:Name="SidebarGrid" Grid.Column="0" Grid.RowSpan="6" RowDefinitions="0,17,18,96,*,80">
+         <Grid x:Name="SidebarGrid" Grid.Column="0" Grid.RowSpan="6" RowDefinitions="0,17,18,106,*,80">
          <Border x:Name="SidebarPageSurface" Grid.RowSpan="6" Background="{DynamicResource LauncherSidebarBrush}" />
         <!-- Sidebar -->
         <Grid Grid.Column="0" components:Dropdown.AllowDismissInteraction="True" Grid.Row="3"
@@ -135,9 +135,6 @@
                                            PageType="{x:Type ghosts:GhostsPage}"
                                            Text="Ghosts" />
 
-            <TextBlock Text="{loc:T category.other}" Classes="SidebarSectionText"
-                       x:Name="OtherSectionText" IsVisible="False" />
-            <!-- Repurposing this translation from settings -->
             <shellControls:SidebarRadioButton IconData="{StaticResource Code}"
                                            PageType="{x:Type design:TestingPage}"
                                            Text="Testing Mode" x:Name="TestingButton" IsVisible="False" />

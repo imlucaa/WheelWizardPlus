@@ -133,22 +133,28 @@ public class Program : IDesignerEntryPoint
     /// </summary>
     private static AppBuilder CreateWheelWizardApp(Func<Task<IDesktopStartup>> createStartup)
     {
+        var isFlatpak = new RuntimeEnvironment().IsFlatpakSandboxed(new RealFileSystem());
+        var flatpakAppId = isFlatpak ? Environment.GetEnvironmentVariable("FLATPAK_ID") : null;
 #pragma warning disable AVALONIA_X11_CSD
+        var x11Options = new X11PlatformOptions { EnableDrawnDecorations = true };
+#pragma warning restore AVALONIA_X11_CSD
+        x11Options.WmClass = flatpakAppId ?? x11Options.WmClass;
         var builder = AppBuilder
             .Configure(() => new App(createStartup))
             .UsePlatformDetect()
-            .With(new X11PlatformOptions { EnableDrawnDecorations = true })
+            .With(x11Options)
             .With(MacOptions)
             .WithInterFont();
-#pragma warning restore AVALONIA_X11_CSD
 
         // https://docs.avaloniaui.net/docs/platform-specific-guides/linux#enabling-the-wayland-backend
         // NOTE: UseWayland() will prevent fallback to X11.
         if (OperatingSystem.IsLinux() && Environment.GetEnvironmentVariable("WAYLAND_DISPLAY") is not null)
         {
 #pragma warning disable AVALONIA_WAYLAND_FORCE_CSD
-            builder = builder.With(new WaylandPlatformOptions { ForceDrawnDecorations = true }).UseWayland();
+            var waylandOptions = new WaylandPlatformOptions { ForceDrawnDecorations = true };
 #pragma warning restore AVALONIA_WAYLAND_FORCE_CSD
+            waylandOptions.AppId = flatpakAppId ?? waylandOptions.AppId;
+            builder = builder.With(waylandOptions).UseWayland();
         }
 
         return builder;
@@ -156,7 +162,8 @@ public class Program : IDesignerEntryPoint
 
     private static void SetupWorkingDirectory()
     {
-        if (new RuntimeEnvironment().IsFlatpakSandboxed(new RealFileSystem()))
+        var fileSystem = new RealFileSystem();
+        if (new RuntimeEnvironment().IsFlatpakSandboxed(fileSystem))
         {
             // In this case, we would not want executable directory-relative paths, since this is in `/app/bin`.
             // We are going to use the home directory instead (this should be the original working directory anyway).
@@ -165,7 +172,7 @@ public class Program : IDesignerEntryPoint
         else
         {
             // Resolve all relative paths based on the WheelWizard executable's directory by default
-            var executableDirectory = Path.GetDirectoryName(Environment.ProcessPath);
+            var executableDirectory = fileSystem.Path.GetDirectoryName(Environment.ProcessPath);
             if (!string.IsNullOrWhiteSpace(executableDirectory))
                 Environment.CurrentDirectory = executableDirectory;
         }
@@ -176,7 +183,7 @@ public class Program : IDesignerEntryPoint
         var whWzBaseDir = Environment.GetEnvironmentVariable("WW_BASEDIR") ?? string.Empty;
         try
         {
-            var whWzBaseDirAbsolute = Path.GetFullPath(whWzBaseDir);
+            var whWzBaseDirAbsolute = fileSystem.Path.GetFullPath(whWzBaseDir);
             Environment.CurrentDirectory = whWzBaseDirAbsolute;
         }
         catch

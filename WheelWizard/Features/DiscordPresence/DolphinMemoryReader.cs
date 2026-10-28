@@ -1,4 +1,4 @@
-﻿using System.Buffers.Binary;
+using System.Buffers.Binary;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -74,8 +74,13 @@ public sealed class DolphinMemoryReader : IDisposable
 
     // Retro Rewind keeps the name of the track in a small block of its own: the letters "PULL", a version, a track id
     // and then the name as plain text. Found by scanning Dolphin's memory; it stays at the same address between tracks.
-    private const uint TrackBlockAddress = 0x804F22E0;
+    // The block is at a different address in each game region (found by scanning Dolphin's memory on a PAL game); a region
+    // without a known address, or a pack version that moved it, is found by looking for the block itself.
+    private static readonly Dictionary<char, uint> TrackBlockAddresses = new() { ['E'] = 0x804F22E0, ['P'] = 0x804F6900 };
     private const int TrackBlockSize = 12 + 64;
+    private static readonly TimeSpan RescanEvery = TimeSpan.FromSeconds(15);
+    private uint? _trackBlock;
+    private DateTime _lastTrackScan = DateTime.MinValue;
 
     /// <summary>The name of the track the pack has loaded (for example "3DS Toad Circuit"), or null when it is not there.</summary>
     public string? ReadTrackName(int processId, bool recomp = false)
@@ -87,21 +92,38 @@ public sealed class DolphinMemoryReader : IDisposable
 
             try
             {
-                var block = new byte[TrackBlockSize];
-                for (var offset = 0; offset < TrackBlockSize; offset += 4)
+                var address = _trackBlock ?? (TrackBlockAddresses.TryGetValue(_region, out var known) ? known : 0);
+                if (address != 0 && TrackNameAt(address) is { } name)
                 {
-                    if (ReadUInt32(TrackBlockAddress + (uint)offset) is not { } word)
-                        return null;
-                    BinaryPrimitives.WriteUInt32BigEndian(block.AsSpan(offset, 4), word);
+                    _trackBlock = address;
+                    return name;
                 }
 
-                return TrackNameFromBlock(block);
+                // Not where it should be: look for it, but not on every refresh (the scan reads the whole memory).
+                if (DateTime.UtcNow - _lastTrackScan < RescanEvery)
+                    return null;
+                _lastTrackScan = DateTime.UtcNow;
+                _trackBlock = FindTrackBlocks(1).FirstOrDefault().Address is var found and not 0 ? found : null;
+                return _trackBlock is { } scanned ? TrackNameAt(scanned) : null;
             }
             catch (Exception)
             {
                 return null;
             }
         }
+    }
+
+    private string? TrackNameAt(uint address)
+    {
+        var block = new byte[TrackBlockSize];
+        for (var offset = 0; offset < TrackBlockSize; offset += 4)
+        {
+            if (ReadUInt32(address + (uint)offset) is not { } word)
+                return null;
+            BinaryPrimitives.WriteUInt32BigEndian(block.AsSpan(offset, 4), word);
+        }
+
+        return TrackNameFromBlock(block);
     }
 
     /// <summary>Reads the track name out of the pack's block, or null when the block is not the pack's or holds no name.</summary>
@@ -274,13 +296,54 @@ public sealed class DolphinMemoryReader : IDisposable
             if (section is null || !IsMainMemory(section.Value))
                 return $"Game found (region {_region}) but no screen is loaded yet.";
 
-            return $"Connected. Region {_region}, screen id {ReadUInt32(section.Value)}.";
+            return $"Connected. Region {_region}, screen id {ReadUInt32(section.Value)}.{Environment.NewLine}{DescribeTrackBlock()}";
         }
         catch (Exception exception)
         {
             Detach();
             return $"Could not read the game: {exception.Message}";
         }
+    }
+
+    // For the Check button: what sits where the pack keeps the track name, and where else a block like it is.
+    private string DescribeTrackBlock()
+    {
+        var address = _trackBlock ?? (TrackBlockAddresses.TryGetValue(_region, out var known) ? known : 0);
+        if (address != 0 && TrackNameAt(address) is { } name)
+            return $"Track name: \"{name}\" (at 0x{address:X8}).";
+
+        var found = FindTrackBlocks(5);
+        return (address == 0 ? "Track name: no known address for this region. " : $"Track name: nothing at 0x{address:X8}. ")
+            + (
+                found.Count == 0
+                    ? "No pack block found in memory."
+                    : $"Pack blocks found at {string.Join(", ", found.Select(block => $"0x{block.Address:X8} (\"{block.Name}\")"))}."
+            );
+    }
+
+    // Looks through the game's main memory for the pack's block: "PULL", then a readable name 12 bytes on.
+    private List<(uint Address, string Name)> FindTrackBlocks(int max)
+    {
+        const int chunk = 1 << 20;
+        var results = new List<(uint, string)>();
+        var buffer = new byte[chunk + TrackBlockSize];
+        for (long start = 0; start < 0x01800000 && results.Count < max; start += chunk)
+        {
+            var size = (nuint)Math.Min(buffer.Length, 0x01800000 - start);
+            if (!ReadProcessMemory(_handle, (nint)(_mem1 + start), buffer, size, out var read) || read < 16)
+                continue;
+
+            for (var i = 0; i + 16 <= (int)read && results.Count < max; i += 4)
+            {
+                if (buffer[i] != (byte)'P' || buffer[i + 1] != (byte)'U' || buffer[i + 2] != (byte)'L' || buffer[i + 3] != (byte)'L')
+                    continue;
+                var end = Math.Min((int)read, i + TrackBlockSize);
+                if (TrackNameFromBlock(buffer.AsSpan(i, end - i)) is { } name)
+                    results.Add(((uint)(0x80000000 + start + i), name));
+            }
+        }
+
+        return results;
     }
 
     private bool IsMarioKartWii(long baseAddress)
@@ -322,6 +385,8 @@ public sealed class DolphinMemoryReader : IDisposable
         _mem1 = 0;
         _mem2 = 0;
         _processId = 0;
+        _trackBlock = null;
+        _lastTrackScan = DateTime.MinValue;
     }
 
     public void Dispose() => Detach();

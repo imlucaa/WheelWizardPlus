@@ -18,11 +18,11 @@ public class BrandingSingletonService : IBrandingSingletonService
     public Branding Branding { get; } =
         new()
         {
-            DisplayName = "BetterWheelWizard",
+            DisplayName = "Wheel Wizard+",
             Identifier = "BetterWheelWizard",
             Version = string.Join('.', Assembly.GetExecutingAssembly().GetName().Version?.ToString().Split('.')[..3] ?? ["0.0.0"]),
 
-            RepositoryUrl = new("https://github.com/imlucaa/BetterWheelWizard"),
+            RepositoryUrl = new("https://github.com/imlucaa/WheelWizardPlus"),
             DiscordUrl = new("https://discord.gg/vZ7T2wJnsq"),
             SupportUrl = new("https://ko-fi.com/wheelwizard"),
         };

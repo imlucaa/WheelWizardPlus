@@ -173,6 +173,38 @@ public class GhostImporterTests
     }
 
     [Fact]
+    public void RestorePrevious_PutsTheReplacedGhostBack_AndKeepsTheOneItReplaces()
+    {
+        var fixture = new Fixture();
+        var track = fixture.Importer.LoadTracks(GhostKind.Custom)[1];
+        fixture.Write("ExpertsCT/1_150.rkg", Ghost(0x02, 0x88, 0x56)); // 1:34.086
+        fixture.Importer.Import(fixture.Source("mine.rkg", Ghost(0x02, 0x00, 0x7B)), track, 150); // 1:00.123
+
+        Assert.Equal(new TimeSpan(0, 0, 1, 34, 86), fixture.Importer.Previous(track, 150)?.Time);
+        Assert.Null(fixture.Importer.Previous(track, 200));
+
+        var result = fixture.Importer.RestorePrevious(track, 150);
+
+        Assert.True(result.Success);
+        Assert.Contains("1:34.086", result.Message);
+        Assert.Equal(new TimeSpan(0, 0, 1, 34, 86), fixture.Importer.CurrentTime(track, 150));
+        Assert.Equal(new TimeSpan(0, 0, 1, 0, 123), fixture.Importer.Previous(track, 150)?.Time);
+    }
+
+    [Fact]
+    public void RestorePrevious_WithNothingReplacedBefore_SaysSoAndChangesNothing()
+    {
+        var fixture = new Fixture();
+        var track = fixture.Importer.LoadTracks(GhostKind.Custom)[0];
+        fixture.Write("ExpertsCT/0_150.rkg", Ghost(0x00, 0x78, 0x01));
+
+        var result = fixture.Importer.RestorePrevious(track, 150);
+
+        Assert.False(result.Success);
+        Assert.Equal(new TimeSpan(0, 0, 0, 30, 1), fixture.Importer.CurrentTime(track, 150));
+    }
+
+    [Fact]
     public void Export_SavesACopyOfTheTracksGhost_ThatCanBeImportedAgain()
     {
         var fixture = new Fixture();

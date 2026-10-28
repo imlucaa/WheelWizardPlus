@@ -52,6 +52,9 @@ public interface ISettingsProperties
     Setting<string> OVERLAY_PRESETS { get; }
     Setting<string> OVERLAY_FRIEND_CODE { get; }
     Setting<string> GAME_DISCS { get; }
+    Setting<string> WIT_LOCATION { get; }
+    Setting<string> LINE_COLOR_ORIGINALS { get; }
+    Setting<string> ROOMS_VIEW { get; }
     Setting<string> DISCORD_LARGE_IMAGE { get; }
     Setting<string> DISCORD_LARGE_TEXT { get; }
     Setting<string> DISCORD_DETAILS { get; }
@@ -88,6 +91,8 @@ public interface ISettingsProperties
     Setting<bool> LAUNCHER_MINIMAL_HOME_ARTWORK { get; }
     Setting<bool> LAUNCHER_HIDE_HOME_TITLE { get; }
     Setting<bool> LAUNCHER_CLEAN_SIDEBAR { get; }
+    Setting<bool> LAUNCHER_PROFILE_OUTLINE { get; }
+    Setting<double> LAUNCHER_PROFILE_OUTLINE_OPACITY { get; }
     Setting<string> LAUNCHER_FONT { get; }
     Setting<string> NAND_ROOT_PATH { get; }
     Setting<string> LOAD_PATH { get; }

@@ -462,7 +462,7 @@ public class SharedControlTests
             window.UpdateLayout();
             var popup = dropdown.GetVisualDescendants().OfType<Avalonia.Controls.Primitives.Popup>().Single();
             var search = popup.Child!.GetVisualDescendants().OfType<InputField>().Single();
-            var empty = popup.Child.GetVisualDescendants().OfType<TextBlock>().Single(x => x.Name == "PART_Empty");
+            var empty = popup.Child!.GetVisualDescendants().OfType<TextBlock>().Single(x => x.Name == "PART_Empty");
             var width = popup.Child.Bounds.Width;
             var height = popup.Child.Bounds.Height;
             Assert.True(width > dropdown.Bounds.Width);
@@ -720,7 +720,8 @@ public class SharedControlTests
             window.UpdateLayout();
             Assert.Same(iconOption, dropdown.SelectedItem);
             var fieldIcon = Assert.Single(
-                dropdown.GetVisualDescendants().OfType<PathIcon>().Where(icon => icon.Classes.Contains("DropdownOptionIcon"))
+                dropdown.GetVisualDescendants().OfType<PathIcon>(),
+                icon => icon.Classes.Contains("DropdownOptionIcon")
             );
             Assert.Same(iconOption.Icon, fieldIcon.Data);
             Assert.Equal(
@@ -730,9 +731,7 @@ public class SharedControlTests
             dropdown.IsDropDownOpen = true;
             window.UpdateLayout();
             var popup = dropdown.GetVisualDescendants().OfType<Avalonia.Controls.Primitives.Popup>().Single();
-            Assert.Single(
-                popup.Child!.GetVisualDescendants().OfType<PathIcon>().Where(icon => icon.Classes.Contains("DropdownOptionIcon"))
-            );
+            Assert.Single(popup.Child!.GetVisualDescendants().OfType<PathIcon>(), icon => icon.Classes.Contains("DropdownOptionIcon"));
             Assert.Equal(
                 (Color)window.FindResource("Brand300")!,
                 Assert.IsAssignableFrom<ISolidColorBrush>(Assert.IsType<DropdownItem>(dropdown.ContainerFromIndex(0)).Foreground).Color
@@ -741,7 +740,7 @@ public class SharedControlTests
             dropdown.SelectedIndex = 1;
             window.UpdateLayout();
             Assert.Same(plainOption, dropdown.SelectedItem);
-            Assert.Empty(dropdown.GetVisualDescendants().OfType<PathIcon>().Where(icon => icon.Classes.Contains("DropdownOptionIcon")));
+            Assert.DoesNotContain(dropdown.GetVisualDescendants().OfType<PathIcon>(), icon => icon.Classes.Contains("DropdownOptionIcon"));
             Assert.Contains(dropdown.GetVisualDescendants().OfType<TextBlock>(), text => text.Text == plainOption.Text);
         }
         finally
