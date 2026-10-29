@@ -100,6 +100,8 @@ public partial class NowPlayingSettings : UserControl
         ViewUtils.ShowSnackbar("Link copied. Paste it into an OBS Browser source.");
     }
 
+    private async void SavePreset_OnClick(object? sender, RoutedEventArgs e) => await SaveLookAsync();
+
     private void Reset_OnClick(object? sender, RoutedEventArgs e)
     {
         _config.Reset();
@@ -202,7 +204,7 @@ public partial class NowPlayingSettings : UserControl
 
         var save = new WheelWizard.Views.Components.Button
         {
-            Text = "Save this look",
+            Text = "Save as preset",
             ButtonSize = WheelWizard.Views.Components.Button.ButtonsSizeType.Compact,
         };
         save.Click += async (_, _) => await SaveLookAsync();
@@ -362,7 +364,7 @@ public partial class NowPlayingSettings : UserControl
         if (_config.SaveLook(name))
         {
             RebuildPresetTiles();
-            ViewUtils.ShowSnackbar($"Saved as {name}.");
+            ViewUtils.ShowSnackbar($"Saved as {name}. It is under Presets, in Your looks.");
         }
         else
         {
@@ -412,7 +414,7 @@ public partial class NowPlayingSettings : UserControl
         if (ok)
         {
             SyncAll();
-            ViewUtils.ShowSnackbar("Look imported. Use Save this look to keep it.");
+            ViewUtils.ShowSnackbar("Look imported. Use Save as preset to keep it.");
         }
         else
         {

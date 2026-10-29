@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -28,7 +28,13 @@
     </UserControl.Styles>
     <Grid RowDefinitions="Auto,*,Auto" Margin="0,15,0,0">
         <StackPanel Grid.Row="0" Spacing="8">
-            <components:FormFieldLabel Text="Now playing" />
+            <Grid ColumnDefinitions="*,Auto">
+                <components:FormFieldLabel Text="Now playing" VerticalAlignment="Center" />
+                <!-- Always in reach: change anything below, then keep it as your own preset. -->
+                <components:Button Grid.Column="1" Text="Save as preset" ButtonSize="Compact"
+                                   ToolTip.Tip="Keep the card as it looks now under a name, next to the ready-made presets"
+                                   Click="SavePreset_OnClick" />
+            </Grid>
             <Viewbox StretchDirection="DownOnly" HorizontalAlignment="Left" MaxHeight="190">
                 <ContentControl x:Name="PreviewHost" />
             </Viewbox>
