@@ -21,6 +21,8 @@ public sealed class RoomLinkListener(
     LiveRoomsService rooms,
     WheelWizard.StreamOverlay.OverlayLive overlay,
     WheelWizard.StreamOverlay.OverlayBackground background,
+    WheelWizard.NowPlaying.NowPlayingService nowPlaying,
+    WheelWizard.NowPlaying.NowPlayingConfig nowPlayingConfig,
     ILogger<RoomLinkListener> logger
 )
 {
@@ -102,6 +104,12 @@ public sealed class RoomLinkListener(
                 return;
             }
 
+            if (path.StartsWith("/now-playing", StringComparison.Ordinal))
+            {
+                await ServeNowPlayingAsync(context, path);
+                return;
+            }
+
             if (path is "/overlay" or "/overlay/state")
             {
                 await ServeOverlayAsync(context, path);
@@ -172,6 +180,39 @@ public sealed class RoomLinkListener(
         context.Response.Headers["Cache-Control"] = path == "/overlay/bg" ? "no-cache" : "max-age=3600";
         context.Response.ContentLength64 = found.Bytes.Length;
         await context.Response.OutputStream.WriteAsync(found.Bytes);
+        context.Response.Close();
+    }
+
+    // The page for OBS asks every second, which keeps the media reader running for as long as the page is open.
+    private async Task ServeNowPlayingAsync(HttpListenerContext context, string path)
+    {
+        nowPlaying.Touch();
+        byte[] bytes;
+        string type;
+        switch (path.TrimEnd('/'))
+        {
+            case "/now-playing":
+                bytes = Encoding.UTF8.GetBytes(WheelWizard.NowPlaying.NowPlayingPage.Html);
+                type = "text/html; charset=utf-8";
+                break;
+            case "/now-playing/state":
+                bytes = Encoding.UTF8.GetBytes(WheelWizard.NowPlaying.NowPlayingPage.StateFor(nowPlaying, nowPlayingConfig));
+                type = "application/json";
+                break;
+            case "/now-playing/cover" when nowPlaying.Current?.Cover is { Length: > 0 } cover:
+                bytes = cover;
+                type = "image/jpeg";
+                break;
+            default:
+                context.Response.StatusCode = 404;
+                context.Response.Close();
+                return;
+        }
+
+        context.Response.ContentType = type;
+        context.Response.Headers["Cache-Control"] = "no-store";
+        context.Response.ContentLength64 = bytes.Length;
+        await context.Response.OutputStream.WriteAsync(bytes);
         context.Response.Close();
     }
 

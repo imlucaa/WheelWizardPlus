@@ -49,6 +49,7 @@ public interface ISettingsProperties
     Setting<string> MII_TAGS { get; }
     Setting<string> PLAYER_FLAGS { get; }
     Setting<string> OVERLAY_CONFIG { get; }
+    Setting<string> NOW_PLAYING_CONFIG { get; }
     Setting<string> OVERLAY_PRESETS { get; }
     Setting<string> OVERLAY_FRIEND_CODE { get; }
     Setting<string> GAME_DISCS { get; }

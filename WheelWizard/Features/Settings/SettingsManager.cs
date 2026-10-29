@@ -220,6 +220,7 @@ public class SettingsManager : ISettingsManager, IDisposable
         MII_TAGS = RegisterWhWz("MiiTags", "");
         PLAYER_FLAGS = RegisterWhWz("PlayerFlags", "");
         OVERLAY_CONFIG = RegisterWhWz("OverlayConfig", "");
+        NOW_PLAYING_CONFIG = RegisterWhWz("NowPlayingConfig", "");
         OVERLAY_PRESETS = RegisterWhWz("OverlayPresets", "");
         OVERLAY_FRIEND_CODE = RegisterWhWz("OverlayFriendCode", "");
         GAME_DISCS = RegisterWhWz("GameDiscs", "");
@@ -385,6 +386,7 @@ public class SettingsManager : ISettingsManager, IDisposable
     public Setting<string> MII_TAGS { get; }
     public Setting<string> PLAYER_FLAGS { get; }
     public Setting<string> OVERLAY_CONFIG { get; }
+    public Setting<string> NOW_PLAYING_CONFIG { get; }
     public Setting<string> OVERLAY_PRESETS { get; }
     public Setting<string> OVERLAY_FRIEND_CODE { get; }
     public Setting<string> GAME_DISCS { get; }

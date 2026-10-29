@@ -40,6 +40,8 @@
                                Text="Discord RPC" />
                 <components:SegmentOption HorizontalContentAlignment="Left" Padding="10,12" Tag="OverlaySettings"
                                Text="VR overlay" />
+                <components:SegmentOption HorizontalContentAlignment="Left" Padding="10,12" Tag="NowPlayingSettings"
+                               Text="Now playing" />
                 <components:SegmentOption HorizontalContentAlignment="Left" Padding="10,12" Tag="FriendCodeSettings"
                                Text="Friend codes" />
                 <components:SegmentOption HorizontalContentAlignment="Left" Padding="10,12" Tag="LineColorSettings"
