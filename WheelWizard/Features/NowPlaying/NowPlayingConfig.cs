@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.Json.Nodes;
 using WheelWizard.Settings;
 
@@ -14,10 +14,11 @@ public sealed class NowPlayingConfig
         .Parse(
             """
             {
-              "layout": { "style": "classic", "coverSide": "left", "coverShape": "square", "coverSize": 90, "width": 360, "scale": 1, "radius": 10, "gap": 8, "textSize": 1, "align": "left" },
-              "effects": { "glow": true, "spin": false, "borderWidth": 0, "borderColor": "#FFFFFF" },
-              "show": { "cover": true, "artist": true, "app": true, "time": true, "bars": true, "progress": true },
-              "colors": { "source": "cover", "custom": "#3A6DF0", "text": "#FFFFFF", "cardOpacity": 0.92, "progress": "#FFFFFF" },
+              "layout": { "style": "classic", "coverSide": "left", "coverShape": "square", "coverSize": 90, "width": 360, "scale": 1, "radius": 10, "gap": 8, "textSize": 1, "align": "left",
+                         "fontFamily": "default", "titleWeight": "bold", "uppercase": false, "barCount": 22, "progressHeight": 5, "progressPosition": "bottom" },
+              "effects": { "glow": true, "spin": false, "borderWidth": 0, "borderColor": "#FFFFFF", "textShadow": false, "cardShadow": false, "gradient": false },
+              "show": { "cover": true, "artist": true, "app": true, "time": true, "bars": true, "progress": true, "album": false, "remaining": false, "paused": true },
+              "colors": { "source": "cover", "custom": "#3A6DF0", "text": "#FFFFFF", "cardOpacity": 0.92, "progress": "#FFFFFF", "bars": "#FFFFFF" },
               "behavior": { "hideWhenNotPlaying": true }
             }
             """
@@ -27,6 +28,19 @@ public sealed class NowPlayingConfig
     public static readonly string[] Styles = ["classic", "compact", "text", "vertical", "strip"];
     public static readonly string[] CoverShapes = ["square", "circle"];
     public static readonly string[] Aligns = ["left", "center"];
+    public static readonly string[] FontFamilies =
+    [
+        "default",
+        "Segoe UI",
+        "Arial",
+        "Verdana",
+        "Trebuchet MS",
+        "Georgia",
+        "Consolas",
+        "Impact",
+    ];
+    public static readonly string[] TitleWeights = ["normal", "semibold", "bold", "black"];
+    public static readonly string[] ProgressPositions = ["bottom", "top"];
     public static readonly string[] CoverSides = ["left", "right"];
     public static readonly string[] ColorSources = ["cover", "custom"];
 
@@ -151,6 +165,17 @@ public sealed class NowPlayingConfig
     /// <summary>"#RRGGBB" from "#RGB" or "#RRGGBB", upper case.</summary>
     public static string Normalize(string hex) =>
         hex.Length == 4 ? $"#{hex[1]}{hex[1]}{hex[2]}{hex[2]}{hex[3]}{hex[3]}".ToUpperInvariant() : hex.ToUpperInvariant();
+
+    /// <summary>The line under the title: the artist and the album, each only when its option is on, joined with a dot.</summary>
+    public string ArtistLine(NowPlayingInfo info)
+    {
+        var parts = new List<string>();
+        if (GetBool("show.artist") && info.Artist.Length > 0)
+            parts.Add(info.Artist);
+        if (GetBool("show.album") && info.Album.Length > 0)
+            parts.Add(info.Album);
+        return string.Join(" · ", parts);
+    }
 
     /// <summary>True when the card should fade out: the option to hide it is on and nothing is playing.</summary>
     public bool IsHidden(NowPlayingInfo? info) => GetBool("behavior.hideWhenNotPlaying") && info is not { IsPlaying: true };

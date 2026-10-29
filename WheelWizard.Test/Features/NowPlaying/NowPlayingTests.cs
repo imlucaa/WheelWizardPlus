@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.Json.Nodes;
 using NSubstitute;
 using SixLabors.ImageSharp;
@@ -204,6 +204,64 @@ public class NowPlayingTests
         Assert.True(look.GetProperty("spin").GetBoolean());
         Assert.Equal(3, look.GetProperty("borderWidth").GetDouble());
         Assert.Equal(90, look.GetProperty("coverSize").GetDouble());
+    }
+
+    [Fact]
+    public void ArtistLine_JoinsTheArtistAndTheAlbumThatAreSwitchedOn()
+    {
+        var config = Config();
+        var info = new NowPlayingInfo("S", "Artist", "Album", "", true, null);
+
+        Assert.Equal("Artist", config.ArtistLine(info));
+
+        config.Set("show.album", JsonValue.Create(true));
+        Assert.Equal("Artist · Album", config.ArtistLine(info));
+
+        config.Set("show.artist", JsonValue.Create(false));
+        Assert.Equal("Album", config.ArtistLine(info));
+
+        Assert.Equal("Artist", Config().ArtistLine(info with { Album = "" }));
+    }
+
+    [Fact]
+    public void TheNewOptionsStartAtTheClassicLook()
+    {
+        var config = Config();
+
+        Assert.Equal("default", config.GetString("layout.fontFamily"));
+        Assert.Equal("bold", config.GetString("layout.titleWeight"));
+        Assert.False(config.GetBool("layout.uppercase"));
+        Assert.Equal(22, config.GetNumber("layout.barCount"));
+        Assert.Equal(5, config.GetNumber("layout.progressHeight"));
+        Assert.Equal("bottom", config.GetString("layout.progressPosition"));
+        Assert.True(config.GetBool("show.paused"));
+        Assert.False(config.GetBool("show.album"));
+        Assert.False(config.GetBool("show.remaining"));
+        Assert.Equal("#FFFFFF", config.GetString("colors.bars"));
+        Assert.False(config.GetBool("effects.textShadow"));
+        Assert.False(config.GetBool("effects.cardShadow"));
+        Assert.False(config.GetBool("effects.gradient"));
+    }
+
+    [Fact]
+    public void State_CarriesTheNewOptionsAndTheAlbumLineToTheOBSPage()
+    {
+        var config = Config();
+        config.Set("show.album", JsonValue.Create(true));
+        config.Set("layout.fontFamily", JsonValue.Create("Georgia"));
+        config.Set("layout.progressPosition", JsonValue.Create("top"));
+        config.Set("layout.barCount", JsonValue.Create(30));
+        config.Set("effects.gradient", JsonValue.Create(true));
+
+        using var state = JsonDocument.Parse(NowPlayingPage.State(new NowPlayingInfo("S", "A", "B", "", true, null), config, Noon));
+        var look = state.RootElement.GetProperty("look");
+
+        Assert.Equal("A · B", state.RootElement.GetProperty("artist").GetString());
+        Assert.Equal("Georgia", look.GetProperty("fontFamily").GetString());
+        Assert.Equal("top", look.GetProperty("progressPosition").GetString());
+        Assert.Equal(30, look.GetProperty("barCount").GetInt32());
+        Assert.True(look.GetProperty("gradient").GetBoolean());
+        Assert.False(look.GetProperty("textShadow").GetBoolean());
     }
 
     [Theory]

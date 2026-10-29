@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using WheelWizard.DiscordPresence;
 
 namespace WheelWizard.NowPlaying;
@@ -19,7 +19,7 @@ public static class NowPlayingPage
                 visible = info is not null && !config.IsHidden(info),
                 playing = info?.IsPlaying ?? false,
                 title = info?.Title ?? string.Empty,
-                artist = config.GetBool("show.artist") ? info?.Artist ?? string.Empty : string.Empty,
+                artist = info is null ? string.Empty : config.ArtistLine(info),
                 app = config.GetBool("show.app") ? info?.App ?? string.Empty : string.Empty,
                 cover = config.GetBool("show.cover") && info?.Cover is { Length: > 0 },
                 color = config.CardColor(info?.Cover),
@@ -48,6 +48,18 @@ public static class NowPlayingPage
                     spin = config.GetBool("effects.spin"),
                     borderWidth = config.GetNumber("effects.borderWidth"),
                     borderColor = SafeColor(config.GetString("effects.borderColor"), "#FFFFFF"),
+                    fontFamily = config.GetString("layout.fontFamily"),
+                    titleWeight = config.GetString("layout.titleWeight"),
+                    uppercase = config.GetBool("layout.uppercase"),
+                    barCount = Math.Clamp((int)config.GetNumber("layout.barCount"), 6, 48),
+                    progressHeight = Math.Clamp(config.GetNumber("layout.progressHeight"), 2, 14),
+                    progressPosition = config.GetString("layout.progressPosition"),
+                    remaining = config.GetBool("show.remaining"),
+                    paused = config.GetBool("show.paused"),
+                    barsColor = SafeColor(config.GetString("colors.bars"), "#FFFFFF"),
+                    textShadow = config.GetBool("effects.textShadow"),
+                    cardShadow = config.GetBool("effects.cardShadow"),
+                    gradient = config.GetBool("effects.gradient"),
                 },
             }
         );
@@ -68,7 +80,8 @@ public static class NowPlayingPage
           html, body { margin: 0; background: transparent; font-family: 'Segoe UI', Roboto, Arial, sans-serif; overflow: hidden; }
           #card { box-sizing: border-box; width: 360px; padding: 10px; opacity: 0; transform: translateY(8px); transform-origin: 0 0;
                   transition: opacity .4s ease, transform .4s ease; --tint: 74, 79, 94; --text: #fff; --text-rgb: 255, 255, 255;
-                  --alpha: .92; --radius: 10px; --cover: 90px; --progress: #fff; --gap: 8px; --ts: 1; --bw: 0px; --bc: #fff; color: var(--text); }
+                  --alpha: .92; --radius: 10px; --cover: 90px; --progress: #fff; --gap: 8px; --ts: 1; --bw: 0px; --bc: #fff; --tw: 800; --ph: 5px; --bars: #fff; --tint2: 41, 44, 52; color: var(--text);
+                  display: flex; flex-direction: column; }
           #card.show { opacity: 1; transform: none; }
           .top { display: flex; gap: var(--gap); align-items: flex-start; }
           #card.right .top { flex-direction: row-reverse; }
@@ -79,14 +92,14 @@ public static class NowPlayingPage
           .c { border-radius: var(--radius); background: rgba(var(--tint), var(--alpha)); box-sizing: border-box; border: var(--bw) solid var(--bc); }
           .title-card { padding: 7px 12px; }
           .title-card div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-          #title { font-size: calc(15px * var(--ts)); font-weight: 800; }
+          #title { font-size: calc(15px * var(--ts)); font-weight: var(--tw); }
           #artist { font-size: calc(12px * var(--ts)); color: rgba(var(--text-rgb), .9); margin-top: 1px; }
           #artist small { color: rgba(var(--text-rgb), .6); font-size: calc(12px * var(--ts)); }
           .time-card { display: flex; align-items: center; gap: 8px; padding: 0 12px; height: 32px; font-size: calc(12px * var(--ts)); font-weight: 800; }
           .time-card.hidden { display: none; }
           .time-card .t.hidden, .bars.hidden { display: none; }
           .bars { flex: 1; display: flex; justify-content: center; align-items: center; gap: 3px; height: 22px; }
-          .bars i { width: 3px; height: 4px; border-radius: 2px; background: var(--text); opacity: .9; animation: eq 1s ease-in-out infinite; animation-play-state: paused; }
+          .bars i { width: 3px; height: 4px; border-radius: 2px; background: var(--bars); opacity: .9; animation: eq 1s ease-in-out infinite; animation-play-state: paused; }
           .playing .bars i { animation-play-state: running; }
           .bars i:nth-child(5n+1) { animation-duration: .9s; animation-delay: -.2s; }
           .bars i:nth-child(5n+2) { animation-duration: 1.3s; animation-delay: -.7s; }
@@ -94,9 +107,14 @@ public static class NowPlayingPage
           .bars i:nth-child(5n+4) { animation-duration: 1.1s; animation-delay: -.9s; }
           .bars i:nth-child(5n)   { animation-duration: 1.5s; animation-delay: -.1s; }
           @keyframes eq { 0%, 100% { height: 4px; } 50% { height: 16px; } }
-          #track { height: 5px; border-radius: min(var(--radius), 2.5px); background: color-mix(in srgb, var(--progress) 25%, transparent); margin-top: 8px; overflow: hidden; }
+          #track { height: var(--ph); border-radius: min(var(--radius), calc(var(--ph) / 2)); background: color-mix(in srgb, var(--progress) 25%, transparent); margin-top: 8px; overflow: hidden; }
           #track.none { display: none; }
           #fill { height: 100%; width: 0; background: var(--progress); }
+          #card.gradient .c { background: linear-gradient(135deg, rgba(var(--tint), var(--alpha)), rgba(var(--tint2), var(--alpha))); }
+          #card.cshadow .c { box-shadow: 0 4px 14px rgba(0, 0, 0, .5); }
+          #card.tshadow .title-card, #card.tshadow .time-card { text-shadow: 0 1px 5px rgba(0, 0, 0, .85); }
+          #card.upper #title { text-transform: uppercase; }
+          #card.ptop #track { order: -1; margin: 0 0 8px; }
           #card.compact .time-card { display: none; }
           #card.strip .time-card, #card.strip #artist { display: none; }
           #card.strip .right, #card.compact .right, #card.text .right { align-self: center; }
@@ -129,20 +147,23 @@ public static class NowPlayingPage
         <script>
           var card = document.getElementById('card'), cover = document.getElementById('cover'), track = document.getElementById('track'),
               fill = document.getElementById('fill'), times = document.getElementById('times'), last = -1, state = null, fetched = 0;
-          var bars = document.getElementById('bars');
+          var bars = document.getElementById('bars'), lookNow = null;
           for (var i = 0; i < 22; i++) bars.appendChild(document.createElement('i'));
           function clock(seconds) {
             seconds = Math.max(0, Math.floor(seconds));
             var h = Math.floor(seconds / 3600), m = Math.floor(seconds / 60) % 60, s = seconds % 60;
             return h ? h + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0') : Math.floor(seconds / 60) + ':' + String(s).padStart(2, '0');
           }
+          function darker(hex) { var n = parseInt(hex.slice(1), 16); return Math.round((n >> 16 & 255) * .55) + ', ' + Math.round((n >> 8 & 255) * .55) + ', ' + Math.round((n & 255) * .55); }
+          var weights = { normal: 400, semibold: 600, bold: 800, black: 900 };
           function rgb(hex) { var n = parseInt(hex.slice(1), 16); return (n >> 16 & 255) + ', ' + (n >> 8 & 255) + ', ' + (n & 255); }
           function paint(s) {
             var look = s.look, hasLength = s.duration > 0;
             var strip = look.style === 'strip';
             document.getElementById('title').textContent = strip && s.artist ? s.title + '  ·  ' + s.artist : s.title;
             var artist = document.getElementById('artist');
-            var source = s.app ? (s.playing ? s.app : s.app + ' · Paused') : (s.playing ? '' : 'Paused');
+            var quiet = s.playing || !look.paused;
+            var source = s.app ? (quiet ? s.app : s.app + ' · Paused') : (quiet ? '' : 'Paused');
             artist.textContent = s.artist;
             if (source) { var small = document.createElement('small'); small.textContent = (s.artist ? '  ·  ' : '') + source; artist.appendChild(small); }
             artist.style.display = artist.textContent ? '' : 'none';
@@ -155,6 +176,12 @@ public static class NowPlayingPage
             style.setProperty('--radius', look.radius + 'px');
             style.setProperty('--cover', Math.min(look.coverSize, strip ? 64 : 220) + 'px');
             style.setProperty('--gap', look.gap + 'px');
+            style.setProperty('--tw', weights[look.titleWeight] || 800);
+            style.setProperty('--ph', look.progressHeight + 'px');
+            style.setProperty('--bars', look.barsColor);
+            style.setProperty('--tint2', darker(s.color));
+            style.fontFamily = look.fontFamily === 'default' ? '' : "'" + look.fontFamily + "', 'Segoe UI', sans-serif";
+            if (bars.children.length !== look.barCount) { bars.textContent = ''; for (var b = 0; b < look.barCount; b++) bars.appendChild(document.createElement('i')); }
             style.setProperty('--ts', look.textSize);
             style.setProperty('--bw', look.borderWidth + 'px');
             style.setProperty('--bc', look.borderColor);
@@ -171,13 +198,17 @@ public static class NowPlayingPage
             document.getElementById('total').textContent = hasLength ? clock(s.duration) : '';
             track.className = look.progress && hasLength ? '' : 'none';
             card.className = 'show ' + look.style + (look.coverSide === 'right' ? ' right' : '') + (s.playing ? ' playing' : '')
-              + (look.coverShape === 'circle' ? ' circle' : '') + (look.spin ? ' spin' : '') + (look.align === 'center' ? ' center' : '') + (look.glow ? '' : ' noglow');
+              + (look.coverShape === 'circle' ? ' circle' : '') + (look.spin ? ' spin' : '') + (look.align === 'center' ? ' center' : '') + (look.glow ? '' : ' noglow')
+              + (look.progressPosition === 'top' ? ' ptop' : '') + (look.textShadow ? ' tshadow' : '') + (look.cardShadow ? ' cshadow' : '')
+              + (look.gradient ? ' gradient' : '') + (look.uppercase ? ' upper' : '');
+            lookNow = look;
           }
           function progress() {
             if (!state || !state.visible || !(state.duration > 0)) return;
             var at = state.position + (state.playing ? (Date.now() - fetched) / 1000 : 0);
             at = Math.min(Math.max(at, 0), state.duration);
             document.getElementById('elapsed').textContent = clock(at);
+            if (lookNow && lookNow.remaining) document.getElementById('total').textContent = '-' + clock(state.duration - at);
             fill.style.width = (at / state.duration * 100) + '%';
           }
           async function tick() {

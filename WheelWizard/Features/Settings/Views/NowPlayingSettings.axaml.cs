@@ -129,6 +129,9 @@ public partial class NowPlayingSettings : UserControl
         style.Add(Row("Spacing", "The gap between the cover and the cards.", Slider("layout.gap", 0, 40, 1, " px")));
         style.Add(Row("Text size", null, Slider("layout.textSize", 0.6, 2, 0.05, "x")));
         style.Add(Row("Text align", null, Choice("layout.align", NowPlayingConfig.Aligns)));
+        style.Add(Row("Font", null, Choice("layout.fontFamily", NowPlayingConfig.FontFamilies)));
+        style.Add(Row("Title weight", null, Choice("layout.titleWeight", NowPlayingConfig.TitleWeights)));
+        style.Add(Row("Title in capitals", null, Toggle("layout.uppercase")));
 
         var show = Section("Show", expanded: true);
         foreach (
@@ -140,9 +143,20 @@ public partial class NowPlayingSettings : UserControl
                 ("time", "Time played and length"),
                 ("bars", "Sound bar"),
                 ("progress", "Progress line"),
+                ("album", "Album name"),
+                ("remaining", "Time left instead of length"),
+                ("paused", "Say Paused"),
             }
         )
             show.Add(Row(label, null, Toggle($"show.{path}")));
+
+        var bars = Section("Sound bar and line");
+        bars.Add(Row("Bars", "How many bars the sound bar has.", Slider("layout.barCount", 6, 48, 1, "")));
+        bars.Add(Row("Bar color", null, Color("colors.bars")));
+        bars.Add(Row("Line thickness", null, Slider("layout.progressHeight", 2, 14, 1, " px")));
+        bars.Add(
+            Row("Line position", "Under the cards or above them.", Choice("layout.progressPosition", NowPlayingConfig.ProgressPositions))
+        );
 
         var colors = Section("Colors");
         colors.Add(
@@ -156,6 +170,9 @@ public partial class NowPlayingSettings : UserControl
         var effects = Section("Effects");
         effects.Add(Row("Glow", "A soft glow around the cover in the card color.", Toggle("effects.glow")));
         effects.Add(Row("Spinning cover", "A round cover turns like a record while the song plays.", Toggle("effects.spin")));
+        effects.Add(Row("Text shadow", "A dark shadow behind the words, easier to read on a busy scene.", Toggle("effects.textShadow")));
+        effects.Add(Row("Card shadow", null, Toggle("effects.cardShadow")));
+        effects.Add(Row("Gradient cards", "The cards fade from the card color to a darker one.", Toggle("effects.gradient")));
         effects.Add(Row("Border", null, Slider("effects.borderWidth", 0, 8, 1, " px")));
         effects.Add(Row("Border color", null, Color("effects.borderColor")));
 

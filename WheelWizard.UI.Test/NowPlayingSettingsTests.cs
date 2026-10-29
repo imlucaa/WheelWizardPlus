@@ -32,8 +32,8 @@ public class NowPlayingSettingsTests
         var host = page.FindControl<StackPanel>("OptionsHost")!;
         var panels = host.Children.OfType<StackPanel>().ToList();
 
-        Assert.Equal(5, panels.Count);
-        Assert.Equal([true, true, false, false, false], panels.Select(panel => panel.IsVisible));
+        Assert.Equal(6, panels.Count);
+        Assert.Equal([true, true, false, false, false, false], panels.Select(panel => panel.IsVisible));
         window.Close();
         service.Dispose();
     }
