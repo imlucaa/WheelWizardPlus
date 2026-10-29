@@ -42,6 +42,10 @@ version sequence.
 - Now playing is a tab in Settings (and can be pinned): it shows the song playing on the PC, from Spotify, Apple Music, iTunes, SoundCloud or YouTube Music in a browser and other players Windows can read, as a card with the cover, title, artist, time, a moving sound bar and a progress line. The cards take the color of the cover. Show it in its own window or as an OBS Browser source (a link to copy). Options: five styles (Classic, Vertical, Compact, Strip, Text), cover side, shape and size, width, size, roundness, spacing, text size and alignment, what shows (cover, artist, app, time, sound bar, progress), card color (cover or your own), card strength, text and progress colors, glow, a spinning round cover, a border, and hiding the card while nothing plays.
 - Testing Mode is a normal item in Arrange sidebar, so it can be moved or hidden like the others.
 
+### Fixed
+
+- Discord status: the timer no longer counts the whole time in a room. When the game screen cannot be read, the status shows the room's current race, and its timer now starts over with each new race instead of running for as long as the room lasts.
+
 ### Removed
 
 - The Dev Tool button in Settings is hidden in debug builds unless `WHEELWIZARD_DEV=1` is set.

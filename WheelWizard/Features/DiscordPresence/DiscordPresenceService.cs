@@ -34,6 +34,7 @@ public sealed class DiscordPresenceService(
     private string? _connectedClientId;
     private long _startedAt;
     private int? _lastSection;
+    private string _lastMoment = "";
     private bool _started;
     private DiscordActivity? _lastSent;
     private int? _lastGoodSection;
@@ -406,6 +407,7 @@ public sealed class DiscordPresenceService(
             }
             _startedAt = 0;
             _lastSection = null;
+            _lastMoment = "";
             _lastSent = null;
             return;
         }
@@ -422,8 +424,10 @@ public sealed class DiscordPresenceService(
             _connectedClientId = clientId;
         }
 
-        // Like the pack's own presence, the timer restarts whenever the screen changes.
-        if (_startedAt == 0 || section != _lastSection)
+        // Like the pack's own presence, the timer restarts whenever the screen changes. Without a readable screen it follows
+        // the room and its race instead, so it counts the time on this track and not the whole time in the room.
+        var moment = live?.Moment ?? "";
+        if (_startedAt == 0 || section != _lastSection || moment != _lastMoment)
         {
             _startedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             // The pack posts its own status again whenever the screen changes, so it is cleared again each time.
@@ -441,6 +445,7 @@ public sealed class DiscordPresenceService(
             _ = ClearDolphinOwnStatusAsync();
         }
         _lastSection = section;
+        _lastMoment = moment;
 
         // The first line is always the game's name, so every status reads the same.
         var details = RequiredName;
@@ -523,8 +528,12 @@ public sealed class DiscordPresenceService(
         int PlayerCount,
         string? PlayerUrl = null,
         bool InRoom = false,
-        string? RoomId = null
+        string? RoomId = null,
+        string Moment = ""
     );
+
+    /// <summary>Tells one race of one room from the next, so the status timer can start over for each.</summary>
+    public static string MomentOf(string? roomId, int? raceNumber) => roomId is null ? "" : $"{roomId}:{raceNumber ?? 0}";
 
     private sealed record MyRoom(string Id, string Track, int PlayerCount, int RaceNumber, int? Vr, int? Br, string? Rk);
 
@@ -562,7 +571,15 @@ public sealed class DiscordPresenceService(
                     id
                 );
             }
-            return new(details, raceTrack, room?.PlayerCount ?? 0, BuildPlayerUrl(profile?.FriendCode), room != null, room?.Id);
+            return new(
+                details,
+                raceTrack,
+                room?.PlayerCount ?? 0,
+                BuildPlayerUrl(profile?.FriendCode),
+                room != null,
+                room?.Id,
+                MomentOf(room?.Id, room?.RaceNumber)
+            );
         }
 
         var fresh = FindFreshRoom(profile);
@@ -576,7 +593,8 @@ public sealed class DiscordPresenceService(
                 fresh.PlayerCount,
                 BuildPlayerUrl(profile?.FriendCode),
                 true,
-                fresh.Id
+                fresh.Id,
+                MomentOf(fresh.Id, fresh.RaceNumber)
             );
         }
 
@@ -587,7 +605,15 @@ public sealed class DiscordPresenceService(
         var mode = string.IsNullOrWhiteSpace(cachedRoom.GameModeAbbrev) ? "Online" : $"Online {cachedRoom.GameModeAbbrev}";
         var rating = me?.Vr is { } vr ? $" (VR: {vr} BR: {me.Br?.ToString() ?? "--"})" : "";
         var track = string.IsNullOrWhiteSpace(cachedRoom.TrackName) ? "In a room" : cachedRoom.TrackName;
-        return new($"{mode}{rating}", track, cachedRoom.PlayerCount, BuildPlayerUrl(profile?.FriendCode), true, cachedRoom.Id);
+        return new(
+            $"{mode}{rating}",
+            track,
+            cachedRoom.PlayerCount,
+            BuildPlayerUrl(profile?.FriendCode),
+            true,
+            cachedRoom.Id,
+            MomentOf(cachedRoom.Id, cachedRoom.RaceNumber)
+        );
     }
 
     /// <summary>

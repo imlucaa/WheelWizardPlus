@@ -1,4 +1,4 @@
-using WheelWizard.DiscordPresence;
+﻿using WheelWizard.DiscordPresence;
 
 namespace WheelWizard.Test.Features.DiscordPresence;
 
@@ -51,6 +51,16 @@ public class DiscordPresenceTests
     [InlineData("", false)]
     public void IsValidApplicationId_AcceptsOnlyDiscordSizedNumbers(string id, bool expected) =>
         Assert.Equal(expected, DiscordPresenceService.IsValidApplicationId(id));
+
+    [Fact]
+    public void MomentOf_ChangesWithTheRoomAndWithEachRace_SoTheStatusTimerStartsOverPerTrack()
+    {
+        Assert.Equal("", DiscordPresenceService.MomentOf(null, 3));
+        Assert.Equal(DiscordPresenceService.MomentOf("room", 4), DiscordPresenceService.MomentOf("room", 4));
+        Assert.NotEqual(DiscordPresenceService.MomentOf("room", 4), DiscordPresenceService.MomentOf("room", 5));
+        Assert.NotEqual(DiscordPresenceService.MomentOf("room", 4), DiscordPresenceService.MomentOf("other", 4));
+        Assert.Equal(DiscordPresenceService.MomentOf("room", 0), DiscordPresenceService.MomentOf("room", null));
+    }
 
     [Fact]
     public void RequiredName_IsRetroRewind() => Assert.Equal("Retro Rewind", DiscordPresenceService.RequiredName);
