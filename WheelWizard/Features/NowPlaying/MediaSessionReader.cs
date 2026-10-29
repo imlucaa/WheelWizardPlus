@@ -9,8 +9,10 @@ public interface IMediaSessionReader : IDisposable
 {
     bool IsSupported { get; }
 
-    /// <summary>When true, media playing in a web browser (YouTube and other videos) is left out. Changing it restarts the reader.</summary>
-    bool IgnoreBrowsers { get; set; }
+    /// <summary>
+    /// What to take from web browsers: "ignore", "music only" (media that names an album) or "everything". Changing it restarts the reader.
+    /// </summary>
+    string BrowserMode { get; set; }
 
     /// <summary>Why the media controls cannot be read right now (PowerShell blocked or stopped), or null when all is well.</summary>
     string? Problem { get; }
@@ -46,19 +48,19 @@ public sealed class WindowsMediaSessionReader(ILogger<WindowsMediaSessionReader>
 
     public string? Problem { get; private set; }
 
-    private bool _ignoreBrowsers;
+    private string _browserMode = "music only";
 
-    public bool IgnoreBrowsers
+    public string BrowserMode
     {
-        get => _ignoreBrowsers;
+        get => _browserMode;
         set
         {
             bool running;
             lock (_gate)
             {
-                if (_ignoreBrowsers == value)
+                if (_browserMode == value)
                     return;
-                _ignoreBrowsers = value;
+                _browserMode = value;
                 running = _worker is { HasExited: false };
             }
 
@@ -85,6 +87,15 @@ public sealed class WindowsMediaSessionReader(ILogger<WindowsMediaSessionReader>
             + (detail.Length > 0 ? $" ({detail})" : string.Empty);
     }
 
+    /// <summary>The word the script understands for a browser mode: ignore, music or all.</summary>
+    public static string ScriptWord(string mode) =>
+        mode switch
+        {
+            "ignore" => "ignore",
+            "everything" => "all",
+            _ => "music",
+        };
+
     public void Start()
     {
         if (!IsSupported)
@@ -102,7 +113,7 @@ public sealed class WindowsMediaSessionReader(ILogger<WindowsMediaSessionReader>
             {
                 var script = MediaSessionScript
                     .Text.Replace("__PARENT__", Environment.ProcessId.ToString())
-                    .Replace("__SKIP__", _ignoreBrowsers ? "$true" : "$false")
+                    .Replace("__BROWSER_MODE__", ScriptWord(_browserMode))
                     .Replace("__BROWSERS__", string.Join(",", NowPlayingInfo.BrowserWords.Select(word => $"'{word}'")));
                 var info = new ProcessStartInfo("powershell.exe")
                 {

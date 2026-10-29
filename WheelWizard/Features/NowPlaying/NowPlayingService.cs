@@ -63,8 +63,8 @@ public sealed class NowPlayingService : IDisposable
 
     private void OnProblemChanged() => Changed?.Invoke();
 
-    // Browsers are left out of what is read when the option says so.
-    private void ApplyConfig() => _reader.IgnoreBrowsers = _config?.GetBool("behavior.ignoreBrowsers") ?? false;
+    // What is taken from web browsers (nothing, only music, or everything) follows the option.
+    private void ApplyConfig() => _reader.BrowserMode = _config?.GetString("behavior.browsers") ?? "music only";
 
     private void OnChanged(NowPlayingInfo? info)
     {

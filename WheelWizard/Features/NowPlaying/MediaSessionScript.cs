@@ -3,8 +3,8 @@ namespace WheelWizard.NowPlaying;
 /// <summary>
 /// The PowerShell the media reader runs. Every second it looks at the Windows media sessions (one per player), takes the
 /// one that is playing (or the one Windows shows), and prints a JSON line when the song, the state or the picture changed,
-/// or when the playback position jumped (a skip inside the song). It can leave out web browsers, so a YouTube video
-/// is not taken for a song. It stops by itself when Wheel Wizard+ is gone.
+/// or when the playback position jumped (a skip inside the song). In a browser it can take only media that names an album
+/// (YouTube Music), so a YouTube video is not taken for a song. It stops by itself when Wheel Wizard+ is gone.
 /// </summary>
 public static class MediaSessionScript
 {
@@ -21,9 +21,17 @@ public static class MediaSessionScript
         $asStream = [System.IO.WindowsRuntimeStreamExtensions].GetMethod('AsStreamForRead', [Type[]]@([Windows.Storage.Streams.IInputStream]))
         $mgr = Await ($manager::RequestAsync()) $manager
         $parent = __PARENT__
-        $skipBrowsers = __SKIP__
+        $browserMode = '__BROWSER_MODE__'
         $browserWords = __BROWSERS__
         function IsBrowser($id) { $lower = ([string]$id).ToLower(); foreach ($word in $browserWords) { if ($lower.Contains($word)) { return $true } } return $false }
+        # A session in a browser is used when the mode says everything, or when it names an album (YouTube Music, Spotify
+        # and Apple Music on the web do; a YouTube video does not).
+        function Allowed($s) {
+          if (-not (IsBrowser $s.SourceAppUserModelId)) { return $true }
+          if ($browserMode -eq 'all') { return $true }
+          if ($browserMode -eq 'ignore') { return $false }
+          try { $named = Await ($s.TryGetMediaPropertiesAsync()) $properties; return -not [string]::IsNullOrWhiteSpace($named.AlbumTitle) } catch { return $false }
+        }
         $last = $null
         $cover = $null
         $coverTries = 0
@@ -35,14 +43,14 @@ public static class MediaSessionScript
           try {
             $session = $null
             foreach ($s in $mgr.GetSessions()) {
-              if ($skipBrowsers -and (IsBrowser $s.SourceAppUserModelId)) { continue }
+              if (-not (Allowed $s)) { continue }
               if ($s.GetPlaybackInfo().PlaybackStatus -eq 'Playing') { $session = $s; break }
             }
             if ($null -eq $session) {
               $current = $mgr.GetCurrentSession()
-              if ($null -ne $current -and -not ($skipBrowsers -and (IsBrowser $current.SourceAppUserModelId))) { $session = $current }
-              elseif ($skipBrowsers) {
-                foreach ($s in $mgr.GetSessions()) { if (-not (IsBrowser $s.SourceAppUserModelId)) { $session = $s; break } }
+              if ($null -ne $current -and (Allowed $current)) { $session = $current }
+              else {
+                foreach ($s in $mgr.GetSessions()) { if (Allowed $s) { $session = $s; break } }
               }
             }
             if ($null -eq $session) {

@@ -362,20 +362,25 @@ public class NowPlayingTests
     public void IsBrowser_RecognisesTheWebBrowsers(string appId, bool expected) => Assert.Equal(expected, NowPlayingInfo.IsBrowser(appId));
 
     [Fact]
-    public void BrowsersAreIgnoredByDefault_AndTheChoiceReachesTheReaderAndTheScript()
+    public void BrowsersGiveOnlyMusicByDefault_AndTheChoiceReachesTheReaderAndTheScript()
     {
         var config = MemoryConfig();
         var reader = new FakeReader();
         using var service = new NowPlayingService(reader, new ManualTime(), config);
 
-        Assert.True(config.GetBool("behavior.ignoreBrowsers"));
-        Assert.True(reader.IgnoreBrowsers);
+        Assert.Equal("music only", config.GetString("behavior.browsers"));
+        Assert.Equal("music only", reader.BrowserMode);
 
-        config.Set("behavior.ignoreBrowsers", JsonValue.Create(false));
-        Assert.False(reader.IgnoreBrowsers);
+        config.Set("behavior.browsers", JsonValue.Create("everything"));
+        Assert.Equal("everything", reader.BrowserMode);
+
+        Assert.Equal("ignore", WindowsMediaSessionReader.ScriptWord("ignore"));
+        Assert.Equal("music", WindowsMediaSessionReader.ScriptWord("music only"));
+        Assert.Equal("all", WindowsMediaSessionReader.ScriptWord("everything"));
+        Assert.Equal("music", WindowsMediaSessionReader.ScriptWord("something odd"));
 
         // The script gets the same list the C# check uses, and the choice.
-        Assert.Contains("__SKIP__", MediaSessionScript.Text);
+        Assert.Contains("__BROWSER_MODE__", MediaSessionScript.Text);
         Assert.Contains("__BROWSERS__", MediaSessionScript.Text);
         Assert.Contains("'brave'", string.Join(",", NowPlayingInfo.BrowserWords.Select(word => $"'{word}'")));
     }
@@ -526,7 +531,7 @@ public class NowPlayingTests
         public int Stops { get; private set; }
         public bool IsSupported => true;
         public string? Problem { get; private set; }
-        public bool IgnoreBrowsers { get; set; }
+        public string BrowserMode { get; set; } = "";
         public event Action<NowPlayingInfo?>? Changed;
         public event Action? ProblemChanged;
 

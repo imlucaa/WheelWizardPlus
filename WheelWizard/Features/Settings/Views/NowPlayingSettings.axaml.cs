@@ -188,9 +188,9 @@ public partial class NowPlayingSettings : UserControl
         var behavior = Section("When it shows");
         behavior.Add(
             Row(
-                "Music apps only",
-                "Ignores anything playing in a browser, like YouTube videos. Turn it off to show SoundCloud or YouTube Music from a browser.",
-                Toggle("behavior.ignoreBrowsers")
+                "Songs from browsers",
+                "Music only shows YouTube Music, Spotify and Apple Music on the web (they name an album) and skips YouTube videos. Everything also shows SoundCloud and videos.",
+                Choice("behavior.browsers", NowPlayingConfig.BrowserModes)
             )
         );
         behavior.Add(

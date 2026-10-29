@@ -19,7 +19,7 @@ public sealed class NowPlayingConfig
               "effects": { "glow": true, "spin": false, "borderWidth": 0, "borderColor": "#FFFFFF", "textShadow": false, "cardShadow": false, "gradient": false },
               "show": { "cover": true, "artist": true, "app": true, "time": true, "bars": true, "progress": true, "album": false, "remaining": false, "paused": true },
               "colors": { "source": "cover", "custom": "#3A6DF0", "text": "#FFFFFF", "cardOpacity": 0.92, "progress": "#FFFFFF", "bars": "#FFFFFF" },
-              "behavior": { "hideWhenNotPlaying": true, "ignoreBrowsers": true }
+              "behavior": { "hideWhenNotPlaying": true, "browsers": "music only" }
             }
             """
         )!
@@ -41,6 +41,7 @@ public sealed class NowPlayingConfig
     ];
     public static readonly string[] TitleWeights = ["normal", "semibold", "bold", "black"];
     public static readonly string[] ProgressPositions = ["bottom", "top"];
+    public static readonly string[] BrowserModes = ["ignore", "music only", "everything"];
     public static readonly string[] CoverSides = ["left", "right"];
     public static readonly string[] ColorSources = ["cover", "custom"];
 
