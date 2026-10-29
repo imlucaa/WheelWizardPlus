@@ -189,7 +189,7 @@ public partial class NowPlayingSettings : UserControl
         behavior.Add(
             Row(
                 "Songs from browsers",
-                "Music only shows YouTube Music, Spotify and Apple Music on the web (they name an album) and skips YouTube videos. Everything also shows SoundCloud and videos.",
+                "Music only shows YouTube Music, Spotify, SoundCloud and other music sites in a browser and skips YouTube videos. Everything also shows videos.",
                 Choice("behavior.browsers", NowPlayingConfig.BrowserModes)
             )
         );

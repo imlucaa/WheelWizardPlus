@@ -1,10 +1,11 @@
-namespace WheelWizard.NowPlaying;
+﻿namespace WheelWizard.NowPlaying;
 
 /// <summary>
 /// The PowerShell the media reader runs. Every second it looks at the Windows media sessions (one per player), takes the
 /// one that is playing (or the one Windows shows), and prints a JSON line when the song, the state or the picture changed,
-/// or when the playback position jumped (a skip inside the song). In a browser it can take only media that names an album
-/// (YouTube Music), so a YouTube video is not taken for a song. It stops by itself when Wheel Wizard+ is gone.
+/// or when the playback position jumped (a skip inside the song). In a browser it can take only music: media that names an
+/// album, or media from a tab of a music website (the tab names are read through Windows' accessibility, which Chromium
+/// browsers answer), so a YouTube video is not taken for a song. It stops by itself when Wheel Wizard+ is gone.
 /// </summary>
 public static class MediaSessionScript
 {
@@ -22,15 +23,56 @@ public static class MediaSessionScript
         $mgr = Await ($manager::RequestAsync()) $manager
         $parent = __PARENT__
         $browserMode = '__BROWSER_MODE__'
+        $musicSites = __MUSIC_SITES__
+        Add-Type -AssemblyName UIAutomationClient
+        Add-Type -AssemblyName UIAutomationTypes
+        $tabCondition = New-Object System.Windows.Automation.PropertyCondition([System.Windows.Automation.AutomationElement]::ControlTypeProperty, [System.Windows.Automation.ControlType]::TabItem)
         $browserWords = __BROWSERS__
         function IsBrowser($id) { $lower = ([string]$id).ToLower(); foreach ($word in $browserWords) { if ($lower.Contains($word)) { return $true } } return $false }
-        # A session in a browser is used when the mode says everything, or when it names an album (YouTube Music, Spotify
-        # and Apple Music on the web do; a YouTube video does not).
+        # The names of the open browser tabs, as the browser tells Windows (they end with ', Audio playing' while one makes sound).
+        function BrowserTabs() {
+          $names = @()
+          foreach ($proc in (Get-Process -ErrorAction SilentlyContinue | Where-Object { $_.MainWindowHandle -ne 0 -and (IsBrowser $_.ProcessName) })) {
+            try {
+              $window = [System.Windows.Automation.AutomationElement]::FromHandle($proc.MainWindowHandle)
+              foreach ($tab in $window.FindAll([System.Windows.Automation.TreeScope]::Descendants, $tabCondition)) { $names += $tab.Current.Name.ToLower() }
+            } catch { }
+          }
+          return $names
+        }
+        # A tab is a music site's when a part of its title starts or ends with the site's name ("... | YouTube Music"), so a
+        # video that only mentions Spotify in its title does not count.
+        function IsMusicTab($name) {
+          $title = $name
+          $cut = $title.IndexOf(' - memory usage')
+          if ($cut -ge 0) { $title = $title.Substring(0, $cut) }
+          $parts = @(' | ', ' - ', (' ' + [char]0x2013 + ' '), (' ' + [char]0x2014 + ' '), (' ' + [char]0x2022 + ' '), ': ')
+          foreach ($segment in $title.Split($parts, [StringSplitOptions]::RemoveEmptyEntries)) {
+            $segment = $segment.Trim()
+            foreach ($site in $musicSites) { if ($segment.StartsWith($site) -or $segment.EndsWith($site)) { return $true } }
+          }
+          return $false
+        }
+        # A music website is open, and when the session is playing, one of them is the tab making sound.
+        function HasMusicTab($playing) {
+          $tabs = BrowserTabs
+          $music = @($tabs | Where-Object { IsMusicTab $_ })
+          if ($music.Count -eq 0) { return $false }
+          if (-not $playing) { return $true }
+          if (@($tabs | Where-Object { $_.Contains('audio playing') }).Count -eq 0) { return $true }
+          return @($music | Where-Object { $_.Contains('audio playing') }).Count -gt 0
+        }
+        # A session in a browser is used when the mode says everything, or in music mode when it names an album (Spotify
+        # and Apple Music on the web do) or comes from a music website's tab (YouTube Music); a YouTube video is neither.
         function Allowed($s) {
           if (-not (IsBrowser $s.SourceAppUserModelId)) { return $true }
           if ($browserMode -eq 'all') { return $true }
           if ($browserMode -eq 'ignore') { return $false }
-          try { $named = Await ($s.TryGetMediaPropertiesAsync()) $properties; return -not [string]::IsNullOrWhiteSpace($named.AlbumTitle) } catch { return $false }
+          try {
+            $named = Await ($s.TryGetMediaPropertiesAsync()) $properties
+            if (-not [string]::IsNullOrWhiteSpace($named.AlbumTitle)) { return $true }
+            return HasMusicTab ($s.GetPlaybackInfo().PlaybackStatus -eq 'Playing')
+          } catch { return $false }
         }
         $last = $null
         $cover = $null

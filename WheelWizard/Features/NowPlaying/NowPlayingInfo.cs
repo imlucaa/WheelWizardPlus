@@ -90,6 +90,20 @@ public sealed record NowPlayingInfo(
     /// <summary>Parts of a media session's app name that mean a web browser (YouTube, SoundCloud and the like play in one).</summary>
     public static readonly string[] BrowserWords = ["chrome", "msedge", "edge", "opera", "firefox", "brave", "vivaldi"];
 
+    /// <summary>Names of music websites, as they show in a browser tab ("YouTube Music", not "YouTube").</summary>
+    public static readonly string[] MusicSites =
+    [
+        "youtube music",
+        "spotify",
+        "soundcloud",
+        "apple music",
+        "tidal",
+        "deezer",
+        "bandcamp",
+        "amazon music",
+        "pandora",
+    ];
+
     /// <summary>True when the app a media session belongs to is a web browser.</summary>
     public static bool IsBrowser(string appId) => BrowserWords.Any(word => appId.Contains(word, StringComparison.OrdinalIgnoreCase));
 

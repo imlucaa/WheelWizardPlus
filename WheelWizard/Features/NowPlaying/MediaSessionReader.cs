@@ -114,6 +114,7 @@ public sealed class WindowsMediaSessionReader(ILogger<WindowsMediaSessionReader>
                 var script = MediaSessionScript
                     .Text.Replace("__PARENT__", Environment.ProcessId.ToString())
                     .Replace("__BROWSER_MODE__", ScriptWord(_browserMode))
+                    .Replace("__MUSIC_SITES__", string.Join(",", NowPlayingInfo.MusicSites.Select(site => $"'{site}'")))
                     .Replace("__BROWSERS__", string.Join(",", NowPlayingInfo.BrowserWords.Select(word => $"'{word}'")));
                 var info = new ProcessStartInfo("powershell.exe")
                 {

@@ -74,6 +74,17 @@ public class DiscordPresenceTests
         Assert.True(DiscordPresenceService.IsIdle(Started(TimeSpan.FromMinutes(42)), now));
     }
 
+    [Theory]
+    [InlineData("GCN Dry Dry Desert / Wii U Dry Dry Desert", "Wii U Dry Dry Desert", "Wii U Dry Dry Desert")]
+    [InlineData("GCN Dry Dry Desert / Wii U Dry Dry Desert", "gcn dry dry desert", "GCN Dry Dry Desert")]
+    [InlineData("GCN Dry Dry Desert / Wii U Dry Dry Desert", " DS Desert Hills ", "DS Desert Hills")]
+    [InlineData("GCN Dry Dry Desert / Wii U Dry Dry Desert", null, "GCN Dry Dry Desert / Wii U Dry Dry Desert")]
+    [InlineData("GCN Dry Dry Desert / Wii U Dry Dry Desert", "  ", "GCN Dry Dry Desert / Wii U Dry Dry Desert")]
+    [InlineData("Luigi Circuit", "Mario Circuit", "Luigi Circuit")]
+    [InlineData("", "Mario Circuit", "")]
+    public void ChooseTrack_ShowsTheOneTrackTheGameLoaded_NotBothNamesTheRoomLists(string roomTrack, string? gameTrack, string expected) =>
+        Assert.Equal(expected, DiscordPresenceService.ChooseTrack(roomTrack, gameTrack));
+
     [Fact]
     public void RequiredName_IsRetroRewind() => Assert.Equal("Retro Rewind", DiscordPresenceService.RequiredName);
 

@@ -46,9 +46,10 @@ version sequence.
 
 - Now playing has more options: font, title weight and capitals, the album name, time left instead of length, whether it says Paused, the number and color of the sound bar's bars, the thickness and position (above or below) of the progress line, a text shadow, card shadows and gradient cards.
 - Now playing has presets (Classic, Vinyl, Strip, Text only, Big cover, Compact, Neon, Glass, Terminal): one click sets the whole look, and the one that matches is outlined. Save the look you made under a name (up to 24, delete with the x), and export a look to a file or import one from a file.
-- Now playing and web browsers: by default a browser only counts when what plays names an album, which YouTube Music, Spotify and Apple Music on the web do and a YouTube video does not, so videos are not shown as songs. Songs from browsers (under When it shows) can also be set to ignore browsers, or to take everything (SoundCloud, videos).
+- Now playing and web browsers: by default a browser only counts when it is playing music: media that names an album (Spotify and Apple Music on the web), or a tab of a music website such as YouTube Music, SoundCloud, Apple Music or Tidal (found from the browser's tab names). A YouTube video is not shown as a song. Songs from browsers (under When it shows) can also be set to ignore browsers, or to take everything.
 - Discord status: after 15 minutes on a menu or vote screen (or in a room you stopped playing in) the status says Idle, without the track, room or buttons, and counts the idle time. Screens that show a track are never idle.
 - Now playing: when Windows' media controls cannot be read (PowerShell blocked by security software, or stopped), the tab says so instead of showing a card that says nothing is playing, and it only tries again every 30 seconds.
+- Discord status: an online race shows the one track the game loaded, not both names the room lists ("GCN Dry Dry Desert / Wii U Dry Dry Desert").
 - Discord status: the timer no longer counts the whole time in a room. When the game screen cannot be read, the status shows the room's current race, and its timer now starts over with each new race instead of running for as long as the room lasts.
 
 ### Removed

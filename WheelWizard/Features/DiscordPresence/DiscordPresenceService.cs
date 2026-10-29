@@ -595,6 +595,9 @@ public sealed class DiscordPresenceService(
                     id
                 );
             }
+            // The room lists a track with its other name too ("GCN Dry Dry Desert / Wii U Dry Dry Desert"); the game knows the one it loaded.
+            if (RetroRewindSections.IsOnlineRace(id))
+                raceTrack = ChooseTrack(raceTrack, gameTrack);
             return new(
                 details,
                 raceTrack,
@@ -665,6 +668,21 @@ public sealed class DiscordPresenceService(
 
         _lastShownRace = room.RaceNumber;
         return room.Track;
+    }
+
+    /// <summary>
+    /// The room names a track with its other name too ("A / B"). When the game's own track name is known, the one it matches
+    /// (or the game's name when it matches neither) is shown instead of both; with no game name, the room's text stays.
+    /// </summary>
+    public static string ChooseTrack(string roomTrack, string? gameTrack)
+    {
+        var options = roomTrack.Split(" / ", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (options.Length <= 1 || string.IsNullOrWhiteSpace(gameTrack))
+            return roomTrack;
+
+        static string Plain(string name) => new(name.Where(char.IsLetterOrDigit).Select(char.ToLowerInvariant).ToArray());
+        var known = options.FirstOrDefault(option => Plain(option) == Plain(gameTrack));
+        return known ?? gameTrack.Trim();
     }
 
     private static string Rating(int? live, uint? saved) => (live ?? (int?)saved)?.ToString() ?? "--";

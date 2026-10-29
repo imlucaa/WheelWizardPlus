@@ -381,6 +381,9 @@ public class NowPlayingTests
 
         // The script gets the same list the C# check uses, and the choice.
         Assert.Contains("__BROWSER_MODE__", MediaSessionScript.Text);
+        Assert.Contains("__MUSIC_SITES__", MediaSessionScript.Text);
+        Assert.Contains("youtube music", NowPlayingInfo.MusicSites);
+        Assert.DoesNotContain("youtube", NowPlayingInfo.MusicSites);
         Assert.Contains("__BROWSERS__", MediaSessionScript.Text);
         Assert.Contains("'brave'", string.Join(",", NowPlayingInfo.BrowserWords.Select(word => $"'{word}'")));
     }
