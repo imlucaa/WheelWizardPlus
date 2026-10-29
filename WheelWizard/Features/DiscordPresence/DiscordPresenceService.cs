@@ -559,7 +559,6 @@ public sealed class DiscordPresenceService(
     /// track, player count and ratings. Without the game screen, the room list alone still shows an online room.
     /// </summary>
     private int? _loggedMissingTrack;
-    private string _loggedBothNames = "";
     private DateTime _lastDolphinClear = DateTime.MinValue;
     private static readonly TimeSpan DolphinClearEvery = TimeSpan.FromSeconds(20);
 
@@ -598,22 +597,7 @@ public sealed class DiscordPresenceService(
             }
             // The room lists a track with its other name too ("GCN Dry Dry Desert / Wii U Dry Dry Desert"); the game knows the one it loaded.
             if (RetroRewindSections.IsOnlineRace(id))
-            {
-                var chosen = ChooseTrack(raceTrack, gameTrack);
-                // Once per track, so a status that still lists both names can be explained from the log.
-                if (chosen == raceTrack && raceTrack.Contains(" / ") && _loggedBothNames != raceTrack)
-                {
-                    _loggedBothNames = raceTrack;
-                    logger.LogInformation(
-                        "Discord status: screen {Section} lists both track names ({Track}) and no track name could be read from the game",
-                        id,
-                        raceTrack
-                    );
-                }
-
-                raceTrack = chosen;
-            }
-
+                raceTrack = ChooseTrack(raceTrack, gameTrack);
             return new(
                 details,
                 raceTrack,
