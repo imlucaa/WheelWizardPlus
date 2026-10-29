@@ -188,6 +188,13 @@ public partial class NowPlayingSettings : UserControl
         var behavior = Section("When it shows");
         behavior.Add(
             Row(
+                "Music apps only",
+                "Ignores anything playing in a browser, like YouTube videos. Turn it off to show SoundCloud or YouTube Music from a browser.",
+                Toggle("behavior.ignoreBrowsers")
+            )
+        );
+        behavior.Add(
+            Row(
                 "Hide when nothing plays",
                 "The card fades out while the music is paused or stopped.",
                 Toggle("behavior.hideWhenNotPlaying")

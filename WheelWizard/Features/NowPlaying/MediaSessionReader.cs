@@ -9,6 +9,9 @@ public interface IMediaSessionReader : IDisposable
 {
     bool IsSupported { get; }
 
+    /// <summary>When true, media playing in a web browser (YouTube and other videos) is left out. Changing it restarts the reader.</summary>
+    bool IgnoreBrowsers { get; set; }
+
     /// <summary>Why the media controls cannot be read right now (PowerShell blocked or stopped), or null when all is well.</summary>
     string? Problem { get; }
 
@@ -43,6 +46,31 @@ public sealed class WindowsMediaSessionReader(ILogger<WindowsMediaSessionReader>
 
     public string? Problem { get; private set; }
 
+    private bool _ignoreBrowsers;
+
+    public bool IgnoreBrowsers
+    {
+        get => _ignoreBrowsers;
+        set
+        {
+            bool running;
+            lock (_gate)
+            {
+                if (_ignoreBrowsers == value)
+                    return;
+                _ignoreBrowsers = value;
+                running = _worker is { HasExited: false };
+            }
+
+            // The script was started with the old choice, so it starts again with the new one.
+            if (running)
+            {
+                Stop();
+                Start();
+            }
+        }
+    }
+
     public event Action<NowPlayingInfo?>? Changed;
 
     public event Action? ProblemChanged;
@@ -72,7 +100,10 @@ public sealed class WindowsMediaSessionReader(ILogger<WindowsMediaSessionReader>
 
             try
             {
-                var script = MediaSessionScript.Text.Replace("__PARENT__", Environment.ProcessId.ToString());
+                var script = MediaSessionScript
+                    .Text.Replace("__PARENT__", Environment.ProcessId.ToString())
+                    .Replace("__SKIP__", _ignoreBrowsers ? "$true" : "$false")
+                    .Replace("__BROWSERS__", string.Join(",", NowPlayingInfo.BrowserWords.Select(word => $"'{word}'")));
                 var info = new ProcessStartInfo("powershell.exe")
                 {
                     RedirectStandardOutput = true,

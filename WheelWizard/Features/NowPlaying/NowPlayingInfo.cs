@@ -87,6 +87,12 @@ public sealed record NowPlayingInfo(
     private static string Text(JsonElement root, string name) =>
         root.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString()!.Trim() : string.Empty;
 
+    /// <summary>Parts of a media session's app name that mean a web browser (YouTube, SoundCloud and the like play in one).</summary>
+    public static readonly string[] BrowserWords = ["chrome", "msedge", "edge", "opera", "firefox", "brave", "vivaldi"];
+
+    /// <summary>True when the app a media session belongs to is a web browser.</summary>
+    public static bool IsBrowser(string appId) => BrowserWords.Any(word => appId.Contains(word, StringComparison.OrdinalIgnoreCase));
+
     private static readonly string[] KnownApps =
     [
         "spotify",

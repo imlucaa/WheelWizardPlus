@@ -351,6 +351,36 @@ public class NowPlayingTests
     }
 
     [Theory]
+    [InlineData("Brave", true)]
+    [InlineData("chrome.exe", true)]
+    [InlineData("MSEdge", true)]
+    [InlineData("Opera.exe", true)]
+    [InlineData("firefox.exe", true)]
+    [InlineData("Spotify.exe", false)]
+    [InlineData("AppleInc.AppleMusicWin_nzyj5cx40ttqa!App", false)]
+    [InlineData("", false)]
+    public void IsBrowser_RecognisesTheWebBrowsers(string appId, bool expected) => Assert.Equal(expected, NowPlayingInfo.IsBrowser(appId));
+
+    [Fact]
+    public void BrowsersAreIgnoredByDefault_AndTheChoiceReachesTheReaderAndTheScript()
+    {
+        var config = MemoryConfig();
+        var reader = new FakeReader();
+        using var service = new NowPlayingService(reader, new ManualTime(), config);
+
+        Assert.True(config.GetBool("behavior.ignoreBrowsers"));
+        Assert.True(reader.IgnoreBrowsers);
+
+        config.Set("behavior.ignoreBrowsers", JsonValue.Create(false));
+        Assert.False(reader.IgnoreBrowsers);
+
+        // The script gets the same list the C# check uses, and the choice.
+        Assert.Contains("__SKIP__", MediaSessionScript.Text);
+        Assert.Contains("__BROWSERS__", MediaSessionScript.Text);
+        Assert.Contains("'brave'", string.Join(",", NowPlayingInfo.BrowserWords.Select(word => $"'{word}'")));
+    }
+
+    [Theory]
     [InlineData("#abc", true)]
     [InlineData("#A1B2C3", true)]
     [InlineData("abc", false)]
@@ -496,6 +526,7 @@ public class NowPlayingTests
         public int Stops { get; private set; }
         public bool IsSupported => true;
         public string? Problem { get; private set; }
+        public bool IgnoreBrowsers { get; set; }
         public event Action<NowPlayingInfo?>? Changed;
         public event Action? ProblemChanged;
 

@@ -3,9 +3,10 @@ namespace WheelWizard.NowPlaying;
 /// <summary>
 /// The PowerShell the media reader runs. Every second it looks at the Windows media sessions (one per player), takes the
 /// one that is playing (or the one Windows shows), and prints a JSON line when the song, the state or the picture changed,
-/// or when the playback position jumped (a skip inside the song). It stops by itself when Wheel Wizard+ is gone.
+/// or when the playback position jumped (a skip inside the song). It can leave out web browsers, so a YouTube video
+/// is not taken for a song. It stops by itself when Wheel Wizard+ is gone.
 /// </summary>
-internal static class MediaSessionScript
+public static class MediaSessionScript
 {
     public const string Text = """
         $ErrorActionPreference = 'Stop'
@@ -20,6 +21,9 @@ internal static class MediaSessionScript
         $asStream = [System.IO.WindowsRuntimeStreamExtensions].GetMethod('AsStreamForRead', [Type[]]@([Windows.Storage.Streams.IInputStream]))
         $mgr = Await ($manager::RequestAsync()) $manager
         $parent = __PARENT__
+        $skipBrowsers = __SKIP__
+        $browserWords = __BROWSERS__
+        function IsBrowser($id) { $lower = ([string]$id).ToLower(); foreach ($word in $browserWords) { if ($lower.Contains($word)) { return $true } } return $false }
         $last = $null
         $cover = $null
         $coverTries = 0
@@ -31,9 +35,16 @@ internal static class MediaSessionScript
           try {
             $session = $null
             foreach ($s in $mgr.GetSessions()) {
+              if ($skipBrowsers -and (IsBrowser $s.SourceAppUserModelId)) { continue }
               if ($s.GetPlaybackInfo().PlaybackStatus -eq 'Playing') { $session = $s; break }
             }
-            if ($null -eq $session) { $session = $mgr.GetCurrentSession() }
+            if ($null -eq $session) {
+              $current = $mgr.GetCurrentSession()
+              if ($null -ne $current -and -not ($skipBrowsers -and (IsBrowser $current.SourceAppUserModelId))) { $session = $current }
+              elseif ($skipBrowsers) {
+                foreach ($s in $mgr.GetSessions()) { if (-not (IsBrowser $s.SourceAppUserModelId)) { $session = $s; break } }
+              }
+            }
             if ($null -eq $session) {
               if ($last -ne '') { $last = ''; Write-Output '{}' }
             } else {

@@ -15,10 +15,19 @@ public sealed class NowPlayingService : IDisposable
     private int _users;
     private DateTimeOffset _touchedUntil = DateTimeOffset.MinValue;
 
-    public NowPlayingService(IMediaSessionReader reader, TimeProvider time)
+    private readonly NowPlayingConfig? _config;
+
+    public NowPlayingService(IMediaSessionReader reader, TimeProvider time, NowPlayingConfig? config = null)
     {
         _reader = reader;
         _time = time;
+        _config = config;
+        if (config is not null)
+        {
+            ApplyConfig();
+            config.Changed += ApplyConfig;
+        }
+
         _reader.Changed += OnChanged;
         _reader.ProblemChanged += OnProblemChanged;
         _idle = time.CreateTimer(_ => StopWhenUnused(), null, TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(10));
@@ -54,6 +63,9 @@ public sealed class NowPlayingService : IDisposable
 
     private void OnProblemChanged() => Changed?.Invoke();
 
+    // Browsers are left out of what is read when the option says so.
+    private void ApplyConfig() => _reader.IgnoreBrowsers = _config?.GetBool("behavior.ignoreBrowsers") ?? false;
+
     private void OnChanged(NowPlayingInfo? info)
     {
         Current = info;
@@ -86,6 +98,8 @@ public sealed class NowPlayingService : IDisposable
     public void Dispose()
     {
         _idle.Dispose();
+        if (_config is not null)
+            _config.Changed -= ApplyConfig;
         _reader.Changed -= OnChanged;
         _reader.ProblemChanged -= OnProblemChanged;
         _reader.Dispose();
