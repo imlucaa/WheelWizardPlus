@@ -7,8 +7,10 @@ using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using WheelWizard.NowPlaying;
+using WheelWizard.Shared.Desktop.Storage;
 using WheelWizard.Shared.Services;
 using WheelWizard.Views.Components;
 using WheelWizard.Views.Dialogs;
@@ -25,13 +27,17 @@ public partial class NowPlayingSettings : UserControl
     private readonly NowPlayingService _service;
     private readonly NowPlayingConfig _config;
     private readonly IPopupFactory _popups;
+    private readonly IFilePickerService _filePicker;
+    private StackPanel _presetGrid = null!;
     private readonly NowPlayingCard _card = new();
     private readonly List<Action> _syncs = [];
+    private readonly List<(NowPlayingPreset Preset, Border Tile)> _presetTiles = [];
     private bool _syncing;
     private IDisposable? _lease;
 
-    public NowPlayingSettings(NowPlayingService service, NowPlayingConfig config, IPopupFactory popups)
+    public NowPlayingSettings(NowPlayingService service, NowPlayingConfig config, IPopupFactory popups, IFilePickerService filePicker)
     {
+        _filePicker = filePicker;
         _service = service;
         _config = config;
         _popups = popups;
@@ -66,6 +72,7 @@ public partial class NowPlayingSettings : UserControl
 
     private void Refresh()
     {
+        UpdatePresetTiles();
         _card.Show(_service.Current, _config, preview: true);
         // Say why nothing shows when the song cannot be read, instead of leaving a card that says nothing is playing.
         var problem = _service.IsSupported ? _service.Problem : "Reading the song works on Windows for now.";
@@ -96,17 +103,17 @@ public partial class NowPlayingSettings : UserControl
     private void Reset_OnClick(object? sender, RoutedEventArgs e)
     {
         _config.Reset();
-        _syncing = true;
-        foreach (var sync in _syncs)
-            sync();
-        _syncing = false;
+        SyncAll();
     }
 
     #region Options
 
     private void BuildOptions()
     {
-        var style = Section("Style", expanded: true);
+        var presets = Section("Presets", expanded: true);
+        presets.Add(PresetTiles());
+
+        var style = Section("Style");
         style.Add(
             Row(
                 "Style",
@@ -133,7 +140,7 @@ public partial class NowPlayingSettings : UserControl
         style.Add(Row("Title weight", null, Choice("layout.titleWeight", NowPlayingConfig.TitleWeights)));
         style.Add(Row("Title in capitals", null, Toggle("layout.uppercase")));
 
-        var show = Section("Show", expanded: true);
+        var show = Section("Show");
         foreach (
             var (path, label) in new[]
             {
@@ -184,6 +191,233 @@ public partial class NowPlayingSettings : UserControl
                 Toggle("behavior.hideWhenNotPlaying")
             )
         );
+    }
+
+    // The ready-made looks and your saved ones as tiles (the one that matches the settings is outlined), with buttons to
+    // save the current look, and to export or import one as a file.
+    private Border PresetTiles()
+    {
+        _presetGrid = new StackPanel();
+        RebuildPresetTiles();
+
+        var save = new WheelWizard.Views.Components.Button
+        {
+            Text = "Save this look",
+            ButtonSize = WheelWizard.Views.Components.Button.ButtonsSizeType.Compact,
+        };
+        save.Click += async (_, _) => await SaveLookAsync();
+        var export = new WheelWizard.Views.Components.Button
+        {
+            Text = "Export",
+            ButtonSize = WheelWizard.Views.Components.Button.ButtonsSizeType.Compact,
+        };
+        export.Click += async (_, _) => await ExportAsync();
+        var import = new WheelWizard.Views.Components.Button
+        {
+            Text = "Import",
+            ButtonSize = WheelWizard.Views.Components.Button.ButtonsSizeType.Compact,
+        };
+        import.Click += async (_, _) => await ImportAsync();
+        var buttons = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 6,
+            Margin = new Thickness(0, 6, 0, 0),
+        };
+        buttons.Children.Add(save);
+        buttons.Children.Add(export);
+        buttons.Children.Add(import);
+
+        var panel = new StackPanel { Spacing = 2 };
+        panel.Children.Add(_presetGrid);
+        panel.Children.Add(buttons);
+        var row = new Border { Child = panel, Padding = new Thickness(0, 4) };
+        row.Classes.Add("SettingsBlockStyle");
+        row.Classes.Add("SettingsRowStyle");
+        return row;
+    }
+
+    private void RebuildPresetTiles()
+    {
+        _presetTiles.Clear();
+        _presetGrid.Children.Clear();
+        _presetGrid.Children.Add(TileGrid(NowPlayingPresets.All, deletable: false));
+        var saved = _config.SavedLooks();
+        if (saved.Count > 0)
+        {
+            _presetGrid.Children.Add(
+                new TextBlock
+                {
+                    Text = "Your looks",
+                    Classes = { "TinyText" },
+                    Margin = new Thickness(4, 8, 0, 2),
+                }
+            );
+            _presetGrid.Children.Add(TileGrid(saved, deletable: true));
+        }
+
+        UpdatePresetTiles();
+    }
+
+    private UniformGrid TileGrid(IReadOnlyList<NowPlayingPreset> presets, bool deletable)
+    {
+        var grid = new UniformGrid { Columns = 2, Margin = new Thickness(-3, 0) };
+        foreach (var preset in presets)
+        {
+            var text = new StackPanel { Spacing = 2 };
+            text.Children.Add(
+                new TextBlock
+                {
+                    Text = preset.Name,
+                    FontWeight = FontWeight.SemiBold,
+                    TextTrimming = TextTrimming.CharacterEllipsis,
+                }
+            );
+            text.Children.Add(
+                new TextBlock
+                {
+                    Text = preset.Description,
+                    TextWrapping = TextWrapping.Wrap,
+                    Classes = { "TinyText" },
+                }
+            );
+            var content = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), ColumnSpacing = 6 };
+            content.Children.Add(text);
+            if (deletable)
+            {
+                var delete = new TextBlock
+                {
+                    Text = "✕",
+                    FontSize = 12,
+                    Opacity = 0.6,
+                    VerticalAlignment = VerticalAlignment.Top,
+                    Cursor = new Cursor(StandardCursorType.Hand),
+                };
+                ToolTip.SetTip(delete, "Delete this look");
+                var name = preset.Name;
+                delete.PointerPressed += (_, e) =>
+                {
+                    e.Handled = true;
+                    _config.DeleteLook(name);
+                    RebuildPresetTiles();
+                };
+                Grid.SetColumn(delete, 1);
+                content.Children.Add(delete);
+            }
+
+            var tile = new Border
+            {
+                Margin = new Thickness(3),
+                Padding = new Thickness(10, 8),
+                CornerRadius = new CornerRadius(10),
+                BorderThickness = new Thickness(1.5),
+                BorderBrush = Brushes.Transparent,
+                Background = new SolidColorBrush(Avalonia.Media.Color.Parse("#14FFFFFF")),
+                Cursor = new Cursor(StandardCursorType.Hand),
+                Child = content,
+            };
+            var chosen = preset;
+            tile.PointerPressed += (_, e) =>
+            {
+                if (e.Handled || !e.GetCurrentPoint(tile).Properties.IsLeftButtonPressed)
+                    return;
+                _config.Apply(chosen.Values);
+                SyncAll();
+            };
+            _presetTiles.Add((preset, tile));
+            grid.Children.Add(tile);
+        }
+
+        return grid;
+    }
+
+    private void SyncAll()
+    {
+        _syncing = true;
+        foreach (var sync in _syncs)
+            sync();
+        _syncing = false;
+    }
+
+    private void UpdatePresetTiles()
+    {
+        var accent = this.TryFindResource("Brand400", ActualThemeVariant, out var found) && found is IBrush brush ? brush : Brushes.White;
+        foreach (var (preset, tile) in _presetTiles)
+            tile.BorderBrush = _config.Matches(preset.Values) ? accent : Brushes.Transparent;
+    }
+
+    private async Task SaveLookAsync()
+    {
+        var input = await _popups
+            .Create<TextInputWindow>()
+            .SetMainText("Name this look")
+            .SetExtraText("Keeps the card's style, options and colors as they are now. A name you already used is replaced.")
+            .SetPlaceholderText("My look")
+            .SetButtonText("Cancel", "Save")
+            .ShowDialog();
+        var name = input?.Trim();
+        if (string.IsNullOrEmpty(name))
+            return;
+
+        if (_config.SaveLook(name))
+        {
+            RebuildPresetTiles();
+            ViewUtils.ShowSnackbar($"Saved as {name}.");
+        }
+        else
+        {
+            ViewUtils.ShowSnackbar(
+                $"A name can be 1 to 30 characters, and you can keep {NowPlayingConfig.MaxSavedLooks} looks.",
+                ViewUtils.SnackbarType.Warning
+            );
+        }
+    }
+
+    private static FilePickerFileType LookFile => new("Now playing look") { Patterns = ["*.json"], MimeTypes = ["application/json"] };
+
+    private async Task ExportAsync()
+    {
+        var path = await _filePicker.SaveFileAsync("Export this look", [LookFile], "now-playing-look");
+        if (path is null)
+            return;
+        if (!path.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
+            path += ".json";
+        try
+        {
+            await File.WriteAllTextAsync(path, _config.Export());
+            ViewUtils.ShowSnackbar("Look exported.");
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            ViewUtils.ShowSnackbar("Could not save that file.", ViewUtils.SnackbarType.Danger);
+        }
+    }
+
+    private async Task ImportAsync()
+    {
+        var path = await _filePicker.OpenSingleFileAsync("Import a look", [LookFile]);
+        if (path is null)
+            return;
+
+        bool ok;
+        try
+        {
+            ok = _config.TryImport(await File.ReadAllTextAsync(path));
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            ok = false;
+        }
+
+        if (ok)
+        {
+            SyncAll();
+            ViewUtils.ShowSnackbar("Look imported. Use Save this look to keep it.");
+        }
+        else
+        {
+            ViewUtils.ShowSnackbar("That file is not a Now playing look.", ViewUtils.SnackbarType.Danger);
+        }
     }
 
     private SectionList Section(string title, bool expanded = false)

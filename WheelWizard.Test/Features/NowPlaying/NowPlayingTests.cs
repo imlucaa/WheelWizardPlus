@@ -264,6 +264,92 @@ public class NowPlayingTests
         Assert.False(look.GetProperty("textShadow").GetBoolean());
     }
 
+    [Fact]
+    public void EveryPreset_SetsOnlyValuesTheConfigKnows_AndOnlyItselfMatches()
+    {
+        foreach (var preset in NowPlayingPresets.All)
+        {
+            var config = MemoryConfig();
+            config.Apply(preset.Values);
+            var changed = NowPlayingConfig
+                .Flatten(config.CurrentChanges())
+                .ToDictionary(pair => pair.Key, pair => pair.Value.ToJsonString());
+
+            foreach (var (path, value) in preset.Values)
+                Assert.True(changed.TryGetValue(path, out var kept) && kept == value.ToJsonString(), $"{preset.Name}: {path}");
+
+            Assert.Equal([preset.Name], NowPlayingPresets.All.Where(other => config.Matches(other.Values)).Select(other => other.Name));
+        }
+    }
+
+    [Fact]
+    public void APreset_ReplacesTheWholeLook_NotJustItsOwnValues()
+    {
+        var config = MemoryConfig();
+        config.Set("effects.borderWidth", JsonValue.Create(6));
+        config.Set("layout.fontFamily", JsonValue.Create("Impact"));
+        var vinyl = NowPlayingPresets.All.First(preset => preset.Name == "Vinyl");
+
+        config.Apply(vinyl.Values);
+
+        Assert.Equal(0, config.GetNumber("effects.borderWidth"));
+        Assert.Equal("default", config.GetString("layout.fontFamily"));
+        Assert.Equal("vertical", config.GetString("layout.style"));
+        Assert.True(config.GetBool("effects.spin"));
+    }
+
+    [Fact]
+    public void SavedLooks_AreKeptByName_Replaced_Deleted_AndLimited()
+    {
+        var config = MemoryConfig();
+        var looksChanged = 0;
+        config.LooksChanged += () => looksChanged++;
+        Assert.Empty(config.SavedLooks());
+
+        config.Set("layout.style", JsonValue.Create("strip"));
+        Assert.True(config.SaveLook("  Stream strip "));
+        config.Set("layout.style", JsonValue.Create("text"));
+        Assert.True(config.SaveLook("Stream strip"));
+        Assert.True(config.SaveLook("Other"));
+
+        var saved = config.SavedLooks();
+        Assert.Equal(["Stream strip", "Other"], saved.Select(look => look.Name));
+        config.Reset();
+        config.Apply(saved[0].Values);
+        Assert.Equal("text", config.GetString("layout.style"));
+        Assert.True(config.Matches(saved[0].Values));
+
+        config.DeleteLook("Stream strip");
+        Assert.Equal(["Other"], config.SavedLooks().Select(look => look.Name));
+        Assert.Equal(4, looksChanged);
+
+        Assert.False(config.SaveLook("   "));
+        Assert.False(config.SaveLook(new string('x', 31)));
+        for (var i = 0; i < NowPlayingConfig.MaxSavedLooks - 1; i++)
+            Assert.True(config.SaveLook($"look {i}"));
+        Assert.False(config.SaveLook("one too many"));
+        Assert.True(config.SaveLook("Other"));
+    }
+
+    [Fact]
+    public void ALookExportedToAFile_CanBeImportedAgain_AndOtherFilesAreRefused()
+    {
+        var config = MemoryConfig();
+        config.Set("layout.style", JsonValue.Create("vertical"));
+        config.Set("colors.text", JsonValue.Create("#112233"));
+        var file = config.Export();
+
+        var other = MemoryConfig();
+        Assert.True(other.TryImport(file));
+        Assert.Equal("vertical", other.GetString("layout.style"));
+        Assert.Equal("#112233", other.GetString("colors.text"));
+
+        Assert.False(other.TryImport("not json"));
+        Assert.False(other.TryImport("""{"format":"something else","look":{}}"""));
+        Assert.False(other.TryImport("""{"format":"wheel-wizard-now-playing"}"""));
+        Assert.Equal("vertical", other.GetString("layout.style"));
+    }
+
     [Theory]
     [InlineData("#abc", true)]
     [InlineData("#A1B2C3", true)]
@@ -372,6 +458,24 @@ public class NowPlayingTests
 
         time.Advance(TimeSpan.FromSeconds(20));
         Assert.Equal(1, reader.Stops);
+    }
+
+    // A config whose settings really keep what is written to them, so saving and loading can be checked.
+    private static NowPlayingConfig MemoryConfig()
+    {
+        var settings = Substitute.For<ISettingsManager>();
+        var look = new MemorySetting("NowPlayingConfig");
+        var saved = new MemorySetting("NowPlayingLooks");
+        settings.NOW_PLAYING_CONFIG.Returns(look);
+        settings.NOW_PLAYING_LOOKS.Returns(saved);
+        settings.Get<string>(Arg.Any<Setting<string>>()).Returns(call => call.Arg<Setting<string>>().Get());
+        settings.Set(Arg.Any<Setting<string>>(), Arg.Any<string>()).Returns(call => call.Arg<Setting<string>>().Set(call.ArgAt<string>(1)));
+        return new NowPlayingConfig(settings);
+    }
+
+    private sealed class MemorySetting(string name) : Setting<string>(name, "")
+    {
+        protected override void ApplyValue(bool skipSave) { }
     }
 
     private static NowPlayingConfig Config()

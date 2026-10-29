@@ -128,6 +128,44 @@ public sealed class NowPlayingConfig
         Changed?.Invoke();
     }
 
+    /// <summary>
+    /// Takes a preset: every value goes back to its default, then the preset's values are set. One save and one change
+    /// notice for the whole preset. A value the config does not know, or of the wrong kind, is skipped.
+    /// </summary>
+    public void Apply(IEnumerable<KeyValuePair<string, JsonNode>> values)
+    {
+        _current = WithValues(values);
+        Save();
+        Changed?.Invoke();
+    }
+
+    /// <summary>True when the look is exactly this preset: the defaults with only its values changed.</summary>
+    public bool Matches(IEnumerable<KeyValuePair<string, JsonNode>> values) => ChangesOf(WithValues(values)) == ChangesOf(_current);
+
+    private static JsonObject WithValues(IEnumerable<KeyValuePair<string, JsonNode>> values)
+    {
+        var look = (JsonObject)Defaults.DeepClone();
+        foreach (var (path, value) in values)
+        {
+            try
+            {
+                var (parent, key) = Resolve(look, path);
+                if (parent[key] is { } expected && SameKind(expected, value))
+                    parent[key] = value.DeepClone();
+            }
+            catch (NullReferenceException) { }
+        }
+
+        return look;
+    }
+
+    private static string ChangesOf(JsonObject look)
+    {
+        var changes = new JsonObject();
+        Diff(Defaults, look, changes);
+        return changes.ToJsonString();
+    }
+
     // Only what differs from the defaults is kept, so a new default reaches everyone who never changed that value.
     private void Save()
     {
@@ -153,6 +191,115 @@ public sealed class NowPlayingConfig
             }
         }
     }
+
+    #region Saved looks and files
+
+    private const string FileFormat = "wheel-wizard-now-playing";
+
+    /// <summary>The most looks you can keep.</summary>
+    public const int MaxSavedLooks = 24;
+
+    /// <summary>Raised when a look is saved or deleted.</summary>
+    public event Action? LooksChanged;
+
+    /// <summary>Only what differs from the defaults, as nested JSON: the look in its smallest form.</summary>
+    public JsonObject CurrentChanges()
+    {
+        var changes = new JsonObject();
+        Diff(Defaults, _current, changes);
+        return changes;
+    }
+
+    /// <summary>The nested values as "group.name" paths with their values.</summary>
+    public static IEnumerable<KeyValuePair<string, JsonNode>> Flatten(JsonObject values, string prefix = "")
+    {
+        foreach (var (key, value) in values)
+        {
+            var path = prefix.Length == 0 ? key : $"{prefix}.{key}";
+            if (value is JsonObject child)
+            {
+                foreach (var pair in Flatten(child, path))
+                    yield return pair;
+            }
+            else if (value is not null)
+            {
+                yield return new KeyValuePair<string, JsonNode>(path, value.DeepClone());
+            }
+        }
+    }
+
+    private JsonObject ReadLooks()
+    {
+        try
+        {
+            var saved = _settings.Get<string>(_settings.NOW_PLAYING_LOOKS);
+            if (!string.IsNullOrWhiteSpace(saved) && JsonNode.Parse(saved) is JsonObject all)
+                return all;
+        }
+        catch (JsonException) { }
+
+        return [];
+    }
+
+    /// <summary>The looks you saved, in the order you saved them.</summary>
+    public IReadOnlyList<NowPlayingPreset> SavedLooks() =>
+        ReadLooks()
+            .Where(pair => pair.Value is JsonObject)
+            .Select(pair => new NowPlayingPreset(pair.Key, "Your saved look.", Flatten((JsonObject)pair.Value!).ToList()))
+            .ToList();
+
+    /// <summary>Keeps the current look under a name (a name that is taken is replaced). False for a bad name or too many looks.</summary>
+    public bool SaveLook(string name)
+    {
+        name = name.Trim();
+        var all = ReadLooks();
+        if (name.Length is 0 or > 30 || (!all.ContainsKey(name) && all.Count >= MaxSavedLooks))
+            return false;
+
+        all[name] = CurrentChanges();
+        _settings.Set(_settings.NOW_PLAYING_LOOKS, all.ToJsonString());
+        LooksChanged?.Invoke();
+        return true;
+    }
+
+    public void DeleteLook(string name)
+    {
+        var all = ReadLooks();
+        if (!all.Remove(name))
+            return;
+
+        _settings.Set(_settings.NOW_PLAYING_LOOKS, all.Count == 0 ? string.Empty : all.ToJsonString());
+        LooksChanged?.Invoke();
+    }
+
+    /// <summary>The current look as a small file others can import.</summary>
+    public string Export() =>
+        new JsonObject { ["format"] = FileFormat, ["look"] = CurrentChanges() }.ToJsonString(
+            new JsonSerializerOptions { WriteIndented = true }
+        );
+
+    /// <summary>Takes a look from a file made by <see cref="Export"/>. False when it is not one.</summary>
+    public bool TryImport(string json)
+    {
+        try
+        {
+            if (
+                JsonNode.Parse(json) is not JsonObject file
+                || file["format"]?.GetValue<string>() != FileFormat
+                || file["look"] is not JsonObject look
+            )
+                return false;
+
+            Apply(Flatten(look));
+            return true;
+        }
+        catch (Exception ex) when (ex is JsonException or InvalidOperationException or FormatException)
+        {
+            return false;
+        }
+    }
+
+    #endregion
 
     /// <summary>The colour of the cards for this cover: its main colour, or the one picked.</summary>
     public string CardColor(byte[]? cover) =>
