@@ -273,6 +273,35 @@ public class NowPlayingTests
     }
 
     [Fact]
+    public void AProblemWithTheMediaReader_ReachesTheServiceAndTellsEveryCardToRedraw()
+    {
+        var reader = new FakeReader();
+        using var service = new NowPlayingService(reader, new ManualTime());
+        var redraws = 0;
+        service.Changed += () => redraws++;
+
+        reader.Fail("PowerShell is blocked");
+        Assert.Equal("PowerShell is blocked", service.Problem);
+
+        reader.Fail(null);
+        Assert.Null(service.Problem);
+        Assert.Equal(2, redraws);
+    }
+
+    [Fact]
+    public void DescribeExit_NamesTheCodeAndKeepsTheLastErrorShort()
+    {
+        var plain = WindowsMediaSessionReader.DescribeExit(1, null);
+        var detailed = WindowsMediaSessionReader.DescribeExit(5, new string('x', 400));
+
+        Assert.Contains("code 1", plain);
+        Assert.Contains("blocking", plain);
+        Assert.DoesNotContain("(", plain.Split("blocking it.")[1]);
+        Assert.Contains("code 5", detailed);
+        Assert.True(detailed.Length < 400);
+    }
+
+    [Fact]
     public void ARequestFromOutsideKeepsTheReaderRunningForAWhile_ThenItStopsOnItsOwn()
     {
         var time = new ManualTime();
@@ -304,7 +333,15 @@ public class NowPlayingTests
     {
         public int Stops { get; private set; }
         public bool IsSupported => true;
+        public string? Problem { get; private set; }
         public event Action<NowPlayingInfo?>? Changed;
+        public event Action? ProblemChanged;
+
+        public void Fail(string? problem)
+        {
+            Problem = problem;
+            ProblemChanged?.Invoke();
+        }
 
         public void Start() { }
 

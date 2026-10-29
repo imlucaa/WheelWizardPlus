@@ -44,6 +44,8 @@ version sequence.
 
 ### Fixed
 
+- Discord status: after 15 minutes on a menu or vote screen (or in a room you stopped playing in) the status says Idle, without the track, room or buttons, and counts the idle time. Screens that show a track are never idle.
+- Now playing: when Windows' media controls cannot be read (PowerShell blocked by security software, or stopped), the tab says so instead of showing a card that says nothing is playing, and it only tries again every 30 seconds.
 - Discord status: the timer no longer counts the whole time in a room. When the game screen cannot be read, the status shows the room's current race, and its timer now starts over with each new race instead of running for as long as the room lasts.
 
 ### Removed

@@ -20,10 +20,14 @@ public sealed class NowPlayingService : IDisposable
         _reader = reader;
         _time = time;
         _reader.Changed += OnChanged;
+        _reader.ProblemChanged += OnProblemChanged;
         _idle = time.CreateTimer(_ => StopWhenUnused(), null, TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(10));
     }
 
     public bool IsSupported => _reader.IsSupported;
+
+    /// <summary>Why the song cannot be read right now (PowerShell blocked or stopped), or null.</summary>
+    public string? Problem => _reader.Problem;
 
     /// <summary>The song, or null when nothing is playing or nothing has been read yet.</summary>
     public NowPlayingInfo? Current { get; private set; }
@@ -47,6 +51,8 @@ public sealed class NowPlayingService : IDisposable
             _touchedUntil = _time.GetUtcNow() + TouchLasts;
         _reader.Start();
     }
+
+    private void OnProblemChanged() => Changed?.Invoke();
 
     private void OnChanged(NowPlayingInfo? info)
     {
@@ -81,6 +87,7 @@ public sealed class NowPlayingService : IDisposable
     {
         _idle.Dispose();
         _reader.Changed -= OnChanged;
+        _reader.ProblemChanged -= OnProblemChanged;
         _reader.Dispose();
     }
 

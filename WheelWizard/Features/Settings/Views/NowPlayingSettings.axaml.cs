@@ -38,8 +38,6 @@ public partial class NowPlayingSettings : UserControl
         InitializeComponent();
         PreviewHost.Content = _card;
         LinkText.Text = NowPlayingPage.Url;
-        if (!service.IsSupported)
-            StatusText.Text = "Reading the song works on Windows for now.";
         BuildOptions();
     }
 
@@ -66,7 +64,15 @@ public partial class NowPlayingSettings : UserControl
 
     private void OnChanged() => Dispatcher.UIThread.Post(Refresh);
 
-    private void Refresh() => _card.Show(_service.Current, _config, preview: true);
+    private void Refresh()
+    {
+        _card.Show(_service.Current, _config, preview: true);
+        // Say why nothing shows when the song cannot be read, instead of leaving a card that says nothing is playing.
+        var problem = _service.IsSupported ? _service.Problem : "Reading the song works on Windows for now.";
+        StatusText.Text = problem ?? string.Empty;
+        StatusText.IsVisible = problem is not null;
+        StatusText.Foreground = new SolidColorBrush(Avalonia.Media.Color.Parse(_service.IsSupported ? "#FF6D7E" : "#9AA3BB"));
+    }
 
     private void UpdateWindowButton() => WindowButton.Text = NowPlayingWindow.Current is null ? "Open as window" : "Close window";
 

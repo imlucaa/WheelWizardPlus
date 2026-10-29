@@ -460,15 +460,32 @@ public sealed class DiscordPresenceService(
             partyMax = live.PlayerCount > 0 ? Math.Max(live.PlayerCount, 12) : 0;
         }
 
+        // Left alone on a menu or vote screen for a long time, or in a room you stopped playing in: the track and the room
+        // are no longer true, so the status says idle, with the time counted from when it went idle. Screens with a track
+        // (offline modes, online races) are being played, so a long Grand Prix or Time Trial session is never idle.
+        var idle =
+            live != null
+            && !liveDefault
+            && (section is not { } screen || !RetroRewindSections.ShowsGameTrack(screen))
+            && IsIdle(_startedAt, DateTimeOffset.UtcNow);
+        if (idle)
+        {
+            details = "Idle";
+            state = "";
+            partySize = 0;
+            partyMax = 0;
+        }
+
         // View Player opens your page on the leaderboard; View Room opens the room list, and only while you are in one.
         // Offline play has no leaderboard page yet, so View Player waits until you are online on a license.
         var online = section is { } onlineId && RetroRewindSections.IsOnline(onlineId) || live is { InRoom: true };
         var playerUrl =
-            online && !liveDefault && settings.Get<bool>(settings.DISCORD_PLAYER_BUTTON)
+            online && !idle && !liveDefault && settings.Get<bool>(settings.DISCORD_PLAYER_BUTTON)
                 ? live?.PlayerUrl ?? BuildPlayerUrl(ActiveProfile?.FriendCode)
                 : null;
         var roomUrl =
             !liveDefault
+            && !idle
             && settings.Get<bool>(settings.DISCORD_ROOM_BUTTON)
             && live is { InRoom: true, RoomId: { } roomId }
             && RoomLinkListener.IsValidRoomId(roomId)
@@ -480,7 +497,7 @@ public sealed class DiscordPresenceService(
             state,
             liveDefault ? "" : settings.Get<string>(settings.DISCORD_LARGE_IMAGE),
             settings.Get<string>(settings.DISCORD_LARGE_TEXT),
-            _startedAt,
+            idle ? _startedAt + (long)IdleAfter.TotalSeconds : _startedAt,
             partySize,
             partyMax,
             playerUrl,
@@ -544,6 +561,13 @@ public sealed class DiscordPresenceService(
     private int? _loggedMissingTrack;
     private DateTime _lastDolphinClear = DateTime.MinValue;
     private static readonly TimeSpan DolphinClearEvery = TimeSpan.FromSeconds(20);
+
+    /// <summary>How long the same screen (or the same race of a room) can stay up before the status says you are idle.</summary>
+    public static readonly TimeSpan IdleAfter = TimeSpan.FromMinutes(15);
+
+    /// <summary>True when the status has shown the same thing for <see cref="IdleAfter"/> or longer.</summary>
+    public static bool IsIdle(long startedAtUnixSeconds, DateTimeOffset now) =>
+        startedAtUnixSeconds > 0 && now - DateTimeOffset.FromUnixTimeSeconds(startedAtUnixSeconds) >= IdleAfter;
 
     private LiveInfo? BuildLiveInfo(int? sectionId, int? licenseIndex, string? gameTrack = null)
     {

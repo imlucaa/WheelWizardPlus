@@ -63,6 +63,18 @@ public class DiscordPresenceTests
     }
 
     [Fact]
+    public void IsIdle_OnlyAfterTheSameThingHasBeenUpForTheIdleTime()
+    {
+        var now = new DateTimeOffset(2026, 10, 29, 12, 0, 0, TimeSpan.Zero);
+        long Started(TimeSpan ago) => now.Add(-ago).ToUnixTimeSeconds();
+
+        Assert.False(DiscordPresenceService.IsIdle(0, now));
+        Assert.False(DiscordPresenceService.IsIdle(Started(TimeSpan.FromMinutes(14)), now));
+        Assert.True(DiscordPresenceService.IsIdle(Started(DiscordPresenceService.IdleAfter), now));
+        Assert.True(DiscordPresenceService.IsIdle(Started(TimeSpan.FromMinutes(42)), now));
+    }
+
+    [Fact]
     public void RequiredName_IsRetroRewind() => Assert.Equal("Retro Rewind", DiscordPresenceService.RequiredName);
 
     [Theory]
