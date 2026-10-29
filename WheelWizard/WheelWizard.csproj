@@ -14,7 +14,7 @@
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 
         <!-- Program details -->
-        <Version>2.6.7</Version>
+        <Version>2.6.8</Version>
         <Description>This program will manage RetroRewind and mods :)</Description>
         <Copyright>GNU v3.0</Copyright>
         <RepositoryUrl>https://github.com/imlucaa/WheelWizardPlus</RepositoryUrl>

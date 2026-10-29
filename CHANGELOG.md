@@ -6,6 +6,8 @@ version sequence.
 
 ## [Unreleased]
 
+## [2.6.8] - 2026-10-29
+
 ### Changed
 
 - The mod browser is now a page (open it from the Patches page with Browse) with category and Patches filters, search, and more mods loading as you scroll. A mod opens in a redesigned details view with a screenshot gallery.
