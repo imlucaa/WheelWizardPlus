@@ -22,7 +22,7 @@ public class NowPlayingSettingsTests
     }
 
     [AvaloniaFact]
-    public void TheStyleAndShowSectionsStartOpen_AndTheOthersClosed()
+    public void TheStyleShowAndBarSectionsStartOpen_AndTheOthersClosed()
     {
         var page = Page(out var service);
         var window = new Window { Content = page };
@@ -33,7 +33,7 @@ public class NowPlayingSettingsTests
         var panels = host.Children.OfType<StackPanel>().ToList();
 
         Assert.Equal(6, panels.Count);
-        Assert.Equal([true, true, false, false, false, false], panels.Select(panel => panel.IsVisible));
+        Assert.Equal([true, true, true, false, false, false], panels.Select(panel => panel.IsVisible));
         window.Close();
         service.Dispose();
     }

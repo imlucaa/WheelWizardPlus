@@ -141,8 +141,6 @@ public partial class NowPlayingSettings : UserControl
                 ("artist", "Artist"),
                 ("app", "Name of the app"),
                 ("time", "Time played and length"),
-                ("bars", "Sound bar"),
-                ("progress", "Progress line"),
                 ("album", "Album name"),
                 ("remaining", "Time left instead of length"),
                 ("paused", "Say Paused"),
@@ -150,7 +148,9 @@ public partial class NowPlayingSettings : UserControl
         )
             show.Add(Row(label, null, Toggle($"show.{path}")));
 
-        var bars = Section("Sound bar and line");
+        var bars = Section("Sound bar and line", expanded: true);
+        bars.Add(Row("Sound bar", "The moving bars next to the time. Off hides them.", Toggle("show.bars")));
+        bars.Add(Row("Progress line", "The line that fills as the song plays. Off hides it.", Toggle("show.progress")));
         bars.Add(Row("Bars", "How many bars the sound bar has.", Slider("layout.barCount", 6, 48, 1, "")));
         bars.Add(Row("Bar color", null, Color("colors.bars")));
         bars.Add(Row("Line thickness", null, Slider("layout.progressHeight", 2, 14, 1, " px")));
