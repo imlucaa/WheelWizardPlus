@@ -344,16 +344,24 @@ public sealed class NowPlayingCard : LayoutTransformControl
         _barsPanel.IsVisible = showBars;
         _track.IsVisible = config.GetBool("show.progress") && hasLength;
 
-        // With the option on, the card fades out while nothing plays; with no song at all it still says so.
-        Opacity = !preview && info is not null && config.IsHidden(info) ? 0 : 1;
+        // With the option on, the card fades out while nothing plays, like the OBS page; the preview always shows.
+
+        Opacity = !preview && config.IsHidden(info) ? 0 : 1;
         UpdateProgress();
         UpdateBars();
     }
 
     private static Color ParseColor(string hex, Color fallback) => Color.TryParse(hex, out var color) ? color : fallback;
 
+    private byte[]? _shownPicture;
+
     private void SetPicture(byte[]? bytes)
     {
+        // A redraw for a changed option keeps the same picture; decoding it again each time would be wasted work.
+        if (ReferenceEquals(bytes, _shownPicture) && (bytes is null || _bitmap is not null))
+            return;
+        _shownPicture = bytes;
+
         Bitmap? bitmap = null;
         if (bytes is { Length: > 0 })
         {

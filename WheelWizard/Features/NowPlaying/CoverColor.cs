@@ -9,11 +9,34 @@ public static class CoverColor
     public const string Neutral = "#4A4F5E";
 
     /// <summary>"#RRGGBB" for the cover picture, or <see cref="Neutral"/>.</summary>
+    private static readonly object Gate = new();
+    private static byte[]? _lastPicture;
+    private static string _lastColor = Neutral;
+
     public static string From(byte[]? picture)
     {
         if (picture is not { Length: > 0 })
             return Neutral;
 
+        // The same picture comes back on every redraw and every OBS request, so its colour is worked out once.
+        lock (Gate)
+        {
+            if (ReferenceEquals(picture, _lastPicture))
+                return _lastColor;
+        }
+
+        var color = Compute(picture);
+        lock (Gate)
+        {
+            _lastPicture = picture;
+            _lastColor = color;
+        }
+
+        return color;
+    }
+
+    private static string Compute(byte[] picture)
+    {
         try
         {
             using var decoded = SKBitmap.Decode(picture);

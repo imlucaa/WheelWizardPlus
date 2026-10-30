@@ -168,7 +168,11 @@ public partial class Layout
                     )
             );
         foreach (var control in controls)
+        {
             control.Opacity = appearing ? 1 : 0;
+            // The slide animates a TranslateTransform; without one the move is skipped (and Avalonia warns about it).
+            control.RenderTransform ??= new TranslateTransform();
+        }
         if (!animate)
             return;
 

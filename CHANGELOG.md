@@ -6,6 +6,12 @@ version sequence.
 
 ## [Unreleased]
 
+### Fixed
+
+- Now playing window: with Hide when nothing plays on, it also hides when nothing is playing at all, like the OBS page, instead of showing "Nothing is playing" on stream.
+- Now playing: the cover's color and picture are worked out once per song instead of on every redraw and every OBS request.
+- Sidebar: the footer and headings slide as well as fade when the sidebar opens or closes (the slide was skipped, with a warning in the log each time).
+
 ## [2.6.8] - 2026-10-29
 
 ### Changed
