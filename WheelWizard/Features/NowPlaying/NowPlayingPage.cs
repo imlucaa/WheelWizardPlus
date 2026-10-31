@@ -78,6 +78,13 @@ public static class NowPlayingPage
         <title>Now playing</title>
         <style>
           html, body { margin: 0; background: transparent; font-family: 'Segoe UI', Roboto, Arial, sans-serif; overflow: hidden; }
+          /* Full HD OBS browser source: drawn at twice the size, so OBS doesn't scale a small card up and blur it. */
+          html { width: 1920px !important; height: 1080px !important; margin: 0 !important; padding: 0 !important;
+                 background: transparent !important; overflow: hidden !important; }
+          body { width: 100% !important; height: 100% !important; margin: 0 !important; padding: 0 !important;
+                 background: transparent !important; overflow: hidden !important; zoom: 2; }
+          body, body * { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+          img { image-rendering: auto !important; }
           #card { box-sizing: border-box; width: 360px; padding: 10px; opacity: 0; transform: translateY(8px); transform-origin: 0 0;
                   transition: opacity .4s ease, transform .4s ease; --tint: 74, 79, 94; --text: #fff; --text-rgb: 255, 255, 255;
                   --alpha: .92; --radius: 10px; --cover: 90px; --progress: #fff; --gap: 8px; --ts: 1; --bw: 0px; --bc: #fff; --tw: 800; --ph: 5px; --bars: #fff; --tint2: 41, 44, 52; color: var(--text);
