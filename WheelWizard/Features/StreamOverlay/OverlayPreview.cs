@@ -280,6 +280,10 @@ public sealed class OverlayPreview : Border
     {
         var text = Parse(_config.GetString("typography.textColor"), Colors.White);
         var muted = Parse(_config.GetString("typography.mutedColor"), Colors.LightGray);
+        var vrColor = Parse(_config.GetString("typography.vrColor"), Color.Parse("#8effc6"));
+        var gain = Parse(_config.GetString("typography.gainColor"), Color.Parse("#5ef0a5"));
+        var loss = Parse(_config.GetString("typography.lossColor"), Color.Parse("#ff6d7e"));
+        var rankColor = Parse(_config.GetString("typography.rankColor"), Color.Parse("#ffe88f"));
         var weight = (FontWeight)(int)Math.Clamp(_config.GetNumber("typography.weight"), 100, 900);
         var grid = new Grid
         {
@@ -323,9 +327,9 @@ public sealed class OverlayPreview : Border
         if (_config.GetBool("visibility.track"))
             chips.Children.Add(Chip("GBA Rainbow Road", muted));
         if (_config.GetBool("visibility.sessionDelta"))
-            chips.Children.Add(Chip("SESSION +528", Color.Parse("#5ef0a5")));
+            chips.Children.Add(Chip("SESSION +528", gain));
         if (_config.GetBool("visibility.dailyDelta"))
-            chips.Children.Add(Chip("24H +1,240", Color.Parse("#5ef0a5")));
+            chips.Children.Add(Chip("24H +1,240", gain));
         if (chips.Children.Count > 0)
             copy.Children.Add(chips);
         left.Children.Add(copy);
@@ -353,7 +357,7 @@ public sealed class OverlayPreview : Border
                 Text = _targetVr.ToString("N0"),
                 FontSize = compact ? 38 : 46,
                 FontWeight = FontWeight.Black,
-                Foreground = new SolidColorBrush(Color.Parse("#8effc6")),
+                Foreground = new SolidColorBrush(vrColor),
                 VerticalAlignment = VerticalAlignment.Center,
             };
             _vrHost = new Border { Child = _vrText, RenderTransformOrigin = RelativePoint.Center };
@@ -361,8 +365,8 @@ public sealed class OverlayPreview : Border
             if (_config.GetBool("visibility.delta"))
                 line.Children.Add(
                     _deltaText.StartsWith('-')
-                        ? Pill(_deltaText, Color.Parse("#ff9d9d"), Color.Parse("#30c0392b"))
-                        : Pill(_deltaText, Color.Parse("#7bffbd"), Color.Parse("#3020b26d"))
+                        ? Pill(_deltaText, loss, WithAlpha(loss, 0.19))
+                        : Pill(_deltaText, gain, WithAlpha(gain, 0.19))
                 );
             right.Children.Add(line);
         }
@@ -382,7 +386,7 @@ public sealed class OverlayPreview : Border
                     Text = $"#{_rank:N0}",
                     FontSize = 15,
                     FontWeight = FontWeight.ExtraBold,
-                    Foreground = new SolidColorBrush(Color.Parse("#ffe88f")),
+                    Foreground = new SolidColorBrush(rankColor),
                     VerticalAlignment = VerticalAlignment.Center,
                 }
             );
@@ -394,7 +398,7 @@ public sealed class OverlayPreview : Border
                         Text = "+2",
                         FontSize = 10,
                         FontWeight = FontWeight.Bold,
-                        Foreground = new SolidColorBrush(Color.Parse("#5ef0a5")),
+                        Foreground = new SolidColorBrush(gain),
                         VerticalAlignment = VerticalAlignment.Center,
                     }
                 );

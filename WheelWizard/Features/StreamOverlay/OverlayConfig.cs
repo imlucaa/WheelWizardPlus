@@ -27,7 +27,10 @@ public sealed class OverlayConfig(ISettingsManager settings)
               },
               "avatar": { "background": "gradient", "color1": "#31d4ff", "color2": "#3556ae" },
               "layout": { "scale": 1, "width": 560, "compact": false, "align": "horizontal" },
-              "typography": { "weight": 800, "textColor": "#ffffff", "mutedColor": "#c9d1e7" },
+              "typography": {
+                "weight": 800, "textColor": "#ffffff", "mutedColor": "#c9d1e7",
+                "vrColor": "#8effc6", "gainColor": "#5ef0a5", "lossColor": "#ff6d7e", "rankColor": "#ffe88f"
+              },
               "background": {
                 "imageUrl": "", "fit": "cover", "x": 50, "y": 50, "zoom": 1, "blur": 0, "brightness": 0.58, "saturation": 1.15, "contrast": 1.08,
                 "overlayColor": "#07111f", "overlayOpacity": 0.38, "glass": 0.26
@@ -308,7 +311,20 @@ public sealed class OverlayConfig(ISettingsManager settings)
         patch.Remove("identity");
         patch.Remove("data");
 
+        // The page doesn't know Wheel Wizard's own colours; they are added to it as CSS (see ColorCss), and only a
+        // short marker travels in the link so the page reloads when one changes.
+        var colors = string.Join("-", ColorKeys.Select(key => GetString($"typography.{key}").TrimStart('#')));
+        if (patch["typography"] is JsonObject typography)
+        {
+            foreach (var key in ColorKeys)
+                typography.Remove(key);
+            if (typography.Count == 0)
+                patch.Remove("typography");
+        }
+
         var url = new StringBuilder($"{PageUrl}?view=overlay&fc={friendCodeDigits}");
+        if (colors != "8effc6-5ef0a5-ff6d7e-ffe88f")
+            url.Append("&colors=").Append(Uri.EscapeDataString(colors));
         if (tag.Length > 0)
             url.Append("&tag=").Append(Uri.EscapeDataString(tag));
         if (poll != 5 && poll is >= 1 and <= 600)
@@ -320,6 +336,29 @@ public sealed class OverlayConfig(ISettingsManager settings)
         }
 
         return url.ToString();
+    }
+
+    private static readonly string[] ColorKeys = ["vrColor", "gainColor", "lossColor", "rankColor"];
+
+    /// <summary>
+    /// CSS for the overlay page with the VR number, gain, loss and rank colours, which the page itself has fixed. Only
+    /// colours that are plain hex values make it in.
+    /// </summary>
+    public string ColorCss()
+    {
+        string Hex(string key, string fallback) =>
+            GetString($"typography.{key}") is var value && System.Text.RegularExpressions.Regex.IsMatch(value, "^#[0-9a-fA-F]{6}$")
+                ? value
+                : fallback;
+
+        var vr = Hex("vrColor", "#8effc6");
+        var gain = Hex("gainColor", "#5ef0a5");
+        var loss = Hex("lossColor", "#ff6d7e");
+        var rank = Hex("rankColor", "#ffe88f");
+        return $".vr-value{{color:{vr};--change-color:{gain};--change-glow:{gain}}}"
+            + $".vr-value.change-negative{{--change-color:{loss};--change-glow:{loss}}}"
+            + $".delta.positive{{color:{gain};background:{gain}30}}.delta.negative{{color:{loss};background:{loss}30}}"
+            + $".positive{{color:{gain}!important}}.negative{{color:{loss}!important}}.rank-chip{{color:{rank}}}";
     }
 
     public int CardHeight()

@@ -37,6 +37,19 @@ public class OverlayConfigTests
     }
 
     [Fact]
+    public void AChangedVrColor_GoesIntoThePageCss_NotIntoTheLinkConfig()
+    {
+        var config = Create();
+        config.Set("typography.vrColor", System.Text.Json.Nodes.JsonValue.Create("#ffffff"));
+
+        var link = config.BuildLink("123456789012");
+
+        Assert.Contains("&colors=ffffff-5ef0a5-ff6d7e-ffe88f", link);
+        Assert.DoesNotContain("&cfg=", link);
+        Assert.Contains(".vr-value{color:#ffffff;", config.ColorCss());
+    }
+
+    [Fact]
     public void ASavedValueOfTheWrongType_IsIgnored_InsteadOfBreakingTheEditor()
     {
         var config = Create("""{"visibility":{"avatar":5},"layout":{"width":"wide"},"border":null}""");

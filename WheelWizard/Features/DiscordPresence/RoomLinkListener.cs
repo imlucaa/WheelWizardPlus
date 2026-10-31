@@ -176,10 +176,23 @@ public sealed class RoomLinkListener(
             return;
         }
 
+        var bytes = found.Bytes;
+        var isPage = found.ContentType.StartsWith("text/html");
+        if (isPage)
+        {
+            // The colours chosen in Wheel Wizard that the page has fixed (VR number, gains, losses, rank).
+            var settings = services.GetRequiredService<WheelWizard.Settings.ISettingsManager>();
+            var css = new WheelWizard.StreamOverlay.OverlayConfig(settings).ColorCss();
+            var html = Encoding.UTF8.GetString(bytes);
+            var end = html.IndexOf("</head>", StringComparison.OrdinalIgnoreCase);
+            html = end >= 0 ? html.Insert(end, $"<style>{css}</style>") : html + $"<style>{css}</style>";
+            bytes = Encoding.UTF8.GetBytes(html);
+        }
+
         context.Response.ContentType = found.ContentType;
-        context.Response.Headers["Cache-Control"] = path == "/overlay/bg" ? "no-cache" : "max-age=3600";
-        context.Response.ContentLength64 = found.Bytes.Length;
-        await context.Response.OutputStream.WriteAsync(found.Bytes);
+        context.Response.Headers["Cache-Control"] = path == "/overlay/bg" || isPage ? "no-cache" : "max-age=3600";
+        context.Response.ContentLength64 = bytes.Length;
+        await context.Response.OutputStream.WriteAsync(bytes);
         context.Response.Close();
     }
 

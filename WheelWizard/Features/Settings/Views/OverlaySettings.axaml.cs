@@ -288,6 +288,10 @@ public partial class OverlaySettings : UserControl
         var colors = Section("Colors");
         colors.Add(Row("Text", null, Color("typography.textColor")));
         colors.Add(Row("Secondary text", null, Color("typography.mutedColor")));
+        colors.Add(Row("VR number", null, Color("typography.vrColor")));
+        colors.Add(Row("Gains", "+VR, session and rank up.", Color("typography.gainColor")));
+        colors.Add(Row("Losses", "-VR.", Color("typography.lossColor")));
+        colors.Add(Row("Rank", null, Color("typography.rankColor")));
         colors.Add(Row("Mii backing", null, Choice("avatar.background", "gradient", "solid", "transparent")));
         colors.Add(Row("Mii color 1", null, Color("avatar.color1")));
         colors.Add(Row("Mii color 2", null, Color("avatar.color2")));
