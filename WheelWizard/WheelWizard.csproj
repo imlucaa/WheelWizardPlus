@@ -43,6 +43,7 @@
         <PackageReference Include="Avalonia.HtmlRenderer" Version="12.0.0" />
         <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.3.22" />
         <PackageReference Include="Avalonia.Wayland" Version="12.1.4" />
+        <PackageReference Include="NAudio.Wasapi" Version="3.3.0" />
         <!-- Realtime (GPU) Mii rendering -->
         <PackageReference Include="Silk.NET.OpenGL" Version="2.22.0" />
         <!-- Reads the header of Wii/GameCube disc images in every container format (ISO, WBFS, CISO, GCZ, WIA, RVZ). -->

@@ -44,6 +44,9 @@ public sealed class NowPlayingCard : LayoutTransformControl
     private readonly Grid _top = new() { ColumnSpacing = 8 };
     private readonly StackPanel _right = new() { Spacing = 6, VerticalAlignment = VerticalAlignment.Top };
     private readonly DispatcherTimer _tick = new() { Interval = TimeSpan.FromMilliseconds(100) };
+
+    // The sound bars follow the music about 30 times a second.
+    private readonly DispatcherTimer _barsTick = new() { Interval = TimeSpan.FromMilliseconds(33) };
     private NowPlayingInfo? _info;
     private Bitmap? _bitmap;
     private double _phase;
@@ -87,6 +90,7 @@ public sealed class NowPlayingCard : LayoutTransformControl
 
         _track.SizeChanged += (_, _) => UpdateProgress();
         _tick.Tick += (_, _) => OnTick();
+        _barsTick.Tick += (_, _) => UpdateBars();
         EnsureBars(22);
     }
 
@@ -384,17 +388,18 @@ public sealed class NowPlayingCard : LayoutTransformControl
     {
         base.OnAttachedToVisualTree(e);
         _tick.Start();
+        _barsTick.Start();
     }
 
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
         _tick.Stop();
+        _barsTick.Stop();
         base.OnDetachedFromVisualTree(e);
     }
 
     private void OnTick()
     {
-        _phase += 0.35;
         if (_spin && _info is { IsPlaying: true })
         {
             // A record turning: the cover rotates while the song plays and stays where it is when paused.
@@ -404,7 +409,6 @@ public sealed class NowPlayingCard : LayoutTransformControl
         }
 
         UpdateProgress();
-        UpdateBars();
     }
 
     private void UpdateProgress()
@@ -418,10 +422,20 @@ public sealed class NowPlayingCard : LayoutTransformControl
         _fill.Width = Math.Max(0, _track.Bounds.Width * elapsed / info.Duration);
     }
 
-    // A few waves of different speeds, so the bars move like a sound level and not in step; flat when nothing plays.
+    // The music's own levels (kick and bass on the left); flat when nothing plays. Without them (not Windows), a few
+    // waves of different speeds, so the bars still move like a sound level and not in step.
     private void UpdateBars()
     {
         var playing = _info is { IsPlaying: true };
+        var levels = playing && _barsPanel.IsVisible ? AudioSpectrum.Shared.Levels(_bars.Length) : null;
+        if (levels is not null)
+        {
+            for (var i = 0; i < _bars.Length; i++)
+                _bars[i].Height = 4 + 14 * levels[i];
+            return;
+        }
+
+        _phase += 0.35 / 3;
         for (var i = 0; i < _bars.Length; i++)
         {
             var wave = Math.Abs(Math.Sin(_phase * (0.6 + i % 5 * 0.17) + i * 1.3)) * 0.7 + Math.Abs(Math.Sin(_phase * 0.4 + i * 0.5)) * 0.3;

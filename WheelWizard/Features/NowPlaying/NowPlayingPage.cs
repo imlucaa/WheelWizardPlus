@@ -108,6 +108,7 @@ public static class NowPlayingPage
           .bars { flex: 1; display: flex; justify-content: center; align-items: center; gap: 3px; height: 22px; }
           .bars i { width: 3px; height: 4px; border-radius: 2px; background: var(--bars); opacity: .9; animation: eq 1s ease-in-out infinite; animation-play-state: paused; }
           .playing .bars i { animation-play-state: running; }
+          .bars.live i { animation: none; }
           .bars i:nth-child(5n+1) { animation-duration: .9s; animation-delay: -.2s; }
           .bars i:nth-child(5n+2) { animation-duration: 1.3s; animation-delay: -.7s; }
           .bars i:nth-child(5n+3) { animation-duration: .7s; animation-delay: -.4s; }
@@ -155,6 +156,26 @@ public static class NowPlayingPage
           var card = document.getElementById('card'), cover = document.getElementById('cover'), track = document.getElementById('track'),
               fill = document.getElementById('fill'), times = document.getElementById('times'), last = -1, state = null, fetched = 0;
           var bars = document.getElementById('bars'), lookNow = null;
+          // The bars follow the music's levels that Wheel Wizard+ sends (the same the app shows); without them they use
+          // their own animation.
+          var live = null, liveCount = 0;
+          function listen(count) {
+            if (live && liveCount === count) return;
+            if (live) live.close();
+            liveCount = count;
+            live = new EventSource('/now-playing/levels?n=' + count);
+            live.onmessage = function (e) {
+              var items = bars.children;
+              if (e.data === '-') {
+                if (bars.classList.contains('live')) { bars.classList.remove('live'); for (var i = 0; i < items.length; i++) items[i].style.height = ''; }
+                return;
+              }
+              var values = e.data.split(',');
+              bars.classList.add('live');
+              for (var j = 0; j < items.length && j < values.length; j++) items[j].style.height = (4 + 14 * values[j]) + 'px';
+            };
+            live.onerror = function () { bars.classList.remove('live'); };
+          }
           for (var i = 0; i < 22; i++) bars.appendChild(document.createElement('i'));
           function clock(seconds) {
             seconds = Math.max(0, Math.floor(seconds));
@@ -189,6 +210,7 @@ public static class NowPlayingPage
             style.setProperty('--tint2', darker(s.color));
             style.fontFamily = look.fontFamily === 'default' ? '' : "'" + look.fontFamily + "', 'Segoe UI', sans-serif";
             if (bars.children.length !== look.barCount) { bars.textContent = ''; for (var b = 0; b < look.barCount; b++) bars.appendChild(document.createElement('i')); }
+            listen(look.barCount);
             style.setProperty('--ts', look.textSize);
             style.setProperty('--bw', look.borderWidth + 'px');
             style.setProperty('--bc', look.borderColor);

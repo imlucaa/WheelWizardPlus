@@ -196,10 +196,68 @@ public sealed class RoomLinkListener(
         context.Response.Close();
     }
 
+    /// <summary>
+    /// The sound bars' levels for the OBS page, about 30 times a second, on a connection the page keeps open
+    /// (server-sent events). "-" means there are none (nothing playing, or no audio capture), and the page uses its own
+    /// animation. The levels are the ones the in-app card shows, so both move together.
+    /// </summary>
+    private async Task StreamLevelsAsync(HttpListenerContext context)
+    {
+        var count = int.TryParse(context.Request.QueryString["n"], out var n) ? Math.Clamp(n, 1, 64) : 22;
+        context.Response.ContentType = "text/event-stream";
+        context.Response.Headers["Cache-Control"] = "no-store";
+        context.Response.SendChunked = true;
+        var output = context.Response.OutputStream;
+        var touched = DateTime.MinValue;
+        try
+        {
+            while (_listener is { IsListening: true })
+            {
+                // Keeps the media reader running while OBS shows the page.
+                if (DateTime.UtcNow - touched > TimeSpan.FromSeconds(5))
+                {
+                    nowPlaying.Touch();
+                    touched = DateTime.UtcNow;
+                }
+
+                var levels = nowPlaying.Current is { IsPlaying: true } ? WheelWizard.NowPlaying.AudioSpectrum.Shared.Levels(count) : null;
+                var line = levels is null
+                    ? "data: -\n\n"
+                    : "data: "
+                        + string.Join(
+                            ",",
+                            levels.Select(level => level.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture))
+                        )
+                        + "\n\n";
+                await output.WriteAsync(Encoding.UTF8.GetBytes(line));
+                await output.FlushAsync();
+                await Task.Delay(33);
+            }
+        }
+        catch (Exception exception) when (exception is HttpListenerException or IOException or ObjectDisposedException)
+        {
+            // The page was closed.
+        }
+        finally
+        {
+            try
+            {
+                context.Response.Close();
+            }
+            catch (Exception) { }
+        }
+    }
+
     // The page for OBS asks every second, which keeps the media reader running for as long as the page is open.
     private async Task ServeNowPlayingAsync(HttpListenerContext context, string path)
     {
         nowPlaying.Touch();
+        if (path.TrimEnd('/') == "/now-playing/levels")
+        {
+            await StreamLevelsAsync(context);
+            return;
+        }
+
         byte[] bytes;
         string type;
         switch (path.TrimEnd('/'))
