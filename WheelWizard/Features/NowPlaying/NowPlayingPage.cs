@@ -225,7 +225,7 @@ public static class NowPlayingPage
               if (s.visible) paint(s); else card.className = card.className.replace('show', '').trim();
             } catch (e) { card.className = card.className.replace('show', '').trim(); }
           }
-          tick(); setInterval(tick, 1000); setInterval(progress, 100);
+          tick(); setInterval(tick, 250); setInterval(progress, 100);
         </script>
         </body>
         </html>

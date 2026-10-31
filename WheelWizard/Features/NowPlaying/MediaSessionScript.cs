@@ -1,7 +1,7 @@
 ﻿namespace WheelWizard.NowPlaying;
 
 /// <summary>
-/// The PowerShell the media reader runs. Every second it looks at the Windows media sessions (one per player), takes the
+/// The PowerShell the media reader runs. Four times a second it looks at the Windows media sessions (one per player), takes the
 /// one that is playing (or the one Windows shows), and prints a JSON line when the song, the state or the picture changed,
 /// or when the playback position jumped (a skip inside the song). In a browser it can take only music: media that names an
 /// album, or media from a tab of a music website (the tab names are read through Windows' accessibility, which Chromium
@@ -64,6 +64,9 @@ public static class MediaSessionScript
         }
         # A session in a browser is used when the mode says everything, or in music mode when it names an album (Spotify
         # and Apple Music on the web do) or comes from a music website's tab (YouTube Music); a YouTube video is neither.
+        # Reading the browser's tabs is slow, so the answer is kept for a few seconds per song; otherwise every check
+        # would wait on it and pausing would show late.
+        $allowedCache = @{}
         function Allowed($s) {
           if (-not (IsBrowser $s.SourceAppUserModelId)) { return $true }
           if ($browserMode -eq 'all') { return $true }
@@ -71,7 +74,14 @@ public static class MediaSessionScript
           try {
             $named = Await ($s.TryGetMediaPropertiesAsync()) $properties
             if (-not [string]::IsNullOrWhiteSpace($named.AlbumTitle)) { return $true }
-            return HasMusicTab ($s.GetPlaybackInfo().PlaybackStatus -eq 'Playing')
+            $cacheKey = "$($s.SourceAppUserModelId)|$($named.Title)"
+            $now = $clock.Elapsed.TotalSeconds
+            $hit = $allowedCache[$cacheKey]
+            if ($null -ne $hit -and ($now - $hit[1]) -lt 5) { return $hit[0] }
+            if ($allowedCache.Count -gt 200) { $allowedCache.Clear() }
+            $ok = HasMusicTab ($s.GetPlaybackInfo().PlaybackStatus -eq 'Playing')
+            $allowedCache[$cacheKey] = @($ok, $now)
+            return $ok
           } catch { return $false }
         }
         $last = $null
@@ -135,7 +145,7 @@ public static class MediaSessionScript
               }
             }
           } catch { }
-          Start-Sleep -Milliseconds 1000
+          Start-Sleep -Milliseconds 250
         }
         """;
 }
