@@ -1,4 +1,4 @@
-﻿# Changelog
+# Changelog
 
 User-facing changes to Wheel Wizard+ (formerly BetterWheelWizard) are recorded here. Versions follow
 the Wheel Wizard+ release sequence rather than the upstream Wheel Wizard
@@ -6,8 +6,21 @@ version sequence.
 
 ## [Unreleased]
 
+## [2.6.9] - 2026-11-08
+
+### Added
+
+- Appearance: Border around popups, for the thin-line popup look from upstream Wheel Wizard (off keeps the flat look).
+- WiiCompiled settings: Separate graphics thread switch (from upstream #548); turn it off if the game crashes or graphics break.
+
+### Changed
+
+- Badges now come from rwfc.net (upstream #554), with the newer badges: moderator, Discord staff, contributor, supporter, beta tester and more tournaments.
+
 ### Fixed
 
+- Friends' VR and BR read from the save were 100 times too small (the game stores them in hundreds); adding a friend now saves them the game's way (upstream #555).
+- Pop-ups no longer get stuck while an install or update runs; closing the app during one asks first (upstream #550).
 - Now playing window: with Hide when nothing plays on, it also hides when nothing is playing at all, like the OBS page, instead of showing "Nothing is playing" on stream.
 - Now playing: the cover's color and picture are worked out once per song instead of on every redraw and every OBS request.
 - Sidebar: the footer and headings slide as well as fade when the sidebar opens or closes (the slide was skipped, with a warning in the log each time).

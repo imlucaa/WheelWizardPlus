@@ -55,7 +55,12 @@ public sealed class OverlayLive(ISettingsManager settings, IGameLicenseSingleton
     public string? CurrentUrl()
     {
         var digits = FriendCodeDigits();
-        return digits.Length == 12 ? new OverlayConfig(settings).BuildLink(digits) : null;
+        var config = new OverlayConfig(settings);
+        // MMR reads the RR Lounge player, so it works without a friend code.
+        // (The page only leaves its demo mode with a friend code whose checksum is right: this is player id 1's.)
+        if (config.ShowsMmr && digits.Length != 12)
+            digits = "021474836481";
+        return digits.Length == 12 ? config.BuildLink(digits) : null;
     }
 
     /// <summary>

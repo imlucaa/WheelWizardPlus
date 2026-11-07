@@ -1,4 +1,4 @@
-﻿using System.IO.Abstractions;
+using System.IO.Abstractions;
 using System.Text.Json;
 using Avalonia.Controls;
 using Avalonia.Input.Platform;
@@ -139,6 +139,7 @@ public partial class ThemesPage : UserControl
             MinimalHomeArtworkCheckBox.IsChecked = SettingsService.LAUNCHER_MINIMAL_HOME_ARTWORK.Get();
             HideHomeTitleCheckBox.IsChecked = SettingsService.LAUNCHER_HIDE_HOME_TITLE.Get();
             CleanSidebarCheckBox.IsChecked = SettingsService.LAUNCHER_CLEAN_SIDEBAR.Get();
+            PopupBorderCheckBox.IsChecked = SettingsService.LAUNCHER_POPUP_BORDER.Get();
             ProfileOutlineCheckBox.IsChecked = SettingsService.LAUNCHER_PROFILE_OUTLINE.Get();
             ProfileOutlineOpacitySlider.Value = SettingsService.LAUNCHER_PROFILE_OUTLINE_OPACITY.Get();
             ProfileOutlineOpacitySlider.IsEnabled = ProfileOutlineCheckBox.IsChecked == true;
@@ -301,6 +302,7 @@ public partial class ThemesPage : UserControl
         SettingsService.Set(SettingsService.LAUNCHER_MINIMAL_HOME_ARTWORK, MinimalHomeArtworkCheckBox.IsChecked == true);
         SettingsService.Set(SettingsService.LAUNCHER_HIDE_HOME_TITLE, HideHomeTitleCheckBox.IsChecked == true);
         SettingsService.Set(SettingsService.LAUNCHER_CLEAN_SIDEBAR, CleanSidebarCheckBox.IsChecked == true);
+        SettingsService.Set(SettingsService.LAUNCHER_POPUP_BORDER, PopupBorderCheckBox.IsChecked == true);
         SettingsService.Set(SettingsService.LAUNCHER_PROFILE_OUTLINE, ProfileOutlineCheckBox.IsChecked == true);
         ProfileOutlineOpacitySlider.IsEnabled = ProfileOutlineCheckBox.IsChecked == true;
     }

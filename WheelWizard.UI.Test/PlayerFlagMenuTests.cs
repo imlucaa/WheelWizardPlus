@@ -1,4 +1,4 @@
-﻿using Avalonia;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
@@ -29,7 +29,7 @@ public class PlayerFlagMenuTests
     {
         var licenses = Substitute.For<IGameLicenseSingletonService>();
         var liveRooms = new LiveRoomsService(
-            Substitute.For<IWhWzDataSingletonService>(),
+            Substitute.For<IRrBadgeSingletonService>(),
             Substitute.For<IRrRoomsSingletonService>(),
             Substitute.For<IRrLeaderboardSingletonService>(),
             licenses,
@@ -94,7 +94,7 @@ public class PlayerFlagMenuTests
     {
         var licenses = Substitute.For<IGameLicenseSingletonService>();
         var liveRooms = new LiveRoomsService(
-            Substitute.For<IWhWzDataSingletonService>(),
+            Substitute.For<IRrBadgeSingletonService>(),
             Substitute.For<IRrRoomsSingletonService>(),
             Substitute.For<IRrLeaderboardSingletonService>(),
             licenses,

@@ -718,7 +718,7 @@ public class RegionLicenseTests
         var service = new GameLicenseSingletonService(
             miis,
             fs,
-            Substitute.For<IWhWzDataSingletonService>(),
+            Substitute.For<IRrBadgeSingletonService>(),
             Substitute.For<IRrRatingReader>(),
             settings,
             Substitute.For<ISaveRegionService>(),

@@ -13,7 +13,7 @@ namespace WheelWizard.RrRooms;
 
 public class LiveRoomsService : ObservablePollingService
 {
-    private readonly IWhWzDataSingletonService _whWzService;
+    private readonly IRrBadgeSingletonService _whWzService;
     private readonly IRrRoomsSingletonService _roomsService;
     private readonly IRrLeaderboardSingletonService _leaderboardService;
     private readonly IGameLicenseSingletonService _gameLicenseService;
@@ -29,7 +29,7 @@ public class LiveRoomsService : ObservablePollingService
     private readonly IFriendVrRefresher? _friendVr;
 
     public LiveRoomsService(
-        IWhWzDataSingletonService whWzService,
+        IRrBadgeSingletonService whWzService,
         IRrRoomsSingletonService roomsService,
         IRrLeaderboardSingletonService leaderboardService,
         IGameLicenseSingletonService gameLicenseService,
@@ -144,7 +144,7 @@ public class LiveRoomsService : ObservablePollingService
 
     private static RrRoom MapRoom(
         RwfcRoomStatusRoom room,
-        IWhWzDataSingletonService whWzService,
+        IRrBadgeSingletonService whWzService,
         IReadOnlyDictionary<string, RwfcLeaderboardEntry> leaderboardByPid,
         IReadOnlyDictionary<string, RwfcLeaderboardEntry> leaderboardByFriendCode,
         IReadOnlySet<uint> friendProfileIds
@@ -170,7 +170,7 @@ public class LiveRoomsService : ObservablePollingService
 
     private static RrPlayer MapPlayer(
         RwfcRoomStatusPlayer p,
-        IWhWzDataSingletonService whWzService,
+        IRrBadgeSingletonService whWzService,
         IReadOnlyDictionary<string, RwfcLeaderboardEntry> leaderboardByPid,
         IReadOnlyDictionary<string, RwfcLeaderboardEntry> leaderboardByFriendCode,
         IReadOnlySet<uint> friendProfileIds

@@ -33,6 +33,13 @@ public sealed class RrLoungeProfile
     public string? CountryCode { get; init; }
     public string Season { get; init; } = string.Empty;
     public string Division { get; init; } = string.Empty;
+
+    /// <summary>The division's badge on the site, such as "/icons/new_diamond.png", or null.</summary>
+    public string? DivisionIcon { get; init; }
+
+    /// <summary>The colour the site writes the division in, such as "#b0f442", or null.</summary>
+    public string? DivisionColor { get; init; }
+
     public int? Rank { get; init; }
     public int? Players { get; init; }
     public string? Percentile { get; init; }
@@ -68,6 +75,9 @@ public static partial class RrLoungeProfiles
 
     [GeneratedRegex("""<img src="/icons/[^"]*" alt="([^"]+)"[^>]*>\s*<p[^>]*>\s*DIVISION""")]
     private static partial Regex DivisionRegex();
+
+    [GeneratedRegex("""<img src="(/icons/[a-z0-9_.-]+)" alt="[^"]+"[^>]*>\s*<p style="color:(#[0-9a-fA-F]{3,8})">\s*DIVISION""")]
+    private static partial Regex DivisionLookRegex();
 
     [GeneratedRegex("""<div[^>]*text-3xl[^>]*>([\s\S]*?)</div>""")]
     private static partial Regex NameRegex();
@@ -134,6 +144,7 @@ public static partial class RrLoungeProfiles
 
         var text = Plain(body[..(body.IndexOf("<table", StringComparison.Ordinal) is var end and >= 0 ? end : body.Length)]);
         var rank = RankRegex().Match(text);
+        var look = DivisionLookRegex().Match(body);
         return new RrLoungeProfile
         {
             Name = name.Success ? Plain(name.Groups[1].Value) : string.Empty,
@@ -143,6 +154,8 @@ public static partial class RrLoungeProfiles
             Division = DivisionRegex().Match(body) is { Success: true } division
                 ? WebUtility.HtmlDecode(division.Groups[1].Value)
                 : string.Empty,
+            DivisionIcon = look.Success ? look.Groups[1].Value : null,
+            DivisionColor = look.Success ? look.Groups[2].Value : null,
             Rank = rank.Success ? Int(rank.Groups[1].Value) : null,
             Players = rank.Success ? Int(rank.Groups[2].Value) : null,
             Percentile = PercentileRegex().Match(text) is { Success: true } percentile ? percentile.Groups[1].Value : null,

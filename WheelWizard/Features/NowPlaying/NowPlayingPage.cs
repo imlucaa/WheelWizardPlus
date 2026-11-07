@@ -25,7 +25,7 @@ public static class NowPlayingPage
                 color = config.CardColor(info?.Cover),
                 position = info?.ElapsedAt(now) ?? 0,
                 duration = info?.Duration ?? 0,
-                version = info is null ? 0 : HashCode.Combine(info.Title, info.Artist, info.Cover?.Length ?? 0) & 0x7fffffff,
+                version = Version(info),
                 look = new
                 {
                     style = config.GetString("layout.style"),
@@ -63,6 +63,19 @@ public static class NowPlayingPage
                 },
             }
         );
+
+    // From the picture's bytes: a cover that arrives late can be the same size as the one before it.
+    private static int Version(NowPlayingInfo? info)
+    {
+        if (info is null)
+            return 0;
+
+        var hash = new HashCode();
+        hash.Add(info.Title);
+        hash.Add(info.Artist);
+        hash.AddBytes(info.Cover ?? []);
+        return hash.ToHashCode() & 0x7fffffff;
+    }
 
     private static string SafeColor(string hex, string fallback) =>
         NowPlayingConfig.IsHex(hex) ? NowPlayingConfig.Normalize(hex) : fallback;
@@ -155,7 +168,7 @@ public static class NowPlayingPage
         <script>
           var card = document.getElementById('card'), cover = document.getElementById('cover'), track = document.getElementById('track'),
               fill = document.getElementById('fill'), times = document.getElementById('times'), last = -1, state = null, fetched = 0;
-          var bars = document.getElementById('bars'), lookNow = null;
+          var bars = document.getElementById('bars'), lookNow = null, painted = '';
           // The bars follow the music's levels that Wheel Wizard+ sends (the same the app shows); without them they use
           // their own animation.
           var live = null, liveCount = 0;
@@ -222,7 +235,8 @@ public static class NowPlayingPage
             var showTime = look.time && hasLength;
             document.getElementById('elapsed').className = 't' + (showTime ? '' : ' hidden');
             document.getElementById('total').className = 't' + (showTime ? '' : ' hidden');
-            bars.className = 'bars' + (look.bars ? '' : ' hidden');
+            // Not className: that would drop "live", and the fake animation would show until the next levels arrive.
+            bars.classList.toggle('hidden', !look.bars);
             times.className = 'c time-card' + (showTime || look.bars ? '' : ' hidden');
             document.getElementById('total').textContent = hasLength ? clock(s.duration) : '';
             track.className = look.progress && hasLength ? '' : 'none';
@@ -244,8 +258,10 @@ public static class NowPlayingPage
             try {
               var s = await (await fetch('/now-playing/state', { cache: 'no-store' })).json();
               state = s; fetched = Date.now();
-              if (s.visible) paint(s); else card.className = card.className.replace('show', '').trim();
-            } catch (e) { card.className = card.className.replace('show', '').trim(); }
+              // Only the position changes on most asks, and progress() draws that: nothing to lay out again.
+              var key = JSON.stringify(s, function (k, v) { return k === 'position' ? 0 : v; });
+              if (s.visible) { if (key !== painted) { paint(s); painted = key; } } else { painted = ''; card.className = card.className.replace('show', '').trim(); }
+            } catch (e) { painted = ''; card.className = card.className.replace('show', '').trim(); }
           }
           tick(); setInterval(tick, 250); setInterval(progress, 100);
         </script>

@@ -63,6 +63,8 @@ public static class SetupExtensions
         services.AddSingleton<WheelWizard.NowPlaying.IMediaSessionReader, WheelWizard.NowPlaying.WindowsMediaSessionReader>();
         services.AddSingleton<WheelWizard.NowPlaying.NowPlayingService>();
         services.AddSingleton<WheelWizard.NowPlaying.NowPlayingConfig>();
+        services.AddSingleton<WheelWizard.LoungeStats.LoungeStatsConfig>();
+        services.AddSingleton<WheelWizard.LoungeStats.LoungeStatsService>();
         services.AddSingleton<WheelWizard.DiscordPresence.RoomLinkListener>();
         services.AddSingleton<WheelWizard.RrRooms.FriendRoomNotifier>();
         services.AddSingleton<WheelWizard.WiiManagement.GameLicense.SessionStatsTracker>();

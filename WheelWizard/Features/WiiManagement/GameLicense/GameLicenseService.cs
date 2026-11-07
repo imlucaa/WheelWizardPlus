@@ -252,7 +252,7 @@ public class GameLicenseSingletonService : ObservablePollingService, IGameLicens
 {
     private readonly IMiiDbService _miiService;
     private readonly IFileSystem _fileSystem;
-    private readonly IWhWzDataSingletonService _whWzDataSingletonService;
+    private readonly IRrBadgeSingletonService _whWzDataSingletonService;
     private readonly IRrRatingReader _rrratingReader;
     private readonly ISettingsManager _settingsManager;
     private readonly ISaveRegionService _saveRegions;
@@ -265,7 +265,7 @@ public class GameLicenseSingletonService : ObservablePollingService, IGameLicens
     public GameLicenseSingletonService(
         IMiiDbService miiService,
         IFileSystem fileSystem,
-        IWhWzDataSingletonService whWzDataSingletonService,
+        IRrBadgeSingletonService whWzDataSingletonService,
         IRrRatingReader rrratingReader,
         ISettingsManager settingsManager,
         ISaveRegionService saveRegions,
@@ -310,6 +310,21 @@ public class GameLicenseSingletonService : ObservablePollingService, IGameLicens
     private const byte DefaultFriendGameRegion = 0;
     private const byte DefaultFriendCountryCode = 0xFF;
     private const byte DefaultFriendRegionId = 0xFF;
+
+    // Retro Rewind stores a friend's VR/BR in rksys.dat as whole hundreds (29,367 VR is stored as 293).
+    private const uint FriendRatingScale = 100;
+    private const uint DefaultRating = 5000;
+    private const uint MaxRating = 1_000_000;
+
+    /// <summary>
+    /// Turns a friend's VR/BR from rksys.dat into rating points. Older WheelWizard versions stored full points instead,
+    /// so the default (5000) and anything above the highest stored rating are already points.
+    /// </summary>
+    public static uint FriendRatingFromRksys(uint stored) =>
+        stored == DefaultRating || stored > MaxRating / FriendRatingScale ? stored : stored * FriendRatingScale;
+
+    /// <summary>Turns rating points into the friend VR/BR stored in rksys.dat.</summary>
+    public static ushort FriendRatingToRksys(uint points) => (ushort)(Math.Min(points, MaxRating) / FriendRatingScale);
 
     /// <summary>
     /// Returns the "focused" or currently active license/user as determined by the Settings.
@@ -593,8 +608,8 @@ public class GameLicenseSingletonService : ObservablePollingService, IGameLicens
 
             var friend = new FriendProfile
             {
-                Vr = BigEndianBinary.BufferToUint16(_rksysData, currentOffset + 0x16),
-                Br = BigEndianBinary.BufferToUint16(_rksysData, currentOffset + 0x18),
+                Vr = FriendRatingFromRksys(BigEndianBinary.BufferToUint16(_rksysData, currentOffset + 0x16)),
+                Br = FriendRatingFromRksys(BigEndianBinary.BufferToUint16(_rksysData, currentOffset + 0x18)),
                 FriendCode = friendCode,
                 Wins = BigEndianBinary.BufferToUint16(_rksysData, currentOffset + 0x14),
                 Losses = BigEndianBinary.BufferToUint16(_rksysData, currentOffset + 0x12),
@@ -694,8 +709,8 @@ public class GameLicenseSingletonService : ObservablePollingService, IGameLicens
             friendCodeValue,
             friendProfileId,
             friendMiiDataResult.Value,
-            (ushort)Math.Min(vr, ushort.MaxValue),
-            (ushort)Math.Min(br, ushort.MaxValue)
+            FriendRatingToRksys(vr),
+            FriendRatingToRksys(br)
         );
 
         var saveResult = SaveRksysToFile();

@@ -35,9 +35,14 @@ public sealed partial class RrLoungeImages(IApplicationDataLocation? location)
     /// <summary>The picture, from disk when it is there and recent, else downloaded (and shrunk to <paramref name="width"/> when given).</summary>
     public Task<Bitmap?> GetAsync(string url, int width)
     {
-        if (!_loaded.TryGetValue(url, out var task))
-            _loaded[url] = task = LoadAsync(url, width);
-        return task;
+        // Read and decoded on a worker thread: a page full of flags and badges must not hold up the screen.
+        // Asked from the UI and from the OBS page server, so the list is locked.
+        lock (_loaded)
+        {
+            if (!_loaded.TryGetValue(url, out var task))
+                _loaded[url] = task = Task.Run(() => LoadAsync(url, width));
+            return task;
+        }
     }
 
     private async Task<Bitmap?> LoadAsync(string url, int width)

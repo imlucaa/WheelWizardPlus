@@ -4,6 +4,13 @@ using WheelWizard.GameBanana.InstallRequests;
 using WheelWizard.Launching;
 using WheelWizard.Models.Enums;
 using WheelWizard.Mods;
+using WheelWizard.RrRooms;
+using WheelWizard.RrRooms;
+using WheelWizard.RrRooms;
+using WheelWizard.RrRooms;
+using WheelWizard.RrRooms;
+using WheelWizard.RrRooms;
+using WheelWizard.RrRooms;
 using WheelWizard.Settings;
 using WheelWizard.WheelWizardData;
 
@@ -18,7 +25,7 @@ public sealed class ApplicationStartup(
     IModManager mods,
     IModInstallRequestHandler installRequests,
     IAutoUpdaterSingletonService updates,
-    IWhWzDataSingletonService badges,
+    IRrBadgeSingletonService badges,
     IApplicationLiveUpdates liveUpdates,
     ISettingsManager settings,
     ILauncherProvider launchers,

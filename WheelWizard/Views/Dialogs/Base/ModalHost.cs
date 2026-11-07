@@ -52,11 +52,16 @@ public sealed class ModalHost : Grid
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
             Background = OpaqueBackground(),
-            BorderThickness = new Thickness(0),
             CornerRadius = new CornerRadius(8),
             ClipToBounds = true,
             Focusable = true,
         };
+        // Flat by default; Appearance > "Border around popups" brings back upstream's thin line, live.
+        panel.Bind(
+            Border.BorderThicknessProperty,
+            panel.GetResourceObservable("ModalPanelBorderThickness", v => v is Thickness ? v : new Thickness(0))
+        );
+        panel.Bind(Border.BorderBrushProperty, panel.GetResourceObservable("BackgroundLineColor"));
         KeyboardNavigation.SetTabNavigation(panel, KeyboardNavigationMode.Cycle);
         var layer = new Grid();
         layer.Children.Add(backdrop);

@@ -35,7 +35,10 @@ public sealed partial class RrLoungePage : UserControl
     private readonly ActionButton _previous;
     private readonly ActionButton _next;
     private readonly TextBlock _pageText;
-    private readonly StackPanel _rows = new();
+    private StackPanel _rows = new();
+    private int _tableVersion;
+    private const int FirstRows = 12;
+    private const int RowsPerStep = 8;
     private readonly ScrollViewer _scroll;
     private readonly Grid _body;
     private readonly ContentControl _state = new();
@@ -60,6 +63,17 @@ public sealed partial class RrLoungePage : UserControl
     private Dictionary<string, int?> _changes = [];
 
     private readonly RrLoungeImages _images;
+
+    // The last ladder each tab showed (current season only), kept with the app's one picture cache (so for the app's
+    // lifetime; the API caller itself is made new for every page).
+    // Coming back to the page shows it at once instead of a spinner and a new download; a refresh in the background then
+    // brings it up to date.
+    private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<
+        RrLoungeImages,
+        Dictionary<RrLoungeLadder, (RrLoungeLadderData Data, DateTime At)>
+    > Remembered = new();
+
+    private Dictionary<RrLoungeLadder, (RrLoungeLadderData Data, DateTime At)> LastLadders => Remembered.GetOrCreateValue(_images);
 
     public RrLoungePage(IApiCaller<IRrLoungeApi> api, RrLoungeImages? images = null)
     {
@@ -174,6 +188,16 @@ public sealed partial class RrLoungePage : UserControl
         };
         AttachedToVisualTree += (_, _) =>
         {
+            if (_data is null && LastLadders.TryGetValue(_ladder, out var last))
+            {
+                _data = last.Data;
+                _season = last.Data.Season;
+                _loadedAt = last.At;
+                FillSeasons(last.Data.Seasons);
+                ShowState(null);
+                ShowTable();
+            }
+
             if (_data is null)
                 _ = LoadAsync();
             else if (DateTime.UtcNow - _loadedAt >= RefreshEvery)
@@ -329,6 +353,8 @@ public sealed partial class RrLoungePage : UserControl
         _data = data;
         _season = data.Season;
         _loadedAt = DateTime.UtcNow;
+        if (!_seasonPicked)
+            LastLadders[_ladder] = (data, _loadedAt);
         FillSeasons(data.Seasons);
         ShowState(null);
         ShowTable(keepScroll: quiet);
@@ -485,7 +511,10 @@ public sealed partial class RrLoungePage : UserControl
     private void ShowTable(bool keepScroll = false)
     {
         var offset = _scroll.Offset;
-        _rows.Children.Clear();
+        // The rows go into a new panel that is not on screen yet and is swapped in at once: adding rows one by one to
+        // the shown table restyled it after every row, which froze the page for a moment.
+        _rows = new StackPanel();
+        _scroll.Content = _rows;
         if (_data is null)
             return;
 
@@ -510,8 +539,24 @@ public sealed partial class RrLoungePage : UserControl
             _rows.Children.Add(empty);
         }
 
-        for (var i = 0; i < shown.Count; i++)
-            _rows.Children.Add(Row(shown[i], i % 2 == 1));
+        // The rows in view first; the rest follow a few at a time between frames, so switching to the page never freezes
+        // while a whole page of rows is styled at once.
+        var panel = _rows;
+        var version = ++_tableVersion;
+        for (var i = 0; i < Math.Min(FirstRows, shown.Count); i++)
+            panel.Children.Add(Row(shown[i], i % 2 == 1));
+        void AddMore(int from)
+        {
+            if (version != _tableVersion)
+                return;
+            for (var i = from; i < Math.Min(from + RowsPerStep, shown.Count); i++)
+                panel.Children.Add(Row(shown[i], i % 2 == 1));
+            if (from + RowsPerStep < shown.Count)
+                Dispatcher.UIThread.Post(() => AddMore(from + RowsPerStep), DispatcherPriority.Background);
+        }
+
+        if (shown.Count > FirstRows)
+            Dispatcher.UIThread.Post(() => AddMore(FirstRows), DispatcherPriority.Background);
         ToolTip.SetTip(
             _showing,
             _changes.Count == 0

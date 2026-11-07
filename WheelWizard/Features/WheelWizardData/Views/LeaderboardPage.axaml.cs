@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using Avalonia.Controls;
@@ -79,7 +79,7 @@ public partial class LeaderboardPage : UserControl, INotifyPropertyChanged
     private CancellationTokenSource? _loadCts;
 
     private IRrLeaderboardSingletonService LeaderboardService { get; }
-    private IWhWzDataSingletonService BadgeService { get; }
+    private IRrBadgeSingletonService BadgeService { get; }
     private IGameLicenseSingletonService GameDataService { get; }
     private ISettingsManager SettingsManager { get; }
     private IApiCaller<IRwfcApi> ApiCaller { get; }
@@ -220,7 +220,7 @@ public partial class LeaderboardPage : UserControl, INotifyPropertyChanged
         IPopupFactory popups,
         INavigationService navigation,
         IRrLeaderboardSingletonService leaderboardService,
-        IWhWzDataSingletonService badgeService,
+        IRrBadgeSingletonService badgeService,
         IGameLicenseSingletonService gameDataService,
         ISettingsManager settingsManager,
         IMiiNativeRenderer miiRenderer,

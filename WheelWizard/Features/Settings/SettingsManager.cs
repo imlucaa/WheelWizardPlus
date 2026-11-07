@@ -1,4 +1,4 @@
-﻿using System.IO.Abstractions;
+using System.IO.Abstractions;
 using WheelWizard.ApplicationData;
 using WheelWizard.Dolphin.Paths;
 using WheelWizard.DolphinInstaller;
@@ -224,6 +224,8 @@ public class SettingsManager : ISettingsManager, IDisposable
         NOW_PLAYING_LOOKS = RegisterWhWz("NowPlayingLooks", "");
         OVERLAY_PRESETS = RegisterWhWz("OverlayPresets", "");
         OVERLAY_FRIEND_CODE = RegisterWhWz("OverlayFriendCode", "");
+        LOUNGE_STATS_CONFIG = RegisterWhWz("LoungeStatsConfig", "");
+        LOUNGE_STATS_CACHE = RegisterWhWz("LoungeStatsCache", "");
         GAME_DISCS = RegisterWhWz("GameDiscs", "");
         WIT_LOCATION = RegisterWhWz("WitLocation", "");
         LINE_COLOR_ORIGINALS = RegisterWhWz("LineColorOriginals", "");
@@ -275,6 +277,8 @@ public class SettingsManager : ISettingsManager, IDisposable
         LAUNCHER_HIDE_HOME_TITLE = RegisterWhWz("LauncherHideHomeTitle", false);
         LAUNCHER_CLEAN_SIDEBAR = RegisterWhWz("LauncherCleanSidebar", false);
         LAUNCHER_PROFILE_OUTLINE = RegisterWhWz("LauncherProfileOutline", true);
+        // Upstream's popup look: a thin line around in-app popups. Off keeps the flat look.
+        LAUNCHER_POPUP_BORDER = RegisterWhWz("LauncherPopupBorder", false);
         LAUNCHER_PROFILE_OUTLINE_OPACITY = RegisterWhWz("LauncherProfileOutlineOpacity", 0.6, value => value is >= 0.0 and <= 1.0);
         LAUNCHER_FONT = RegisterWhWz(
             "LauncherFont",
@@ -318,6 +322,7 @@ public class SettingsManager : ISettingsManager, IDisposable
         RECOMP_SHOW_FPS = RegisterRecomp(("video", "show_fps"), true);
         RECOMP_DISCORD_PRESENCE = RegisterRecomp(("discord", "enabled"), true);
         RECOMP_PREVENT_STUTTERS = RegisterRecomp(("video", "skip_unready_pipelines"), true);
+        RECOMP_GX_WORKER = RegisterRecomp(("video", "gx_worker"), true);
         // The Wii data folder the runtime should use, written by RecompDolphinDataService after an
         // install and whenever the sharing choice changes. Empty/absent means the runtime's private NAND.
         RECOMP_NAND_ROOT = RegisterRecomp(("paths", "nand_root"), "");
@@ -391,6 +396,8 @@ public class SettingsManager : ISettingsManager, IDisposable
     public Setting<string> NOW_PLAYING_LOOKS { get; }
     public Setting<string> OVERLAY_PRESETS { get; }
     public Setting<string> OVERLAY_FRIEND_CODE { get; }
+    public Setting<string> LOUNGE_STATS_CONFIG { get; }
+    public Setting<string> LOUNGE_STATS_CACHE { get; }
     public Setting<string> GAME_DISCS { get; }
     public Setting<string> WIT_LOCATION { get; }
     public Setting<string> LINE_COLOR_ORIGINALS { get; }
@@ -432,6 +439,7 @@ public class SettingsManager : ISettingsManager, IDisposable
     public Setting<bool> LAUNCHER_HIDE_HOME_TITLE { get; }
     public Setting<bool> LAUNCHER_CLEAN_SIDEBAR { get; }
     public Setting<bool> LAUNCHER_PROFILE_OUTLINE { get; }
+    public Setting<bool> LAUNCHER_POPUP_BORDER { get; }
     public Setting<double> LAUNCHER_PROFILE_OUTLINE_OPACITY { get; }
     public Setting<string> LAUNCHER_FONT { get; }
 
@@ -449,6 +457,7 @@ public class SettingsManager : ISettingsManager, IDisposable
     public Setting<bool> RECOMP_SHOW_FPS { get; }
     public Setting<bool> RECOMP_DISCORD_PRESENCE { get; }
     public Setting<bool> RECOMP_PREVENT_STUTTERS { get; }
+    public Setting<bool> RECOMP_GX_WORKER { get; }
     public Setting<string> RECOMP_NAND_ROOT { get; }
     #endregion
 

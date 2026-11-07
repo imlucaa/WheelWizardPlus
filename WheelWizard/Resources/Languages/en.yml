@@ -185,6 +185,8 @@ en:
     redo: "Redo"
     leave: "Leave"
     keep_editing: "Keep editing"
+    quit: "Quit"
+    keep_installing: "Keep installing"
     surprise_me: "Surprise me"
     unfavorite: "Unfavorite"
     favorite: "Favorite"
@@ -448,6 +450,9 @@ en:
     leave_mii_editor:
       title: "Leave without saving?"
       extra: "Your changes to this Mii will be lost."
+    quit_during_setup:
+      title: "Quit while installing?"
+      extra: "An install or update is still running. Quitting now can leave the game incomplete."
     recomp_uninstall:
       title: "Uninstall WiiCompiled?"
       extra_shared: "This removes the WiiCompiled installation. Your saves stay in Dolphin's Wii folder, and Retro Rewind stays installed."
@@ -749,6 +754,7 @@ en:
     recomp_resolution: "Resolution"
     recomp_graphics_api: "Graphics API"
     recomp_prevent_stutters: "Prevent stutters"
+    recomp_gx_worker: "Separate graphics thread"
   section:
     graphics: "Graphics"
     general: "General"
@@ -776,6 +782,7 @@ en:
     recomp_graphics_api: "Only DirectX 12 and Vulkan run WiiCompiled reliably, so nothing else is offered."
     recomp_dolphin_data_not_found: "Set an existing Dolphin User Folder in Location Settings first. It must contain a Wii folder."
     recomp_prevent_stutters: "A little pop-in instead of stutters while shaders load."
+    recomp_gx_worker: "Faster. Turn off if the game crashes or graphics break. Applies next launch."
     launch_with_dolphin: "Also opens Dolphin's main window."
     launch_rr_on_startup: "Starts Retro Rewind when the launcher opens."
     retro_rewind_version: "Installed version: %{version}"

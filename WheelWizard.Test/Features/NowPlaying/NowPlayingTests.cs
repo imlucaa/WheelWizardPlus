@@ -105,6 +105,27 @@ public class NowPlayingTests
     }
 
     [Fact]
+    public void State_VersionChanges_WhenALateCoverIsTheSameSize()
+    {
+        static int Version(byte[] cover)
+        {
+            var info = new NowPlayingInfo("Song", "Artist", "", "Spotify", true, cover);
+            using var state = JsonDocument.Parse(NowPlayingPage.State(info, Config(), Noon));
+            return state.RootElement.GetProperty("version").GetInt32();
+        }
+
+        Assert.NotEqual(Version([1, 2, 3]), Version([4, 5, 6]));
+        Assert.Equal(Version([1, 2, 3]), Version([1, 2, 3]));
+    }
+
+    [Fact]
+    public void Page_KeepsTheLiveBarsWhenItRedraws()
+    {
+        // Assigning the class would drop "live" on each redraw, and the fake bar animation would flash over the real levels.
+        Assert.DoesNotContain("bars.className", NowPlayingPage.Html);
+    }
+
+    [Fact]
     public void State_FollowsTheLook_AndCarriesTheTime()
     {
         var info = new NowPlayingInfo("Song", "Artist", "", "Apple Music", true, [1, 2], 20, 180, Noon);

@@ -35,6 +35,78 @@ public sealed class OverlayPreview : Border
     private LinearGradientBrush? _spinBrush;
     private Border? _glowShell;
     private TextBlock? _vrText;
+
+    /// <summary>The word after the number: "VR", or "MMR" when the badge shows the RR Lounge MMR.</summary>
+    public string Unit
+    {
+        get => _unit;
+        set
+        {
+            _unit = value;
+            Rebuild();
+        }
+    }
+
+    private string _unit = "VR";
+
+    /// <summary>The RR Lounge country flag before the name (MMR with the flag on), or null for none.</summary>
+    public Avalonia.Media.IImage? Flag
+    {
+        get => _flag;
+        set
+        {
+            _flag = value;
+            Rebuild();
+        }
+    }
+
+    private Avalonia.Media.IImage? _flag;
+
+    // The name with the flag before it, when there is one.
+    private Control WithFlag(Control name, double height)
+    {
+        if (_flag is null)
+            return name;
+        var line = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
+        line.Children.Add(
+            new Image
+            {
+                Source = _flag,
+                Width = height * 1.3,
+                Height = height * 0.95,
+                Stretch = Stretch.Fill,
+                VerticalAlignment = VerticalAlignment.Center,
+            }
+        );
+        line.Children.Add(name);
+        return line;
+    }
+
+    /// <summary>The RR Lounge division badge, used as the rank badge while the badge shows MMR.</summary>
+    public Avalonia.Media.IImage? LoungeBadge
+    {
+        get => _loungeBadge;
+        set
+        {
+            _loungeBadge = value;
+            Rebuild();
+        }
+    }
+
+    private Avalonia.Media.IImage? _loungeBadge;
+    private WheelWizard.LoungeStats.HudSvgImage? _vrDigits;
+    private double _digitsHeight;
+    private WheelWizard.LoungeStats.HudLook? _digitsLook;
+
+    // Race HUD digits: the number's text drawn with the game digits instead.
+    private void ShowDigits(string text)
+    {
+        if (_vrDigits is null || _digitsLook is null)
+            return;
+        var digits = new string(text.Where(c => char.IsAsciiDigit(c) || c == '-').ToArray());
+        _vrDigits.Set(WheelWizard.LoungeStats.HudArt.Number(digits, _digitsLook), _digitsHeight, digits);
+    }
+
     private Border? _vrHost;
     private double _angle;
     private double _pulse;
@@ -150,7 +222,26 @@ public sealed class OverlayPreview : Border
     }
 
     /// <summary>Plays the VR change the way the OBS overlay would.</summary>
-    public void Replay() => _animStart = Environment.TickCount64;
+    // Play in the tab: the real change when there is one, otherwise a sample +41 (so it always shows something).
+    public void Replay()
+    {
+        _playGain = _gain;
+        if (_gain == 0)
+        {
+            _savedDelta ??= _deltaText;
+            _playGain = SampleGain;
+            _deltaText = "+" + SampleGain.ToString("0");
+            Rebuild();
+        }
+
+        _animStart = Environment.TickCount64;
+        // The race HUD VR change only shows the change while it counts: draw it now.
+        if (_config.GetString("animations.vr") == "race hud")
+            Rebuild();
+    }
+
+    private double _playGain;
+    private string? _savedDelta;
 
     private static Color Parse(string hex, Color fallback) => Color.TryParse(hex, out var color) ? color : fallback;
 
@@ -199,22 +290,26 @@ public sealed class OverlayPreview : Border
             ? new BoxShadows(new BoxShadow { Blur = 10 + 28 * strength, Color = WithAlpha(c1, .55 * strength + .15) })
             : default;
 
+        // No card: only the text and numbers, like the race HUD.
+        var card = _config.ShowsCard;
         var inner = new Border
         {
             CornerRadius = new CornerRadius(Math.Max(0, radius - borderWidth)),
-            ClipToBounds = true,
-            Background = Backdrop(),
-            Child = Layers(Content(compact, height)),
+            ClipToBounds = card,
+            Background = card ? Backdrop() : null,
+            Child = card ? Layers(Content(compact, height)) : Content(compact, height),
         };
 
         _glowShell = new Border
         {
-            Width = width,
+            // Without a card it is only as wide as the text and numbers, so it sits in the middle.
+            Width = card ? width : double.NaN,
             Height = height + borderWidth * 2,
+            HorizontalAlignment = HorizontalAlignment.Center,
             CornerRadius = new CornerRadius(radius),
-            Padding = new Thickness(borderWidth),
-            Background = borderBrush,
-            BoxShadow = shadows,
+            Padding = card ? new Thickness(borderWidth) : default,
+            Background = card ? borderBrush : null,
+            BoxShadow = card ? shadows : default,
             Child = inner,
             Margin = new Thickness(18),
         };
@@ -306,30 +401,46 @@ public sealed class OverlayPreview : Border
         if (_config.GetBool("visibility.name"))
         {
             var tag = _config.GetBool("visibility.tag") ? _config.GetString("identity.tag") : string.Empty;
-            copy.Children.Add(
-                new TextBlock
-                {
-                    Text = string.Join(' ', new[] { tag, _playerName }.Where(s => s.Length > 0)),
-                    FontSize = compact ? 22 : 26,
-                    FontWeight = weight,
-                    Foreground = new SolidColorBrush(text),
-                    TextTrimming = TextTrimming.CharacterEllipsis,
-                    MaxWidth = 260,
-                }
-            );
+            var shown = string.Join(' ', new[] { tag, _playerName }.Where(s => s.Length > 0));
+            // The race HUD look writes the name in the game font when every letter has a picture.
+            if (
+                _config.UsesHudLook
+                && WheelWizard.LoungeStats.HudArt.Text(shown, HudDigits.Look(_config.GetString("typography.textColor"))) is { } nameArt
+            )
+            {
+                var nameImage = new WheelWizard.LoungeStats.HudSvgImage { VerticalAlignment = VerticalAlignment.Center };
+                nameImage.Set(nameArt, compact ? 24 : 28, shown);
+                copy.Children.Add(WithFlag(nameImage, compact ? 22 : 26));
+            }
+            else
+                copy.Children.Add(
+                    WithFlag(
+                        new TextBlock
+                        {
+                            Text = shown,
+                            FontSize = compact ? 22 : 26,
+                            FontWeight = weight,
+                            Foreground = new SolidColorBrush(text),
+                            TextTrimming = TextTrimming.CharacterEllipsis,
+                            MaxWidth = 260,
+                            VerticalAlignment = VerticalAlignment.Center,
+                        },
+                        compact ? 22 : 26
+                    )
+                );
         }
 
         if (_config.GetBool("visibility.connection"))
-            copy.Children.Add(Chip("In a room", muted, false));
+            copy.Children.Add(HudOr(Chip("In a room", muted, false), "In a room", muted, 16));
         var chips = new WrapPanel { Orientation = Orientation.Horizontal };
         if (_config.GetBool("visibility.room"))
-            chips.Children.Add(Chip("Retro Tracks", muted));
+            chips.Children.Add(HudOr(Chip("Retro Tracks", muted), "Retro Tracks", muted, 16));
         if (_config.GetBool("visibility.track"))
-            chips.Children.Add(Chip("GBA Rainbow Road", muted));
+            chips.Children.Add(HudOr(Chip("GBA Rainbow Road", muted), "GBA Rainbow Road", muted, 16));
         if (_config.GetBool("visibility.sessionDelta"))
-            chips.Children.Add(Chip("SESSION +528", gain));
+            chips.Children.Add(HudOr(Chip("SESSION +528", gain), "SESSION +528", gain, 16));
         if (_config.GetBool("visibility.dailyDelta"))
-            chips.Children.Add(Chip("24H +1,240", gain));
+            chips.Children.Add(HudOr(Chip("24H +1,240", gain), "24H +1,240", gain, 16));
         if (chips.Children.Count > 0)
             copy.Children.Add(chips);
         left.Children.Add(copy);
@@ -360,14 +471,76 @@ public sealed class OverlayPreview : Border
                 Foreground = new SolidColorBrush(vrColor),
                 VerticalAlignment = VerticalAlignment.Center,
             };
-            _vrHost = new Border { Child = _vrText, RenderTransformOrigin = RelativePoint.Center };
+            _vrDigits = null;
+            if (_config.UsesHudDigits)
+            {
+                _vrDigits = new WheelWizard.LoungeStats.HudSvgImage { VerticalAlignment = VerticalAlignment.Center };
+                _digitsHeight = (compact ? 38 : 46) * 1.08;
+                _digitsLook = HudDigits.Look(_config.GetString("typography.vrColor"));
+                ShowDigits(_vrText.Text ?? string.Empty);
+            }
+
+            _vrHost = new Border { Child = (Control?)_vrDigits ?? _vrText, RenderTransformOrigin = RelativePoint.Center };
+            // The VR rank badge (E to Crown) left of the number.
+            if (_config.GetBool("visibility.rankBadge"))
+            {
+                try
+                {
+                    // MMR: the RR Lounge division badge; VR: Retro Rewind's E to Crown badge for the VR.
+                    var badge =
+                        _unit == "MMR" ? _loungeBadge as Bitmap
+                        : HudDigits.RankFile(HudDigits.RankFor((int)Math.Round(_targetVr))) is { } rankFile ? new Bitmap(rankFile)
+                        : null;
+                    // An outline around the badge's shape, in any colour.
+                    if (badge is not null && _config.GetBool("visibility.rankOutline"))
+                        badge = WheelWizard.LoungeStats.HudArt.Outlined(
+                            badge,
+                            _config.GetString("typography.rankOutlineColor"),
+                            Math.Max(
+                                1,
+                                (int)
+                                    Math.Round(
+                                        badge.PixelSize.Height * 0.03 * Math.Clamp(_config.GetNumber("typography.rankOutlineWidth"), 1, 10)
+                                    )
+                            )
+                        );
+                    var number = compact ? 38 : 46;
+                    var size = number * 0.95 * Math.Clamp(_config.GetNumber("typography.rankBadgeSize"), 30, 300) / 100;
+                    // The line's own spacing is 10; the gap setting adds to or takes from it.
+                    var gap = number * Math.Clamp(_config.GetNumber("typography.rankBadgeGap"), 0, 100) / 100 - 10;
+                    if (badge is not null)
+                        line.Children.Add(
+                            new Image
+                            {
+                                Source = badge,
+                                Height = size,
+                                MaxWidth = size * 1.3,
+                                Stretch = Stretch.Uniform,
+                                VerticalAlignment = VerticalAlignment.Center,
+                                Margin = new Thickness(0, 0, gap, 0),
+                            }
+                        );
+                }
+                catch (Exception)
+                {
+                    // An unreadable picture: no badge.
+                }
+            }
+
             line.Children.Add(_vrHost);
-            if (_config.GetBool("visibility.delta"))
-                line.Children.Add(
-                    _deltaText.StartsWith('-')
-                        ? Pill(_deltaText, loss, WithAlpha(loss, 0.19))
-                        : Pill(_deltaText, gain, WithAlpha(gain, 0.19))
-                );
+            // The change: small game digits without a pill in the race HUD look, a pill otherwise (none with the race
+            // HUD digits on the badge). The race HUD VR change only shows it while it counts.
+            _deltaHost = null;
+            _deltaCompact = compact;
+            var showDelta =
+                _config.GetBool("visibility.delta")
+                && (_config.UsesHudLook || !_config.UsesHudDigits)
+                && (_config.GetString("animations.vr") != "race hud" || _animStart >= 0);
+            if (showDelta)
+            {
+                _deltaHost = new Border { VerticalAlignment = VerticalAlignment.Center, Child = DeltaControl(_deltaText) };
+                line.Children.Add(_deltaHost);
+            }
             right.Children.Add(line);
         }
 
@@ -377,7 +550,14 @@ public sealed class OverlayPreview : Border
             Spacing = 9,
             HorizontalAlignment = HorizontalAlignment.Right,
         };
-        if (_config.GetBool("visibility.rank"))
+        // The race HUD look writes the rank and its change in the game font, without the chip.
+        if (_config.GetBool("visibility.rank") && _config.UsesHudLook)
+        {
+            meta.Children.Add(HudOr(new TextBlock { Text = $"#{_rank:N0}" }, $"{_rank}", rankColor, 22));
+            if (_config.GetBool("visibility.rankDelta"))
+                meta.Children.Add(HudOr(new TextBlock { Text = "+2" }, "+2", gain, 14));
+        }
+        else if (_config.GetBool("visibility.rank"))
         {
             var rank = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
             rank.Children.Add(
@@ -417,16 +597,17 @@ public sealed class OverlayPreview : Border
             );
         }
 
-        meta.Children.Add(
-            new TextBlock
-            {
-                Text = "VR",
-                FontSize = 10,
-                FontWeight = FontWeight.ExtraBold,
-                Foreground = new SolidColorBrush(muted),
-                VerticalAlignment = VerticalAlignment.Center,
-            }
-        );
+        if (!_config.UsesHudDigits)
+            meta.Children.Add(
+                new TextBlock
+                {
+                    Text = _unit,
+                    FontSize = 10,
+                    FontWeight = FontWeight.ExtraBold,
+                    Foreground = new SolidColorBrush(muted),
+                    VerticalAlignment = VerticalAlignment.Center,
+                }
+            );
         right.Children.Add(meta);
         Grid.SetColumn(right, 1);
         grid.Children.Add(right);
@@ -485,6 +666,26 @@ public sealed class OverlayPreview : Border
         };
     }
 
+    // The race HUD look: the text in the game font (in its colour), when the font can write it; otherwise the plain one.
+    private Control HudOr(Control plain, string text, Color color, double height)
+    {
+        if (!_config.UsesHudLook)
+            return plain;
+        var clean = HudDigits.Clean(text);
+        if (
+            clean.Length == 0
+            || WheelWizard.LoungeStats.HudArt.Text(clean, HudDigits.Look($"#{color.R:X2}{color.G:X2}{color.B:X2}")) is not { } art
+        )
+            return plain;
+        var image = new WheelWizard.LoungeStats.HudSvgImage
+        {
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(0, 0, 8, 0),
+        };
+        image.Set(art, height, clean);
+        return image;
+    }
+
     private static Control Chip(string text, Color color, bool box = true) =>
         new Border
         {
@@ -500,6 +701,34 @@ public sealed class OverlayPreview : Border
                 Foreground = new SolidColorBrush(color),
             },
         };
+
+    private Border? _deltaHost;
+    private bool _deltaCompact;
+    private string? _deltaShown;
+
+    // The change as it is drawn: game digits in the race HUD look, a pill otherwise.
+    private Control DeltaControl(string text)
+    {
+        _deltaShown = text;
+        var negative = text.StartsWith('-');
+        if (
+            _config.UsesHudLook
+            && WheelWizard.LoungeStats.HudArt.Text(
+                text,
+                HudDigits.Look(_config.GetString(negative ? "typography.lossColor" : "typography.gainColor"))
+            )
+                is { } art
+        )
+        {
+            var image = new WheelWizard.LoungeStats.HudSvgImage { VerticalAlignment = VerticalAlignment.Center };
+            image.Set(art, (_deltaCompact ? 38 : 46) * 0.5, text);
+            return image;
+        }
+
+        var gain = Parse(_config.GetString("typography.gainColor"), Color.Parse("#5ef0a5"));
+        var loss = Parse(_config.GetString("typography.lossColor"), Color.Parse("#ff6d7e"));
+        return negative ? Pill(text, loss, WithAlpha(loss, 0.19)) : Pill(text, gain, WithAlpha(gain, 0.19));
+    }
 
     private static Control Pill(string text, Color foreground, Color background) =>
         new Border
@@ -548,7 +777,21 @@ public sealed class OverlayPreview : Border
             return;
         }
 
-        _vrText.Text = (mode == "count" ? (_targetVr - _gain) + _gain * eased : _targetVr).ToString("N0");
+        var counts = mode is "count" or "race hud";
+        _vrText.Text = (counts ? (_targetVr - _playGain) + _playGain * eased : _targetVr).ToString("N0");
+        // Race HUD: what is still to be added counts down next to the number.
+        if (mode == "race hud" && _deltaHost is not null)
+        {
+            var left = (int)Math.Round(_playGain * (1 - eased));
+            var text = left == 0 ? string.Empty : (left > 0 ? "+" : "") + left;
+            if (text != _deltaShown)
+            {
+                _deltaHost.Child = text.Length == 0 ? null : DeltaControl(text);
+                _deltaShown = text;
+            }
+        }
+
+        ShowDigits(_vrText.Text);
         var scale = mode switch
         {
             "spring" => 0.65 + 0.35 * eased + Math.Sin(t * Math.PI) * 0.08,
@@ -556,7 +799,7 @@ public sealed class OverlayPreview : Border
             _ => 1,
         };
         _vrHost.RenderTransform = new ScaleTransform(scale, mode == "flip" ? Math.Max(0.05, eased) : scale);
-        _vrHost.Opacity = mode == "count" ? 1 : Math.Max(0.1, eased);
+        _vrHost.Opacity = counts ? 1 : Math.Max(0.1, eased);
         if (t >= 1)
             FinishAnimation();
     }
@@ -564,8 +807,22 @@ public sealed class OverlayPreview : Border
     private void FinishAnimation()
     {
         _animStart = -1;
+        // The race HUD VR change is gone once it is counted.
+        if (_config.GetString("animations.vr") == "race hud" && _deltaHost is not null)
+            _deltaHost.IsVisible = false;
+        // The sample change was only for Play: the real one comes back.
+        if (_savedDelta is not null)
+        {
+            _deltaText = _savedDelta;
+            _savedDelta = null;
+            Rebuild();
+        }
+
         if (_vrText is not null)
+        {
             _vrText.Text = _targetVr.ToString("N0");
+            ShowDigits(_vrText.Text);
+        }
         if (_vrHost is null)
             return;
         _vrHost.RenderTransform = null;

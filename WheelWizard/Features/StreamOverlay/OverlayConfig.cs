@@ -20,16 +20,18 @@ public sealed class OverlayConfig(ISettingsManager settings)
             """
             {
               "identity": { "tag": "" },
-              "data": { "pollSeconds": 5 },
+              "data": { "pollSeconds": 5, "source": "vr" },
               "visibility": {
                 "avatar": true, "name": true, "tag": true, "vr": true, "delta": true, "rank": true, "rankDelta": true,
-                "connection": false, "room": false, "track": false, "sessionDelta": false, "dailyDelta": false
+                "connection": false, "room": false, "track": false, "sessionDelta": false, "dailyDelta": false,
+                "rankBadge": false, "rankOutline": false, "flag": false
               },
               "avatar": { "background": "gradient", "color1": "#31d4ff", "color2": "#3556ae" },
-              "layout": { "scale": 1, "width": 560, "compact": false, "align": "horizontal" },
+              "layout": { "scale": 1, "width": 560, "compact": false, "align": "horizontal", "card": true, "look": "badge" },
               "typography": {
                 "weight": 800, "textColor": "#ffffff", "mutedColor": "#c9d1e7",
-                "vrColor": "#8effc6", "gainColor": "#5ef0a5", "lossColor": "#ff6d7e", "rankColor": "#ffe88f"
+                "vrColor": "#8effc6", "gainColor": "#5ef0a5", "lossColor": "#ff6d7e", "rankColor": "#ffe88f",
+                "hudDigits": false, "rankOutlineColor": "#FFFFFF", "rankOutlineWidth": 3, "rankBadgeSize": 100, "rankBadgeGap": 15
               },
               "background": {
                 "imageUrl": "", "fit": "cover", "x": 50, "y": 50, "zoom": 1, "blur": 0, "brightness": 0.58, "saturation": 1.15, "contrast": 1.08,
@@ -302,6 +304,24 @@ public sealed class OverlayConfig(ISettingsManager settings)
     }
 
     /// <summary>The OBS Browser source link for the given friend code (12 digits).</summary>
+    /// <summary>Where the VR overlay page reads its player from when it shows the RR Lounge MMR.</summary>
+    public static string MmrDataUrl => $"http://127.0.0.1:{DiscordPresence.RoomLinkListener.Port}/overlay-mmr";
+
+    /// <summary>True when the badge shows the RR Lounge MMR instead of the VR.</summary>
+    public bool ShowsMmr => GetString("data.source") == "mmr";
+
+    /// <summary>
+    /// The race HUD look, which comes with the "race hud" VR change: no card, the race HUD digits and the game font,
+    /// whatever the badge settings say (they are kept).
+    /// </summary>
+    public bool UsesHudLook => GetString("animations.vr") == "race hud";
+
+    /// <summary>Whether the card (background, border, glow) is drawn.</summary>
+    public bool ShowsCard => !UsesHudLook && GetBool("layout.card");
+
+    /// <summary>Whether the number is drawn in the race HUD digits.</summary>
+    public bool UsesHudDigits => UsesHudLook || GetBool("typography.hudDigits");
+
     public string BuildLink(string friendCodeDigits)
     {
         var patch = Patch();
@@ -310,6 +330,18 @@ public sealed class OverlayConfig(ISettingsManager settings)
         var poll = (int)GetNumber("data.pollSeconds");
         patch.Remove("identity");
         patch.Remove("data");
+        // "race hud" is Wheel Wizard's own VR change: the page counts, and the script draws the +N counting down.
+        var raceHudChange = GetString("animations.vr") == "race hud";
+        if (raceHudChange && patch["animations"] is JsonObject animationsPatch)
+            animationsPatch["vr"] = "count";
+        // MMR: the page reads the player from Wheel Wizard (the RR Lounge stats it already keeps, shaped like an
+        // rwfc.net player) instead of rwfc.net, so every look option works the same for MMR.
+        if (ShowsMmr)
+            patch["data"] = new JsonObject
+            {
+                ["leaderboardUrl"] = $"{MmrDataUrl}/player/{{friendCode}}",
+                ["groupsUrl"] = $"{MmrDataUrl}/rooms",
+            };
 
         // The page doesn't know Wheel Wizard's own colours; they are added to it as CSS (see ColorCss), and only a
         // short marker travels in the link so the page reloads when one changes.
@@ -318,15 +350,64 @@ public sealed class OverlayConfig(ISettingsManager settings)
         {
             foreach (var key in ColorKeys)
                 typography.Remove(key);
+            typography.Remove("hudDigits");
+            typography.Remove("rankOutlineColor");
+            typography.Remove("rankOutlineWidth");
+            typography.Remove("rankBadgeSize");
+            typography.Remove("rankBadgeGap");
             if (typography.Count == 0)
                 patch.Remove("typography");
         }
 
         var url = new StringBuilder($"{PageUrl}?view=overlay&fc={friendCodeDigits}");
+        if (ShowsMmr)
+            url.Append("&src=mmr");
+        // MMR: the RR Lounge country flag before the name (Wheel Wizard adds the country to the link).
+        if (ShowsMmr && GetBool("visibility.flag"))
+            url.Append("&flag=on");
         if (colors != "8effc6-5ef0a5-ff6d7e-ffe88f")
             url.Append("&colors=").Append(Uri.EscapeDataString(colors));
         if (tag.Length > 0)
             url.Append("&tag=").Append(Uri.EscapeDataString(tag));
+        // No card: only the text and numbers, like the race HUD (Wheel Wizard hides the card with CSS).
+        if (patch["layout"] is JsonObject layoutPatch)
+        {
+            layoutPatch.Remove("card");
+            layoutPatch.Remove("look");
+            if (layoutPatch.Count == 0)
+                patch.Remove("layout");
+        }
+
+        if (!ShowsCard)
+            url.Append("&card=off");
+        // The VR rank badge is Wheel Wizard's own too (see HudDigits).
+        if (patch["visibility"] is JsonObject visibilityPatch)
+        {
+            visibilityPatch.Remove("rankBadge");
+            visibilityPatch.Remove("rankOutline");
+            visibilityPatch.Remove("flag");
+            if (visibilityPatch.Count == 0)
+                patch.Remove("visibility");
+        }
+
+        if (GetBool("visibility.rankBadge"))
+            url.Append("&rank=on")
+                .Append("&bs=")
+                .Append((int)Math.Clamp(GetNumber("typography.rankBadgeSize"), 30, 300))
+                .Append("&bg=")
+                .Append((int)Math.Clamp(GetNumber("typography.rankBadgeGap"), 0, 100));
+        if (UsesHudLook)
+            url.Append("&text=hud");
+        if (raceHudChange)
+            url.Append("&vrhud=1");
+        if (GetBool("visibility.rankBadge") && GetBool("visibility.rankOutline"))
+            url.Append("&ro=")
+                .Append(Uri.EscapeDataString(GetString("typography.rankOutlineColor").TrimStart('#')))
+                .Append("&rw=")
+                .Append((int)Math.Clamp(GetNumber("typography.rankOutlineWidth"), 1, 10));
+        // Race HUD digits: Wheel Wizard draws them over the page's number (see HudDigits).
+        if (UsesHudDigits)
+            url.Append("&digits=hud");
         if (poll != 5 && poll is >= 1 and <= 600)
             url.Append("&poll=").Append(poll);
         if (patch.Count > 0)

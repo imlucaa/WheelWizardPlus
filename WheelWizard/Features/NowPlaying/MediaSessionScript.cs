@@ -14,7 +14,7 @@ public static class MediaSessionScript
         [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false)
         Add-Type -AssemblyName System.Runtime.WindowsRuntime
         $asTask = ([System.WindowsRuntimeSystemExtensions].GetMethods() | Where-Object { $_.Name -eq 'AsTask' -and $_.GetParameters().Count -eq 1 -and $_.GetParameters()[0].ParameterType.Name -eq 'IAsyncOperation`1' })[0]
-        function Await($op, $type) { $t = $asTask.MakeGenericMethod($type).Invoke($null, @($op)); [void]$t.Wait(-1); $t.Result }
+        function Await($op, $type, $ms = -1) { $t = $asTask.MakeGenericMethod($type).Invoke($null, @($op)); if (-not $t.Wait($ms)) { throw 'No answer in time' }; $t.Result }
         $manager = [Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager, Windows.Media.Control, ContentType = WindowsRuntime]
         $properties = [Windows.Media.Control.GlobalSystemMediaTransportControlsSessionMediaProperties, Windows.Media.Control, ContentType = WindowsRuntime]
         $streamType = [Windows.Storage.Streams.IRandomAccessStreamWithContentType, Windows.Storage.Streams, ContentType = WindowsRuntime]
@@ -85,8 +85,11 @@ public static class MediaSessionScript
           } catch { return $false }
         }
         $last = $null
+        $song = $null
+        $songAt = 0.0
         $cover = $null
-        $coverTries = 0
+        $coverVersion = 0
+        $coverReadAt = -100.0
         $emitPosition = 0.0
         $clock = [System.Diagnostics.Stopwatch]::StartNew()
         $emitClock = 0.0
@@ -111,16 +114,29 @@ public static class MediaSessionScript
               $p = Await ($session.TryGetMediaPropertiesAsync()) $properties
               $playing = $session.GetPlaybackInfo().PlaybackStatus -eq 'Playing'
               $key = "$($session.SourceAppUserModelId)|$($p.Title)|$($p.Artist)|$playing"
-              if (-not $last -or -not $last.StartsWith($key)) { $cover = $null; $coverTries = 0 }
-              if ($null -eq $cover -and $coverTries -lt 4 -and $null -ne $p.Thumbnail) {
-                $coverTries++
+              $thisSong = "$($session.SourceAppUserModelId)|$($p.Title)|$($p.Artist)"
+              $coverNow = $clock.Elapsed.TotalSeconds
+              if ($thisSong -ne $song) { $song = $thisSong; $songAt = $coverNow; $cover = $null; $coverVersion++; $coverReadAt = -100.0 }
+              # Players often send the new title before the new picture, so one read could keep the last song's cover.
+              # The picture is read at every check just after a change, and every few seconds after that.
+              $coverEvery = if (($coverNow - $songAt) -lt 5) { 0 } else { 5 }
+              if ($null -ne $p.Thumbnail -and ($coverNow - $coverReadAt) -ge $coverEvery) {
+                $coverReadAt = $coverNow
+                $reader = $null
+                $memory = $null
                 try {
-                  $raw = Await ($p.Thumbnail.OpenReadAsync()) $streamType
+                  $raw = Await ($p.Thumbnail.OpenReadAsync()) $streamType 3000
                   $reader = $asStream.Invoke($null, @($raw))
                   $memory = New-Object System.IO.MemoryStream
                   $reader.CopyTo($memory)
-                  if ($memory.Length -gt 0 -and $memory.Length -lt 4000000) { $cover = [Convert]::ToBase64String($memory.ToArray()) }
-                } catch { }
+                  if ($memory.Length -gt 0 -and $memory.Length -lt 4000000) {
+                    $fresh = [Convert]::ToBase64String($memory.ToArray())
+                    if ($fresh -cne $cover) { $cover = $fresh; $coverVersion++ }
+                  }
+                } catch { } finally {
+                  if ($null -ne $reader) { $reader.Dispose() }
+                  if ($null -ne $memory) { $memory.Dispose() }
+                }
               }
               $duration = 0.0
               $position = 0.0
@@ -136,7 +152,7 @@ public static class MediaSessionScript
               $expected = $emitPosition
               if ($playing) { $expected += ($now - $emitClock) }
               $jumped = [math]::Abs($position - $expected) -gt 2.5
-              $state = "$key|$($null -ne $cover)"
+              $state = "$key|$coverVersion"
               if ($state -ne $last -or $jumped) {
                 $last = $state
                 $emitPosition = $position

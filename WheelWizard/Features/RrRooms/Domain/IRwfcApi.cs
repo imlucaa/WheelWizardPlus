@@ -1,4 +1,4 @@
-﻿using Refit;
+using Refit;
 using WheelWizard.Ghosts;
 using WheelWizard.Models;
 
@@ -90,4 +90,7 @@ public interface IRwfcApi
     /// <summary>The ghost file (.rkg) of a time on the board.</summary>
     [Get("/api/timetrial/ghost/{id}/download")]
     Task<HttpContent> DownloadTimeTrialGhostAsync(int id);
+
+    [Get("/api/badges/all")]
+    Task<RwfcBadgesResponse> GetAllBadgesAsync();
 }

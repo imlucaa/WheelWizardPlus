@@ -53,7 +53,7 @@ public partial class UserProfilePage : UserControl, INotifyPropertyChanged
 
     private IGameLicenseSingletonService GameLicenseService { get; }
 
-    private IWhWzDataSingletonService BadgeService { get; }
+    private IRrBadgeSingletonService BadgeService { get; }
 
     private IMiiDbService MiiDbService { get; }
 
@@ -235,7 +235,7 @@ public partial class UserProfilePage : UserControl, INotifyPropertyChanged
         INavigationService navigation,
         LiveRoomsService liveRooms,
         IGameLicenseSingletonService gameLicenseService,
-        IWhWzDataSingletonService badgeService,
+        IRrBadgeSingletonService badgeService,
         IMiiDbService miiDbService,
         ISettingsManager settingsService,
         ISaveRegionService saveRegions,

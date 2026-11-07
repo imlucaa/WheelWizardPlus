@@ -1,4 +1,4 @@
-﻿using Avalonia;
+using Avalonia;
 using Avalonia.Animation;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -20,6 +20,7 @@ using WheelWizard.Settings.Views;
 using WheelWizard.Shared.MessageTranslations;
 using WheelWizard.Shared.Polling;
 using WheelWizard.Themes;
+using WheelWizard.Views.Components;
 using WheelWizard.Views.Dialogs;
 using WheelWizard.Views.Shell.Controls;
 using WheelWizard.Views.Shell.Navigation;
@@ -272,6 +273,7 @@ public partial class Layout : BaseWindow, IPollingListener
             || setting == SettingsService.LAUNCHER_CLEAN_SIDEBAR
             || setting == SettingsService.LAUNCHER_PROFILE_OUTLINE
             || setting == SettingsService.LAUNCHER_PROFILE_OUTLINE_OPACITY
+            || setting == SettingsService.LAUNCHER_POPUP_BORDER
             || setting == SettingsService.LAUNCHER_BACKGROUND_FILE
         )
             ApplyLauncherAppearance();
@@ -316,6 +318,9 @@ public partial class Layout : BaseWindow, IPollingListener
         CompleteGrid.Classes.Set("CleanSidebar", cleanSidebar);
         SidebarProfileBlock.Background = ProfileBackground("SidebarBoxBrush");
         SidebarProfileBlock.BorderBrush = ProfileOutlineBrush();
+        // Popups follow this resource live (ModalHost binds to it), so an open popup changes too.
+        if (Application.Current is { } app)
+            app.Resources["ModalPanelBorderThickness"] = new Thickness(SettingsService.LAUNCHER_POPUP_BORDER.Get() ? 1 : 0);
         // Footer utility glyphs remain unboxed in both sidebar modes. Their own
         // foreground colors provide contrast without theme-colored circles.
         LiveStatusBorder.Background = Brushes.Transparent;
@@ -398,31 +403,56 @@ public partial class Layout : BaseWindow, IPollingListener
     private bool _closeConfirmed;
     private bool _closePromptOpen;
 
+    private int _closeGuards;
+
+    /// <summary>While guarded (an install or update is running), closing the window asks first. From upstream #550.</summary>
+    public void SetCloseGuarded(bool guarded) => _closeGuards = Math.Max(0, _closeGuards + (guarded ? 1 : -1));
+
     protected override async void OnClosing(WindowClosingEventArgs e)
     {
-        if (!_closeConfirmed && Navigation.CurrentPage is INavigationGuard { HasUnsavedWork: true } guard && InteractionContent.IsEnabled)
+        var confirm = GetCloseConfirmation(e);
+        if (confirm == null)
         {
-            e.Cancel = true;
             base.OnClosing(e);
-            if (_closePromptOpen)
-                return;
-            _closePromptOpen = true;
-            try
-            {
-                if (!await guard.ConfirmLeaveAsync())
-                    return;
-                _closeConfirmed = true;
-                Close();
-            }
-            finally
-            {
-                _closePromptOpen = false;
-            }
             return;
         }
 
+        e.Cancel = true;
         base.OnClosing(e);
+        if (_closePromptOpen)
+            return;
+        _closePromptOpen = true;
+        try
+        {
+            if (!await confirm())
+                return;
+            _closeConfirmed = true;
+            Close();
+        }
+        finally
+        {
+            _closePromptOpen = false;
+        }
     }
+
+    private Func<Task<bool>>? GetCloseConfirmation(WindowClosingEventArgs e)
+    {
+        if (_closeConfirmed)
+            return null;
+        var setup = _closeGuards > 0 && !e.IsProgrammatic && e.CloseReason == WindowCloseReason.WindowClosing;
+        var page = Navigation.CurrentPage is INavigationGuard { HasUnsavedWork: true } guard ? guard : null;
+        if (!setup && page == null)
+            return null;
+        return async () => (!setup || await ConfirmQuitDuringSetupAsync()) && (page == null || await page.ConfirmLeaveAsync());
+    }
+
+    private static Task<bool> ConfirmQuitDuringSetupAsync() =>
+        new YesNoWindow()
+            .SetMainText(t("question.quit_during_setup.title"))
+            .SetExtraText(t("question.quit_during_setup.extra"))
+            .SetButtonText(t("action.quit"), t("action.keep_installing"))
+            .SetButtonTones(ActionButtonTone.Danger, ActionButtonTone.Secondary)
+            .AwaitAnswer();
 
     public void NavigateToPage(UserControl page)
     {

@@ -1,4 +1,4 @@
-﻿using WheelWizard.Models.Enums;
+using WheelWizard.Models.Enums;
 using WheelWizard.Settings.Types;
 
 namespace WheelWizard.Settings;
@@ -53,6 +53,8 @@ public interface ISettingsProperties
     Setting<string> NOW_PLAYING_LOOKS { get; }
     Setting<string> OVERLAY_PRESETS { get; }
     Setting<string> OVERLAY_FRIEND_CODE { get; }
+    Setting<string> LOUNGE_STATS_CONFIG { get; }
+    Setting<string> LOUNGE_STATS_CACHE { get; }
     Setting<string> GAME_DISCS { get; }
     Setting<string> WIT_LOCATION { get; }
     Setting<string> LINE_COLOR_ORIGINALS { get; }
@@ -94,6 +96,7 @@ public interface ISettingsProperties
     Setting<bool> LAUNCHER_HIDE_HOME_TITLE { get; }
     Setting<bool> LAUNCHER_CLEAN_SIDEBAR { get; }
     Setting<bool> LAUNCHER_PROFILE_OUTLINE { get; }
+    Setting<bool> LAUNCHER_POPUP_BORDER { get; }
     Setting<double> LAUNCHER_PROFILE_OUTLINE_OPACITY { get; }
     Setting<string> LAUNCHER_FONT { get; }
     Setting<string> NAND_ROOT_PATH { get; }
@@ -110,6 +113,7 @@ public interface ISettingsProperties
     Setting<bool> RECOMP_SHOW_FPS { get; }
     Setting<bool> RECOMP_DISCORD_PRESENCE { get; }
     Setting<bool> RECOMP_PREVENT_STUTTERS { get; }
+    Setting<bool> RECOMP_GX_WORKER { get; }
     Setting<string> RECOMP_NAND_ROOT { get; }
 }
 

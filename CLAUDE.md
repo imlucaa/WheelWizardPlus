@@ -65,8 +65,9 @@ Notes that are easy to trip over:
 
 - Start C#/.NET work (features, fixes, build errors) with the `csharp-expert` skill; it routes to the right specialist.
 - Use the `run-tests` skill before running or recommending `dotnet test` commands (this repo is VSTest mode with xUnit; no MTP runner).
+- Use the `wii-sync` skill for anything touching Settings > Sync to Wii (`Features/WiiSync`); the other half is the FTP server in `rr-launcher`.
 
 ## Working here
 
-- The branch's working copy lives under `%TEMP%\opencode\betterwheelwizard-v261-migration` as a git worktree, so it can be deleted by temp cleanup; commit and keep a copy elsewhere.
+- The branch's working copy lives at `Desktop\project\WheelWizardPlus` as a git worktree. Its git data is in the main checkout at `Downloads\WheelWizard-main\WheelWizard-main`, so deleting that folder breaks this one. Other worktrees of the same repo (e.g. `better-sync-to-wii`) are still under `%TEMP%\opencode\`, where temp cleanup can delete them.
 - Upstream remote is `TeamWheelWizard/WheelWizard`; this branch is based on upstream `v2.6.1`, and upstream `main` has moved on (v2.6.2+).

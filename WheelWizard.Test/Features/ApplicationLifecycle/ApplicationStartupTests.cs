@@ -5,6 +5,14 @@ using WheelWizard.GameBanana.InstallRequests;
 using WheelWizard.Launching;
 using WheelWizard.Models.Enums;
 using WheelWizard.Mods;
+using WheelWizard.RrRooms;
+using WheelWizard.RrRooms;
+using WheelWizard.RrRooms;
+using WheelWizard.RrRooms;
+using WheelWizard.RrRooms;
+using WheelWizard.RrRooms;
+using WheelWizard.RrRooms;
+using WheelWizard.RrRooms;
 using WheelWizard.Settings;
 using WheelWizard.WheelWizardData;
 
@@ -163,7 +171,7 @@ public class ApplicationStartupTests
         public IModManager Mods { get; } = Substitute.For<IModManager>();
         public IModInstallRequestHandler Requests { get; } = Substitute.For<IModInstallRequestHandler>();
         public IAutoUpdaterSingletonService Updates { get; } = Substitute.For<IAutoUpdaterSingletonService>();
-        public IWhWzDataSingletonService Badges { get; } = Substitute.For<IWhWzDataSingletonService>();
+        public IRrBadgeSingletonService Badges { get; } = Substitute.For<IRrBadgeSingletonService>();
         public IApplicationLiveUpdates Live { get; } = Substitute.For<IApplicationLiveUpdates>();
         public ISettingsManager Settings { get; } = Substitute.For<ISettingsManager>();
         public ILauncherProvider Launchers { get; } = Substitute.For<ILauncherProvider>();
