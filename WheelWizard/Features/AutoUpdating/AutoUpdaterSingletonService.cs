@@ -134,12 +134,32 @@ public class AutoUpdaterSingletonService(
         var releasesResult = await gitHubService.GetReleasesAsync();
         if (releasesResult.IsFailure)
         {
+            // GitHub allows 60 checks an hour without an account; past that it answers 403/429 until the hour is up.
+            // That is not something to warn about: the next start checks again.
+            if (IsRateLimited(releasesResult.Error.Exception))
+            {
+                Serilog.Log.Information("Update check skipped: GitHub's hourly limit is used up");
+                return null;
+            }
+
             await presentation.ShowCheckFailureAsync(releasesResult.Error.Message);
 
             return null;
         }
 
         return FindNewestUsable(releasesResult.Value);
+    }
+
+    internal static bool IsRateLimited(Exception? exception)
+    {
+        for (var e = exception; e is not null; e = e.InnerException)
+        {
+            if (e is Refit.ApiException { StatusCode: System.Net.HttpStatusCode.Forbidden or System.Net.HttpStatusCode.TooManyRequests })
+                return true;
+            if (e is HttpRequestException { StatusCode: System.Net.HttpStatusCode.Forbidden or System.Net.HttpStatusCode.TooManyRequests })
+                return true;
+        }
+        return false;
     }
 
     /// <summary>The newest stable release that is newer than this version and, where it matters, has a file for this platform.</summary>

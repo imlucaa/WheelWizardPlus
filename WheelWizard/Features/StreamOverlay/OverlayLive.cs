@@ -16,7 +16,7 @@ public sealed class OverlayLive(ISettingsManager settings, IGameLicenseSingleton
 
     public const string Html = """
         <!doctype html><meta charset="utf-8"><title>VR overlay</title>
-        <style>html,body{margin:0;height:100%;background:transparent;overflow:hidden}iframe{border:0;width:100%;height:100%;background:transparent}</style>
+        <style>html,body{margin:0;height:100%;background:transparent;overflow:hidden}iframe{border:0;width:100%;height:100%;background:transparent;transform-origin:50% 50%}</style>
         <iframe id="f" allowtransparency="true"></iframe>
         <script>
         let current = '';
@@ -24,7 +24,10 @@ public sealed class OverlayLive(ISettingsManager settings, IGameLicenseSingleton
           try {
             const response = await fetch('/overlay/state', { cache: 'no-store' });
             const state = await response.json();
-            if (state.url && state.url !== current) { current = state.url; document.getElementById('f').src = state.url; }
+            const f = document.getElementById('f');
+            if (state.url && state.url !== current) { current = state.url; f.src = state.url; }
+            const s = state.scale > 0 ? state.scale : 1;
+            f.style.transform = s === 1 ? '' : `scale(${s})`;
           } catch (e) { }
           setTimeout(tick, 1500);
         }
@@ -48,6 +51,9 @@ public sealed class OverlayLive(ISettingsManager settings, IGameLicenseSingleton
             return string.Empty;
         }
     }
+
+    /// <summary>The OBS scale chosen in the VR overlay tab.</summary>
+    public double ObsScale() => new OverlayConfig(settings).ObsScale;
 
     public void SaveFriendCode(string digits) => SettingsEditing.Set(settings, settings.OVERLAY_FRIEND_CODE, digits);
 

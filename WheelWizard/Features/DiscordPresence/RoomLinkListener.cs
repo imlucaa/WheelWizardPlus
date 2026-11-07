@@ -223,11 +223,35 @@ public sealed class RoomLinkListener(
                 html = html.Replace("</head>", $"<style>{WheelWizard.StreamOverlay.HudDigits.NoCardCss}</style></head>");
             // MMR with the flag on: the RR Lounge country's flag before the name, as its background so the name keeps its
             // place (the race HUD script starts the name after it).
+            // Slim: the flag sits above the name instead of before it.
+            var slim = context.Request.QueryString["look"] == "slim";
             if (context.Request.QueryString["cc"] is { Length: 2 } cc && cc.All(char.IsAsciiLetterLower))
                 html = html.Replace(
                     "</head>",
-                    $"<style>.player-name{{padding-left:1.55em;background:url(/overlay-mmr/flag?cc={cc}) left center/1.3em .95em no-repeat}}</style></head>"
+                    slim
+                        ? $"<style>.player-name{{padding-top:1.05em;background:url(/overlay-mmr/flag?cc={cc}) left top/1.2em .85em no-repeat}}</style></head>"
+                        : $"<style>.player-name{{padding-left:1.55em;background:url(/overlay-mmr/flag?cc={cc}) left center/1.3em .95em no-repeat}}</style></head>"
                 );
+            if (slim)
+            {
+                // MMR: the division (BRONZE, SILVER, ...) takes the place of the "MMR" label under the number.
+                var divisionName =
+                    context.Request.QueryString["div"] is { Length: > 0 and < 30 } d && d.All(char.IsAsciiLetter)
+                        ? d.ToUpperInvariant()
+                        : null;
+                var divisionCss = divisionName is null
+                    ? string.Empty
+                    : $".vr-label{{font-size:0!important}}.vr-label::after{{content:\"{divisionName}\";font-size:9px}}";
+                // Like the site: the big number in the text colour.
+                var textColor = new WheelWizard.StreamOverlay.OverlayConfig(settings).GetString("typography.textColor");
+                var numberCss = System.Text.RegularExpressions.Regex.IsMatch(textColor, "^#[0-9a-fA-F]{6}$")
+                    ? $".vr-value{{color:{textColor}!important}}"
+                    : string.Empty;
+                html = html.Replace(
+                    "</head>",
+                    $"<style>{WheelWizard.StreamOverlay.OverlayConfig.SlimCss}{numberCss}{divisionCss}</style></head>"
+                );
+            }
             var hudDigits = context.Request.QueryString["digits"] == "hud";
             var rankBadge = context.Request.QueryString["rank"] == "on";
             if (hudDigits || rankBadge)
@@ -562,7 +586,7 @@ public sealed class RoomLinkListener(
     {
         var state = path == "/overlay/state";
         var body = state
-            ? System.Text.Json.JsonSerializer.Serialize(new { url = WithDivision(overlay.CurrentUrl()) })
+            ? System.Text.Json.JsonSerializer.Serialize(new { url = WithDivision(overlay.CurrentUrl()), scale = overlay.ObsScale() })
             : WheelWizard.StreamOverlay.OverlayLive.Html;
         var bytes = Encoding.UTF8.GetBytes(body);
         context.Response.ContentType = state ? "application/json" : "text/html; charset=utf-8";

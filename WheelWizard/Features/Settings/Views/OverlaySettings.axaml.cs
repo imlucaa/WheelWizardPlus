@@ -1,4 +1,4 @@
-﻿using System.Text.Json.Nodes;
+using System.Text.Json.Nodes;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
@@ -472,6 +472,12 @@ public partial class OverlaySettings : UserControl
         // The flag toggle shows or hides the preview's flag at once.
         _config.Changed += UpdateFlag;
 
+        var style = Section("Style", expanded: true);
+        var styleBlock = new Border { Child = LookPicker() };
+        styleBlock.Classes.Add("SettingsBlockStyle");
+        styleBlock.Classes.Add("SettingsRowStyle");
+        style.Add(styleBlock);
+
         var presets = Section("Presets", expanded: true);
         presets.Add(PresetCards());
 
@@ -503,7 +509,7 @@ public partial class OverlaySettings : UserControl
         if (_licenseChoices.Count > 0)
             identity.Add(Vr(Row("License", "Your licenses in Wheel Wizard.", _licensePicker)));
         identity.Add(Vr(Row("Friend code", "From the license, or type another.", _friendCodeInput)));
-        identity.Add(Row("Tag", "Shown before your name.", Text("identity.tag", 90)));
+        identity.Add(BadgeOnly(Row("Tag", "Shown before your name.", Text("identity.tag", 90))));
         identity.Add(Vr(Row("Update every", "How often VR is refreshed.", Slider("data.pollSeconds", 3, 60, 1, " s"))));
 
         var show = Section("Show");
@@ -528,8 +534,8 @@ public partial class OverlaySettings : UserControl
         )
         {
             var row = Row(label, null, Toggle($"visibility.{path}"));
-            // The race HUD never shows the change pill.
-            show.Add(path == "delta" ? BadgeOnly(row) : row);
+            // The race HUD shows only the VR, the rank and the rank badge, like the Rewind overlay site.
+            show.Add(path is "vr" or "rank" or "rankBadge" or "rankOutline" ? row : BadgeOnly(row));
         }
 
         show.Add(Row("Outline strength", "How thick the rank badge outline is.", Slider("typography.rankOutlineWidth", 1, 10, 1, "")));
@@ -539,10 +545,17 @@ public partial class OverlaySettings : UserControl
         );
 
         var layout = Section("Size");
+        layout.Add(
+            Row(
+                "OBS scale",
+                "Bigger also needs a bigger Browser source in OBS (800 x 300 fits 1x; 2x needs 1600 x 600).",
+                Slider("obs.scale", 0.25, 4, 0.05, "x")
+            )
+        );
         layout.Add(BadgeOnly(Row("Width", null, Slider("layout.width", 320, 900, 10, " px"))));
         layout.Add(BadgeOnly(Row("Compact", "A shorter badge.", Toggle("layout.compact"))));
         layout.Add(BadgeOnly(Row("Card", "Off shows only the text and numbers, like the race HUD.", Toggle("layout.card"))));
-        layout.Add(Row("Text weight", null, Slider("typography.weight", 400, 900, 100, "")));
+        layout.Add(BadgeOnly(Row("Text weight", null, Slider("typography.weight", 400, 900, 100, ""))));
 
         var borderStart = OptionsHost.Children.Count;
         var border = Section("Border");
@@ -559,7 +572,7 @@ public partial class OverlaySettings : UserControl
         BadgeOnlyFrom(borderStart);
         var colors = Section("Colors");
         colors.Add(Row("Text", null, Color("typography.textColor")));
-        colors.Add(Row("Secondary text", null, Color("typography.mutedColor")));
+        colors.Add(BadgeOnly(Row("Secondary text", null, Color("typography.mutedColor"))));
         colors.Add(Row("VR number", null, Color("typography.vrColor")));
         colors.Add(
             BadgeOnly(
@@ -570,13 +583,13 @@ public partial class OverlaySettings : UserControl
                 )
             )
         );
-        colors.Add(BadgeOnly(Row("Gains", "+VR, session and rank up.", Color("typography.gainColor"))));
-        colors.Add(BadgeOnly(Row("Losses", "-VR.", Color("typography.lossColor"))));
-        colors.Add(Row("Rank", null, Color("typography.rankColor")));
+        colors.Add(Row("Gains", "+VR, session and rank up.", Color("typography.gainColor")));
+        colors.Add(Row("Losses", "-VR.", Color("typography.lossColor")));
+        colors.Add(BadgeOnly(Row("Rank", null, Color("typography.rankColor"))));
         colors.Add(Row("Rank badge outline", "The line around the rank badge.", Color("typography.rankOutlineColor")));
-        colors.Add(Row("Mii backing", null, Choice("avatar.background", "gradient", "solid", "transparent")));
-        colors.Add(Row("Mii color 1", null, Color("avatar.color1")));
-        colors.Add(Row("Mii color 2", null, Color("avatar.color2")));
+        colors.Add(BadgeOnly(Row("Mii backing", null, Choice("avatar.background", "gradient", "solid", "transparent"))));
+        colors.Add(BadgeOnly(Row("Mii color 1", null, Color("avatar.color1"))));
+        colors.Add(BadgeOnly(Row("Mii color 2", null, Color("avatar.color2"))));
 
         var backgroundStart = OptionsHost.Children.Count;
         var background = Section("Background");
@@ -597,11 +610,14 @@ public partial class OverlaySettings : UserControl
         BadgeOnlyFrom(backgroundStart);
         var motion = Section("Animation");
         motion.Add(Row("Preview", "Plays the VR change on the badge above.", PlayButton()));
-        motion.Add(Row("VR change", null, Choice("animations.vr", "count", "race hud", "spring", "flip", "burst", "none")));
-        motion.Add(Row("Rank change", null, Choice("animations.rank", "flip", "count", "spring", "burst", "none")));
-        motion.Add(Row("Length", null, Slider("animations.durationMs", 200, 3000, 50, " ms")));
-        motion.Add(Row("Big gain bursts at", "VR gained in one race.", Slider("animations.celebrateThreshold", 50, 1000, 10, " VR")));
-        motion.Add(Row("Reduce motion", null, Toggle("animations.reducedMotion")));
+        // The race HUD keeps only the preview here (its count-down is fixed); the style cards pick it, not VR change.
+        motion.Add(BadgeOnly(Row("VR change", null, Choice("animations.vr", "count", "spring", "flip", "burst", "none"))));
+        motion.Add(BadgeOnly(Row("Rank change", null, Choice("animations.rank", "flip", "count", "spring", "burst", "none"))));
+        motion.Add(BadgeOnly(Row("Length", null, Slider("animations.durationMs", 200, 3000, 50, " ms"))));
+        motion.Add(
+            BadgeOnly(Row("Big gain bursts at", "VR gained in one race.", Slider("animations.celebrateThreshold", 50, 1000, 10, " VR")))
+        );
+        motion.Add(BadgeOnly(Row("Reduce motion", null, Toggle("animations.reducedMotion"))));
     }
 
     private SectionList Section(string title, bool expanded = false)
@@ -643,14 +659,17 @@ public partial class OverlaySettings : UserControl
         };
         header.Classes.Add("SettingsBlockStyle");
         header.Classes.Add("SettingsRowStyle");
+        // A closed section's rows join the page the first time it opens, so opening the tab only lays out what shows.
+        var host = new ContentControl { Content = expanded ? stack : null };
         header.PointerPressed += (_, _) =>
         {
+            host.Content ??= stack;
             stack.IsVisible = !stack.IsVisible;
             chevron.RenderTransform = new RotateTransform(stack.IsVisible ? 0 : -90);
         };
 
         OptionsHost.Children.Add(header);
-        OptionsHost.Children.Add(stack);
+        OptionsHost.Children.Add(host);
         return new SectionList(stack);
     }
 
@@ -696,6 +715,216 @@ public partial class OverlaySettings : UserControl
         row.Classes.Add("SettingsRowStyle");
         return row;
     }
+
+    // Card or race HUD, as two picture cards. The race HUD look is the "race hud" VR change (Animation).
+    private Control LookPicker()
+    {
+        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,*,*"), ColumnSpacing = 10 };
+        var cards = new (string Style, Border Card)[]
+        {
+            ("card", LookCard("Card", "Border, background, Mii", CardSketch(), "card")),
+            ("slim", LookCard("Slim", "Thin pill, flag, division", SlimSketch(), "slim")),
+            ("hud", LookCard("Race HUD", "Game font, no card", HudSketch(), "hud")),
+        };
+        for (var i = 0; i < cards.Length; i++)
+        {
+            Grid.SetColumn(cards[i].Card, i);
+            grid.Children.Add(cards[i].Card);
+        }
+
+        void Sync()
+        {
+            var current = CurrentStyle();
+            foreach (var (style, card) in cards)
+                Mark(card, style == current);
+        }
+        Sync();
+        _syncs.Add(Sync);
+        _config.Changed += Sync;
+        return grid;
+    }
+
+    private static void Mark(Border card, bool on)
+    {
+        card.BorderBrush = on ? Brushes.White : new SolidColorBrush(Avalonia.Media.Color.Parse("#26ffffff"));
+        card.Background = new SolidColorBrush(Avalonia.Media.Color.Parse(on ? "#1affffff" : "#0dffffff"));
+    }
+
+    private string CurrentStyle() =>
+        _config.UsesHudLook ? "hud"
+        : _config.UsesSlimLook ? "slim"
+        : "card";
+
+    private Border LookCard(string title, string subtitle, Control sketch, string style)
+    {
+        var picture = new Border
+        {
+            Height = 64,
+            CornerRadius = new CornerRadius(6),
+            Background = Brushes.Black,
+            BorderBrush = new SolidColorBrush(Avalonia.Media.Color.Parse("#1fffffff")),
+            BorderThickness = new Thickness(1),
+            Child = sketch,
+        };
+        var stack = new StackPanel { Spacing = 2 };
+        stack.Children.Add(picture);
+        stack.Children.Add(
+            new TextBlock
+            {
+                Text = title,
+                FontWeight = FontWeight.SemiBold,
+                Margin = new Thickness(0, 8, 0, 0),
+            }
+        );
+        stack.Children.Add(
+            new TextBlock
+            {
+                Text = subtitle,
+                Classes = { "TinyText" },
+                Opacity = 0.7,
+            }
+        );
+        var card = new Border
+        {
+            Padding = new Thickness(10),
+            CornerRadius = new CornerRadius(8),
+            BorderThickness = new Thickness(1),
+            Cursor = new Cursor(StandardCursorType.Hand),
+            Child = stack,
+        };
+        card.PointerPressed += (_, e) =>
+        {
+            // Clicking the chosen look again puts its values back (handy after changing options).
+            if (!e.GetCurrentPoint(card).Properties.IsLeftButtonPressed)
+                return;
+            _config.ApplyStyle(style);
+            // Every option shows the look's values (the Animation tab's VR change too).
+            Dispatcher.UIThread.Post(SyncAll);
+        };
+        return card;
+    }
+
+    // A small badge: dot, two lines and a number in a rounded outline.
+    private static Control CardSketch()
+    {
+        var row = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 6,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        row.Children.Add(
+            new Avalonia.Controls.Shapes.Ellipse
+            {
+                Width = 12,
+                Height = 12,
+                Fill = new SolidColorBrush(Avalonia.Media.Color.Parse("#66ffffff")),
+            }
+        );
+        var lines = new StackPanel { Spacing = 3, VerticalAlignment = VerticalAlignment.Center };
+        lines.Children.Add(
+            new Border
+            {
+                Width = 40,
+                Height = 3,
+                CornerRadius = new CornerRadius(2),
+                Background = new SolidColorBrush(Avalonia.Media.Color.Parse("#66ffffff")),
+            }
+        );
+        lines.Children.Add(
+            new Border
+            {
+                Width = 26,
+                Height = 3,
+                CornerRadius = new CornerRadius(2),
+                Background = new SolidColorBrush(Avalonia.Media.Color.Parse("#40ffffff")),
+            }
+        );
+        row.Children.Add(lines);
+        row.Children.Add(
+            new TextBlock
+            {
+                Text = "9,044",
+                FontSize = 10,
+                FontWeight = FontWeight.Bold,
+                Margin = new Thickness(8, 0, 0, 0),
+                VerticalAlignment = VerticalAlignment.Center,
+            }
+        );
+        return new Border
+        {
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+            Padding = new Thickness(8, 5),
+            CornerRadius = new CornerRadius(8),
+            BorderBrush = new SolidColorBrush(Avalonia.Media.Color.Parse("#99ffffff")),
+            BorderThickness = new Thickness(1),
+            Child = row,
+        };
+    }
+
+    // A thin pill: a short bar for the name and a big plain number.
+    private static Control SlimSketch()
+    {
+        var row = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 8,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        var lines = new StackPanel { Spacing = 3, VerticalAlignment = VerticalAlignment.Center };
+        lines.Children.Add(
+            new Border
+            {
+                Width = 10,
+                Height = 4,
+                CornerRadius = new CornerRadius(1),
+                Background = new SolidColorBrush(Avalonia.Media.Color.Parse("#66ffffff")),
+            }
+        );
+        lines.Children.Add(
+            new Border
+            {
+                Width = 34,
+                Height = 3,
+                CornerRadius = new CornerRadius(2),
+                Background = new SolidColorBrush(Avalonia.Media.Color.Parse("#40ffffff")),
+            }
+        );
+        row.Children.Add(lines);
+        row.Children.Add(
+            new TextBlock
+            {
+                Text = "3945",
+                FontSize = 13,
+                FontWeight = FontWeight.Bold,
+                Margin = new Thickness(14, 0, 0, 0),
+                VerticalAlignment = VerticalAlignment.Center,
+            }
+        );
+        return new Border
+        {
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+            Padding = new Thickness(12, 4),
+            CornerRadius = new CornerRadius(99),
+            BorderBrush = new SolidColorBrush(Avalonia.Media.Color.Parse("#ccffffff")),
+            BorderThickness = new Thickness(1.5),
+            Child = row,
+        };
+    }
+
+    // The race HUD number: big, heavy and slanted like the game's digits.
+    private static Control HudSketch() =>
+        new TextBlock
+        {
+            Text = "9044",
+            FontSize = 24,
+            FontWeight = FontWeight.Black,
+            FontStyle = FontStyle.Italic,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
 
     private Control Toggle(string path)
     {
@@ -817,6 +1046,9 @@ public partial class OverlaySettings : UserControl
                 return;
             var hex = (input.Text ?? string.Empty).Trim();
             Paint(hex);
+            // The box reports its first text when the tab opens; only a real change is saved (and redraws everything).
+            if (string.Equals(hex, _config.GetString(path), StringComparison.OrdinalIgnoreCase))
+                return;
             if (hex.StartsWith('#') && hex.Length is 4 or 7 or 9 && Avalonia.Media.Color.TryParse(hex, out _))
                 _config.Set(path, JsonValue.Create(hex));
         };
@@ -835,8 +1067,10 @@ public partial class OverlaySettings : UserControl
         _syncs.Add(Sync);
         input.TextChanged += (_, _) =>
         {
-            if (!_syncing)
-                _config.Set(path, JsonValue.Create((input.Text ?? string.Empty).Trim()));
+            var text = (input.Text ?? string.Empty).Trim();
+            // The box reports its first text when the tab opens; only a real change is saved (and redraws everything).
+            if (!_syncing && text != _config.GetString(path))
+                _config.Set(path, JsonValue.Create(text));
         };
         return input;
     }

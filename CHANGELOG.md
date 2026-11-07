@@ -6,6 +6,22 @@ version sequence.
 
 ## [Unreleased]
 
+## [2.6.10] - 2026-11-08
+
+### Added
+
+- VR overlay: a Style picker with three looks, Card, Slim (the thin pill from the Rewind overlay site) and Race HUD, instead of the race HUD hiding under Animation.
+- VR overlay: OBS scale (0.25x to 4x) under Size, for the Browser source.
+- A 1 in 100 lucky start: a gold coin jumps out with the chest sound, and the launcher turns gold. Your theme is saved first as "Before the gold (date)" in the Theme library.
+
+### Changed
+
+- Race HUD shows only the VR, the rank and the rank badge (the Mii, name, tag, flag and other lines stay off), like the Rewind overlay site, and only its options are listed.
+
+### Fixed
+
+- The VR overlay tab opens about twice as fast: it no longer saves every text and colour box when it opens, and closed sections are built when opened.
+- No "Failed to check for updates" message when GitHub's hourly limit is used up; the next start checks again.
 ## [2.6.9] - 2026-11-08
 
 ### Added

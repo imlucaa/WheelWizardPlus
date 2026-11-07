@@ -109,4 +109,42 @@ public class OverlayConfigTests
         Assert.True(OverlayConfig.IsBuiltIn("Default"));
         Assert.Contains("Blue", config.PresetNames);
     }
+
+    [Fact]
+    public void Slim_SendsLookSlim_AndItsPillValues_EvenAfterReloading()
+    {
+        var config = Create();
+        config.ApplyStyle("slim");
+        var reloaded = Create(config.Patch().ToJsonString());
+
+        var link = reloaded.BuildLink("123456789012");
+        var cfg = link[(link.IndexOf("&cfg=", StringComparison.Ordinal) + 5)..].Replace('-', '+').Replace('_', '/');
+        var json = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(cfg + new string('=', (4 - cfg.Length % 4) % 4)));
+
+        Assert.True(reloaded.UsesSlimLook);
+        Assert.Contains("&look=slim", link);
+        Assert.Contains("\"effect\":\"solid\"", json);
+        Assert.Contains("\"compact\":true", json);
+    }
+
+    [Fact]
+    public void RaceHud_ShowsOnlyTheVrAndRank_AndTheCardChoicesComeBack()
+    {
+        var config = Create();
+        config.Set("identity.tag", System.Text.Json.Nodes.JsonValue.Create("RR"));
+        config.ApplyStyle("hud");
+
+        var link = config.BuildLink("123456789012");
+        var cfg = link[(link.IndexOf("&cfg=", StringComparison.Ordinal) + 5)..].Replace('-', '+').Replace('_', '/');
+        var json = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(cfg + new string('=', (4 - cfg.Length % 4) % 4)));
+
+        Assert.False(config.GetBool("visibility.name"));
+        Assert.True(config.GetBool("visibility.vr"));
+        Assert.Contains("\"name\":false", json);
+        Assert.Contains("\"avatar\":false", json);
+        Assert.DoesNotContain("&tag=", link);
+
+        config.ApplyStyle("card");
+        Assert.True(config.GetBool("visibility.name"));
+    }
 }

@@ -41,7 +41,8 @@ public sealed class OverlayConfig(ISettingsManager settings)
                 "effect": "rainbow", "width": 4, "radius": 38, "speed": 5.5, "glow": true, "glowStrength": 0.65,
                 "color1": "#22d3ee", "color2": "#8b5cf6", "color3": "#f97316"
               },
-              "animations": { "vr": "count", "rank": "flip", "durationMs": 1100, "celebrateThreshold": 250, "reducedMotion": false }
+              "animations": { "vr": "count", "rank": "flip", "durationMs": 1100, "celebrateThreshold": 250, "reducedMotion": false },
+              "obs": { "scale": 1 }
             }
             """
         )!
@@ -93,7 +94,26 @@ public sealed class OverlayConfig(ISettingsManager settings)
         return (node, parts[^1]);
     }
 
-    public bool GetBool(string path) => Resolve(_current, path) is var (p, k) && p[k]!.GetValue<bool>();
+    // Race HUD only has the VR and the rank (like the Rewind overlay site): these stay off whatever the card had, and come
+    // back as they were with Card or Slim.
+    private static readonly string[] HudHidden =
+    [
+        "avatar",
+        "name",
+        "tag",
+        "rankDelta",
+        "connection",
+        "room",
+        "track",
+        "sessionDelta",
+        "dailyDelta",
+        "flag",
+    ];
+
+    public bool GetBool(string path) =>
+        !(path.StartsWith("visibility.", StringComparison.Ordinal) && UsesHudLook && HudHidden.Contains(path["visibility.".Length..]))
+        && Resolve(_current, path) is var (p, k)
+        && p[k]!.GetValue<bool>();
 
     // Read through the text form: a number set from code as an int would throw when asked for a double.
     public double GetNumber(string path) =>
@@ -310,6 +330,60 @@ public sealed class OverlayConfig(ISettingsManager settings)
     /// <summary>True when the badge shows the RR Lounge MMR instead of the VR.</summary>
     public bool ShowsMmr => GetString("data.source") == "mmr";
 
+    /// <summary>The slim pill: a thin card, a plain big number and the name small (from the Rewind overlay site).</summary>
+    public bool UsesSlimLook => !UsesHudLook && GetString("layout.look") == "slim";
+
+    /// <summary>CSS that turns the card into the slim pill.</summary>
+    public const string SlimCss =
+        ".card-content{padding:8px 30px!important;gap:16px!important}"
+        + ".player-name{font-size:18px!important;letter-spacing:0!important;opacity:.85}"
+        + ".vr-value{font-family:inherit!important;font-size:46px!important;font-weight:600!important;letter-spacing:-.01em!important;text-shadow:0 2px 10px #000c!important}"
+        + ".meta-line{margin-top:-2px!important;min-height:0!important;justify-content:center!important;gap:6px!important}"
+        + ".vr-label{font-size:9px!important;letter-spacing:.22em!important}"
+        // the glass blur leaks past the round ends in Chrome
+        + ".background-shade{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}";
+
+    /// <summary>Card, slim or race HUD. Card and slim each start from their own look; the options can change it after.</summary>
+    public void ApplyStyle(string style)
+    {
+        if (style == "card")
+        {
+            foreach (var key in new[] { "avatar", "name", "rank" })
+                _current["visibility"]![key] = true;
+            _current["border"] = Defaults["border"]!.DeepClone();
+            _current["layout"] = Defaults["layout"]!.DeepClone();
+        }
+        // The race HUD keeps whichever card look is under it.
+        if (style != "hud")
+            _current["layout"]!["look"] = style == "slim" ? "slim" : "badge";
+        if (style == "slim")
+        {
+            var visibility = _current["visibility"]!;
+            visibility["avatar"] = false;
+            visibility["name"] = true;
+            visibility["rank"] = false;
+            visibility["delta"] = true;
+            var border = _current["border"]!;
+            border["effect"] = "solid";
+            border["width"] = 3;
+            border["radius"] = 60;
+            border["glow"] = false;
+            border["color1"] = "#e8a6b8";
+            _current["layout"]!["compact"] = true;
+            _current["layout"]!["width"] = 470;
+            var background = _current["background"]!;
+            background["overlayOpacity"] = 0.3;
+            background["brightness"] = 0.75;
+            background["blur"] = 0;
+        }
+        _current["animations"]!["vr"] = style == "hud" ? "race hud" : "count";
+        Save();
+        Changed?.Invoke();
+    }
+
+    /// <summary>How big the OBS Browser source draws the overlay (1 = 100 %).</summary>
+    public double ObsScale => Math.Clamp(GetNumber("obs.scale"), 0.25, 4);
+
     /// <summary>
     /// The race HUD look, which comes with the "race hud" VR change: no card, the race HUD digits and the game font,
     /// whatever the badge settings say (they are kept).
@@ -330,6 +404,15 @@ public sealed class OverlayConfig(ISettingsManager settings)
         var poll = (int)GetNumber("data.pollSeconds");
         patch.Remove("identity");
         patch.Remove("data");
+        // Wheel Wizard's own: the OBS page scales the whole overlay (see OverlayLive.Html), the page never sees it.
+        patch.Remove("obs");
+        // The look (card or slim) is Wheel Wizard's own too: slim travels as look=slim and is drawn with CSS.
+        if (patch["layout"] is JsonObject lookPatch)
+        {
+            lookPatch.Remove("look");
+            if (lookPatch.Count == 0)
+                patch.Remove("layout");
+        }
         // "race hud" is Wheel Wizard's own VR change: the page counts, and the script draws the +N counting down.
         var raceHudChange = GetString("animations.vr") == "race hud";
         if (raceHudChange && patch["animations"] is JsonObject animationsPatch)
@@ -367,7 +450,7 @@ public sealed class OverlayConfig(ISettingsManager settings)
             url.Append("&flag=on");
         if (colors != "8effc6-5ef0a5-ff6d7e-ffe88f")
             url.Append("&colors=").Append(Uri.EscapeDataString(colors));
-        if (tag.Length > 0)
+        if (tag.Length > 0 && !UsesHudLook)
             url.Append("&tag=").Append(Uri.EscapeDataString(tag));
         // No card: only the text and numbers, like the race HUD (Wheel Wizard hides the card with CSS).
         if (patch["layout"] is JsonObject layoutPatch)
@@ -380,6 +463,19 @@ public sealed class OverlayConfig(ISettingsManager settings)
 
         if (!ShowsCard)
             url.Append("&card=off");
+        if (UsesHudLook)
+        {
+            if (patch["visibility"] is not JsonObject hidden)
+                patch["visibility"] = hidden = new JsonObject();
+            foreach (var key in HudHidden)
+            {
+                if (Defaults["visibility"]![key]!.GetValue<bool>())
+                    hidden[key] = false;
+                else
+                    hidden.Remove(key);
+            }
+        }
+
         // The VR rank badge is Wheel Wizard's own too (see HudDigits).
         if (patch["visibility"] is JsonObject visibilityPatch)
         {
@@ -398,6 +494,8 @@ public sealed class OverlayConfig(ISettingsManager settings)
                 .Append((int)Math.Clamp(GetNumber("typography.rankBadgeGap"), 0, 100));
         if (UsesHudLook)
             url.Append("&text=hud");
+        if (UsesSlimLook)
+            url.Append("&look=slim");
         if (raceHudChange)
             url.Append("&vrhud=1");
         if (GetBool("visibility.rankBadge") && GetBool("visibility.rankOutline"))

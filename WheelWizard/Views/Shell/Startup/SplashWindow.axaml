@@ -13,6 +13,8 @@
     <Grid x:Name="Entrance" Width="220" Height="220" HorizontalAlignment="Center" VerticalAlignment="Center"
           RenderTransformOrigin="50%,50%">
         <Image x:Name="Wheel" Source="/Resources/Images/AppIcon.png" Stretch="Uniform" RenderTransformOrigin="50%,50%" />
+        <!-- Lucky start: gold sparkles around the token (filled in from code). -->
+        <Canvas x:Name="Sparkles" IsHitTestVisible="False" IsVisible="False" />
     </Grid>
 </Window>
 
